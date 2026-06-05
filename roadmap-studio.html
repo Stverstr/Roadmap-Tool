@@ -178,13 +178,13 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--g700);cursor:poin
 .icon-pick-btn.empty{font-size:14px;color:var(--gy400);}
 .icon-clear-btn{font-size:12px;color:var(--gy400);background:none;border:none;cursor:pointer;padding:3px 6px;border-radius:5px;}
 .icon-clear-btn:hover{color:var(--red);background:#FEE2E2;}
-#icon-picker-popup{position:fixed;z-index:9999;background:white;border:1px solid var(--gy300);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);width:300px;display:none;flex-direction:column;overflow:hidden;}
+#icon-picker-popup{position:fixed;z-index:9999;background:white;border:1px solid var(--gy300);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);width:340px;display:none;flex-direction:column;overflow:hidden;}
 #icon-picker-popup.open{display:flex;}
-.ip-cats{display:flex;gap:2px;padding:8px 8px 4px;border-bottom:1px solid var(--gy100);overflow-x:auto;flex-shrink:0;}
-.ip-cat{background:none;border:none;font-size:15px;cursor:pointer;padding:4px 6px;border-radius:6px;opacity:.5;transition:all .12s;}
+.ip-cats{display:flex;flex-wrap:wrap;gap:2px;padding:6px 6px 4px;border-bottom:1px solid var(--gy100);flex-shrink:0;}
+.ip-cat{background:none;border:none;font-size:15px;cursor:pointer;padding:4px 6px;border-radius:6px;opacity:.5;transition:all .12s;flex-shrink:0;}
 .ip-cat:hover,.ip-cat.active{opacity:1;background:var(--g100);}
-.ip-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:8px;max-height:220px;overflow-y:auto;}
-.ip-em{font-size:20px;cursor:pointer;text-align:center;padding:5px 3px;border-radius:5px;line-height:1;transition:background .1s;}
+.ip-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;padding:8px;max-height:240px;overflow-y:auto;}
+.ip-em{font-size:20px;cursor:pointer;text-align:center;padding:5px 2px;border-radius:5px;line-height:1;transition:background .1s;}
 .ip-em:hover{background:var(--g100);}
 input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-radius:5px;padding:2px;cursor:pointer;background:white;}
 .sep{border:none;border-top:1px solid var(--gy200);margin:16px 0;}
@@ -1523,13 +1523,16 @@ function switchTab(name) {
 //  ICON PICKER
 // ═══════════════════════════════════════════
 const ICON_CATS = [
-  { label: '⚙️', name: 'Proces', icons: ['⚙️','🔧','🔨','🛠️','🔩','⛏️','🔄','🔀','🔁','➡️','📋','📌','📍','🗂️','📁','📂','🗃️','📦'] },
-  { label: '👥', name: 'Mensen', icons: ['👥','👤','🤝','💼','🎓','👩‍💼','👨‍💼','🧑‍🤝‍🧑','💬','📣','📢','🗣️','✍️','📝'] },
-  { label: '📊', name: 'Data', icons: ['📊','📈','📉','🔍','🔎','💡','🧠','🗺️','🌐','💾','🖥️','📱','⌨️','🖨️'] },
-  { label: '🎯', name: 'Doel', icons: ['🎯','🏆','🥇','🎖️','🏅','🎗️','✅','☑️','🚀','🌟','⭐','💫','🔥','💪'] },
-  { label: '🌿', name: 'Natuur', icons: ['🌿','🌍','🌱','💚','🍀','🌾','🌻','🌲','🌳','♻️','💧','☀️','🌤️','❄️'] },
-  { label: '⚠️', name: 'Status', icons: ['⚠️','🚦','🔴','🟡','🟢','🔔','🔕','❗','❓','💬','💭','🗯️','📍','🚩'] },
-  { label: '1️⃣', name: 'Cijfers', icons: ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🅰️','🅱️','🆎','🆚'] },
+  { label: '⚙️', name: 'Werk & Proces', icons: ['⚙️','🔧','🔨','🛠️','🔩','⛏️','🪛','🪚','🔄','🔀','🔁','🔃','➡️','⬆️','⬇️','↩️','↪️','🔗','📋','📌','📍','🗂️','📁','📂','🗃️','📦','📫','📬','📭','📮','🗳️','🗄️','🗑️','📇','🗒️','🗓️','📅','📆','🗑️','📐','📏','✂️','🖇️','📎','🖊️','✒️','🖋️','📝','✏️','🖍️','📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🏷️'] },
+  { label: '👥', name: 'Mensen & Teams', icons: ['👥','👤','🤝','💼','🎓','🧑‍💼','👩‍💼','👨‍💼','🧑‍🏫','👩‍🏫','👨‍🏫','🧑‍🔬','👩‍🔬','👨‍🔬','🧑‍💻','👩‍💻','👨‍💻','🧑‍🎨','👩‍🎨','👨‍🎨','🧑‍🔧','👩‍🔧','👨‍🔧','💬','📣','📢','🗣️','✍️','🙋','🙌','👏','🤜','🤛','💪','🫱','🫲','🫶','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','🫂','🫀','🧠'] },
+  { label: '📊', name: 'Data & Tech', icons: ['📊','📈','📉','🔍','🔎','💡','🧠','🗺️','🌐','💾','🖥️','🖨️','⌨️','🖱️','💻','📱','☎️','📞','📟','📠','📡','🔋','🔌','💿','📀','🖲️','🕹️','📷','📸','📹','🎥','📽️','🎞️','📺','📻','🎙️','🎚️','🎛️','🧮','⌚','⏰','⏱️','⏲️','🔭','🔬','🧬','🧪','🧫','🧲','⚗️','🔦','💡','🕯️','🪔'] },
+  { label: '🎯', name: 'Doelen & Succes', icons: ['🎯','🏆','🥇','🥈','🥉','🎖️','🏅','🎗️','✅','☑️','✔️','🚀','🌟','⭐','🌠','💫','✨','🎆','🎇','🎉','🎊','🎈','🎁','🎀','🪄','🔮','🎱','🎲','🃏','🀄','🎴','🧩','🪅','🎭','🎬','🎤','🎵','🎶','🎸','🎹','🥁','🎷','🎺','🎻','🪕','🪗','🎮','🕹️','👑','💎','🏵️','🎠','🎡','🎢'] },
+  { label: '🌿', name: 'Natuur & Duurzaamheid', icons: ['🌿','🌍','🌎','🌏','🌱','💚','🍀','🌾','🌻','🌲','🌳','🌴','🌵','🎋','🎍','🍃','🍂','🍁','🌺','🌸','🌼','🌷','🌹','🥀','🌞','🌝','🌛','🌜','🌚','🌕','☀️','🌤️','⛅','🌥️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','☃️','⛄','🌬️','💨','🌈','☔','⚡','🌊','💧','🫧','♻️','🌡️','🌋','🏔️','⛰️','🗻','🏕️','🌄','🌅','🏖️','🏜️','🏝️'] },
+  { label: '🚦', name: 'Status & Signalen', icons: ['🚦','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔺','🔻','🔷','🔶','🔹','🔸','🔘','🔲','🔳','⬛','⬜','🟥','🟧','🟨','🟩','🟦','🟪','⚠️','❗','❕','❓','❔','‼️','⁉️','🔔','🔕','🔇','🔈','🔉','🔊','📢','📣','💬','💭','🗯️','📍','🚩','🏴','🏳️','🎌','🏁','🚧','⛔','🚫','📵','🔞','🆘','🆕','🆙','🆒','🆓','🆗','🆖','🆙','🆚','🆛','🆜','🆝','🔝','🔛','🔜'] },
+  { label: '🏗️', name: 'Bouwen & Lanceren', icons: ['🏗️','🏢','🏬','🏭','🏠','🏡','🏰','🏯','🕌','⛪','🛕','🗼','🗽','🗿','🏛️','⛲','⛺','🏕️','🛖','🪵','🧱','🪟','🚪','🛗','🪜','🧰','🪣','🪤','🧲','💡','🔦','🕯️','🪔','🧯','🛢️','💈','🔑','🗝️','🔐','🔒','🔓','🔏','🪪','🏷️','🎫','🎟️','🎪','🎠','🎡','🎢','🛝','⛱️','🎑','🗺️','🧭','🌉','🌃','🌆','🌇','🌁'] },
+  { label: '🚀', name: 'Beweging & Energie', icons: ['🚀','✈️','🛸','🛩️','🚁','🛺','🚂','🚃','🚄','🚅','🚆','🚇','🚈','🚉','🚊','🚝','🚞','🚋','🚌','🚍','🚎','🚐','🚑','🚒','🚓','🚔','🚕','🚖','🚗','🚘','🚙','🚚','🛻','🚛','🚜','🏎️','🏍️','🛵','🛺','🚲','🛴','🛹','🛼','🚏','🛣️','🛤️','⛽','🚨','🚥','🚦','🛑','⚓','⛵','🚤','🛥️','🛳️','⛴️','🚢','🛶','🪂','🏋️','🤸','🧗','🏊','🚵','🤾','⛷️','🏂','🏄'] },
+  { label: '🍕', name: 'Fun & Lifestyle', icons: ['🍕','🍔','🌮','🌯','🥗','🥘','🍜','🍝','🍛','🍣','🍱','🍤','🍙','🍘','🥟','🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯','☕','🍵','🧃','🥤','🧋','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🥐','🥖','🥨','🥞','🧇','🥓','🍳','🧆','🥙','🥗','🫕','🫙','🧊','🌶️','🫚','🧄','🧅','🥕','🌽','🥦','🥬','🥒','🍆','🫑','🥑','🍇','🍓','🫐','🍈','🍑','🍒','🍍','🥭','🍌','🍋','🍊','🍉','🍏','🍎'] },
+  { label: '😀', name: 'Expressie', icons: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','🫠','😉','😊','😇','🥰','😍','🤩','😘','😗','☺️','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🫢','🫣','🤫','🤔','🫡','🤐','🤨','😐','😑','😶','🫥','😏','😒','🙄','😬','🤥','🫨','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🥴','😵','💫','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','🫤','😟','🙁','☹️','😮','😯','😲','😳','🥺','🫹','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿'] },
 ];
 
 let ipTargetInput = null;
@@ -1589,10 +1592,13 @@ function setIconBtn(inputId, btnId, val) {
   else { btn.textContent = '＋'; btn.classList.add('empty'); }
 }
 
+// Stop propagation inside picker so it never accidentally closes
+document.getElementById('icon-picker-popup').addEventListener('click', e => e.stopPropagation());
+
 // Close picker on outside click
 document.addEventListener('click', e => {
   const popup = document.getElementById('icon-picker-popup');
-  if (popup && popup.classList.contains('open') && !popup.contains(e.target) && !e.target.classList.contains('icon-pick-btn')) {
+  if (popup && popup.classList.contains('open') && !e.target.classList.contains('icon-pick-btn')) {
     popup.classList.remove('open');
   }
 });
