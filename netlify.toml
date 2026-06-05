@@ -1,0 +1,4 @@
+[[redirects]]
+  from = "/*"
+  to = "/roadmap-studio.html"
+  status = 200
