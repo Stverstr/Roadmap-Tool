@@ -167,9 +167,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* ── MISC ── */
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
-.toggle-row{display:flex;align-items:center;gap:10px;padding:10px 0;}
-.toggle-label{font-size:13px;color:var(--gy700);flex:1;}
-input[type=checkbox]{width:16px;height:16px;accent-color:var(--g700);cursor:pointer;}
+.toggle-row{display:flex;align-items:center;gap:8px;padding:10px 0;}
+.toggle-label{font-size:13px;color:var(--gy700);}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--g700);cursor:pointer;flex-shrink:0;}
+
+/* ── ICON PICKER ── */
+.icon-pick-wrap{display:flex;align-items:center;gap:8px;}
+.icon-pick-btn{font-size:22px;width:44px;height:36px;background:var(--gy100);border:1px solid var(--gy300);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
+.icon-pick-btn:hover{background:var(--g100);}
+.icon-pick-btn.empty{font-size:14px;color:var(--gy400);}
+.icon-clear-btn{font-size:12px;color:var(--gy400);background:none;border:none;cursor:pointer;padding:3px 6px;border-radius:5px;}
+.icon-clear-btn:hover{color:var(--red);background:#FEE2E2;}
+#icon-picker-popup{position:fixed;z-index:9999;background:white;border:1px solid var(--gy300);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);width:300px;display:none;flex-direction:column;overflow:hidden;}
+#icon-picker-popup.open{display:flex;}
+.ip-cats{display:flex;gap:2px;padding:8px 8px 4px;border-bottom:1px solid var(--gy100);overflow-x:auto;flex-shrink:0;}
+.ip-cat{background:none;border:none;font-size:15px;cursor:pointer;padding:4px 6px;border-radius:6px;opacity:.5;transition:all .12s;}
+.ip-cat:hover,.ip-cat.active{opacity:1;background:var(--g100);}
+.ip-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:8px;max-height:220px;overflow-y:auto;}
+.ip-em{font-size:20px;cursor:pointer;text-align:center;padding:5px 3px;border-radius:5px;line-height:1;transition:background .1s;}
+.ip-em:hover{background:var(--g100);}
 input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-radius:5px;padding:2px;cursor:pointer;background:white;}
 .sep{border:none;border-top:1px solid var(--gy200);margin:16px 0;}
 .loading{text-align:center;padding:30px;color:var(--gy500);font-size:13px;}
@@ -238,12 +254,12 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         </div>
         <hr class="sep">
         <div class="toggle-row">
-          <span class="toggle-label">📅 Meetings toevoegen aan tijdslijn</span>
           <input type="checkbox" id="s-enable-meetings" onchange="autoSaveProject()">
+          <span class="toggle-label">📅 Meetings toevoegen aan tijdslijn</span>
         </div>
         <div class="toggle-row">
-          <span class="toggle-label">🏁 Milestones toevoegen aan tijdslijn</span>
           <input type="checkbox" id="s-enable-milestones" onchange="autoSaveProject()">
+          <span class="toggle-label">🏁 Milestones toevoegen aan tijdslijn</span>
         </div>
         <div style="margin-top:10px;display:flex;gap:8px;">
           <button class="btn btn-p" onclick="saveProject()">💾 Opslaan</button>
@@ -336,7 +352,13 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div class="modal-head"><span class="modal-title" id="mt-title">🚦 Spoor</span><button class="modal-close" onclick="closeModal('modal-track')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label class="label">Naam</label><input class="input" id="mt-name" placeholder="bijv. Proces, Mensen, Data…"></div>
-      <div class="field"><label class="label">Icoon (emoji)</label><input class="input" id="mt-icon" placeholder="⚙️" maxlength="4"></div>
+      <div class="field"><label class="label">Icoon</label>
+        <div class="icon-pick-wrap">
+          <button type="button" class="icon-pick-btn empty" id="mt-icon-btn" onclick="openIconPicker('mt-icon','mt-icon-btn')">＋</button>
+          <input type="hidden" id="mt-icon" value="">
+          <button type="button" class="icon-clear-btn" onclick="clearIcon('mt-icon','mt-icon-btn')" title="Leegmaken">✕ leeg</button>
+        </div>
+      </div>
       <div class="field"><label class="label">Kleur</label><input type="color" id="mt-color" value="#40916C"></div>
       <hr class="sep">
       <div class="card-row" style="margin:0 0 8px"><span style="font-size:13px;font-weight:700;">Subcategorieën</span><button class="btn btn-sm btn-p" onclick="addSubcatField()">＋ Voeg toe</button></div>
@@ -356,6 +378,13 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div class="modal-head"><span class="modal-title" id="mph-title">📌 Fase</span><button class="modal-close" onclick="closeModal('modal-phase')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label class="label">Naam</label><input class="input" id="mph-name" placeholder="bijv. Fase 1 — Experimenteren"></div>
+      <div class="field"><label class="label">Icoon</label>
+        <div class="icon-pick-wrap">
+          <button type="button" class="icon-pick-btn empty" id="mph-icon-btn" onclick="openIconPicker('mph-icon','mph-icon-btn')">＋</button>
+          <input type="hidden" id="mph-icon" value="">
+          <button type="button" class="icon-clear-btn" onclick="clearIcon('mph-icon','mph-icon-btn')" title="Leegmaken">✕ leeg</button>
+        </div>
+      </div>
       <div class="input-row">
         <div class="field"><label class="label">Startdatum</label><input class="input" id="mph-start" type="date"></div>
         <div class="field"><label class="label">Einddatum</label><input class="input" id="mph-end" type="date"></div>
@@ -443,6 +472,13 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div class="modal-head"><span class="modal-title">📂 Subcategorie</span><button class="modal-close" onclick="closeModal('modal-subcat')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label class="label">Naam</label><input class="input" id="msc-name" placeholder="bijv. Reporting, Training…"></div>
+      <div class="field"><label class="label">Icoon</label>
+        <div class="icon-pick-wrap">
+          <button type="button" class="icon-pick-btn empty" id="msc-icon-btn" onclick="openIconPicker('msc-icon','msc-icon-btn')">＋</button>
+          <input type="hidden" id="msc-icon" value="">
+          <button type="button" class="icon-clear-btn" onclick="clearIcon('msc-icon','msc-icon-btn')" title="Leegmaken">✕ leeg</button>
+        </div>
+      </div>
       <div class="field"><label class="label">Kleur</label><input type="color" id="msc-color" value="#74C69D"></div>
     </div>
     <div class="modal-foot">
@@ -454,6 +490,12 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
 </div>
 
 <div id="toast"></div>
+
+<!-- ═══ ICON PICKER POPUP ═══ -->
+<div id="icon-picker-popup">
+  <div class="ip-cats" id="ip-cats"></div>
+  <div class="ip-grid" id="ip-grid"></div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════
@@ -736,12 +778,13 @@ function openModal(modalId, recordId, mode, extra, extra2) {
     if (mode === 'edit' && editingTrackId) {
       const tr = tracks.find(t => t.id === editingTrackId);
       document.getElementById('mt-name').value = tr.name;
-      document.getElementById('mt-icon').value = tr.icon || '';
+      setIconBtn('mt-icon','mt-icon-btn', tr.icon);
       document.getElementById('mt-color').value = tr.color || '#40916C';
-      subcatFields = subcategories.filter(s => s.track_id === editingTrackId).map(s => ({id:s.id,name:s.name,color:s.color}));
+      subcatFields = subcategories.filter(s => s.track_id === editingTrackId).map(s => ({id:s.id,name:s.name,color:s.color,icon:s.icon||''}));
+
     } else {
       document.getElementById('mt-name').value = '';
-      document.getElementById('mt-icon').value = '';
+      setIconBtn('mt-icon','mt-icon-btn','');
       document.getElementById('mt-color').value = '#40916C';
     }
     renderSubcatFields();
@@ -751,11 +794,13 @@ function openModal(modalId, recordId, mode, extra, extra2) {
     if (mode === 'edit' && editingPhaseId) {
       const ph = phases.find(p => p.id === editingPhaseId);
       document.getElementById('mph-name').value = ph.name;
+      setIconBtn('mph-icon','mph-icon-btn', ph.icon);
       document.getElementById('mph-start').value = ph.start_date || '';
       document.getElementById('mph-end').value = ph.end_date || '';
       document.getElementById('mph-color').value = ph.color || '#2D6A4F';
     } else {
       document.getElementById('mph-name').value = '';
+      setIconBtn('mph-icon','mph-icon-btn','');
       document.getElementById('mph-start').value = '';
       document.getElementById('mph-end').value = '';
       document.getElementById('mph-color').value = '#2D6A4F';
@@ -804,9 +849,11 @@ function openModal(modalId, recordId, mode, extra, extra2) {
     if (mode === 'edit' && editingSubcatId) {
       const s = subcategories.find(x => x.id === editingSubcatId);
       document.getElementById('msc-name').value = s.name;
+      setIconBtn('msc-icon','msc-icon-btn', s.icon);
       document.getElementById('msc-color').value = s.color || '#74C69D';
     } else {
       document.getElementById('msc-name').value = '';
+      setIconBtn('msc-icon','msc-icon-btn','');
       document.getElementById('msc-color').value = '#74C69D';
     }
   } else if (modalId === 'modal-project') {
@@ -834,10 +881,46 @@ function renderSubcatFields() {
   const el = document.getElementById('mt-subcats');
   el.innerHTML = subcatFields.map((s, i) => `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <button type="button" class="icon-pick-btn${s.icon?'':' empty'}" style="width:36px;height:32px;font-size:18px;" onclick="openInlineIconPicker(${i},this)">${s.icon||'＋'}</button>
       <input class="input" style="flex:1" value="${s.name}" placeholder="Subcategorie naam" onchange="subcatFields[${i}].name=this.value">
       <input type="color" value="${s.color}" onchange="subcatFields[${i}].color=this.value" style="width:32px;height:32px;border:1px solid var(--gy300);border-radius:5px;padding:2px;cursor:pointer;">
       <button class="btn btn-danger btn-sm" onclick="subcatFields.splice(${i},1);renderSubcatFields()">✕</button>
     </div>`).join('');
+}
+
+let inlineIconIdx = null;
+let inlineIconBtnEl = null;
+function openInlineIconPicker(idx, btn) {
+  inlineIconIdx = idx;
+  inlineIconBtnEl = btn;
+  ipTargetInput = null; // use inline mode
+  ipTargetBtn = null;
+  const popup = document.getElementById('icon-picker-popup');
+  renderIpCatsInline();
+  renderIpGridInline(0);
+  const rect = btn.getBoundingClientRect();
+  popup.style.top = (rect.bottom + 6) + 'px';
+  popup.style.left = Math.min(rect.left, window.innerWidth - 320) + 'px';
+  popup.classList.add('open');
+}
+function renderIpCatsInline() {
+  document.getElementById('ip-cats').innerHTML = ICON_CATS.map((c, i) =>
+    `<button class="ip-cat${i===ipActiveCat?' active':''}" onclick="renderIpGridInline(${i})" title="${c.name}">${c.label}</button>`
+  ).join('');
+}
+function renderIpGridInline(catIdx) {
+  ipActiveCat = catIdx;
+  renderIpCatsInline();
+  document.getElementById('ip-grid').innerHTML = ICON_CATS[catIdx].icons.map(em =>
+    `<div class="ip-em" onclick="selectInlineIcon('${em}')">${em}</div>`
+  ).join('');
+}
+function selectInlineIcon(emoji) {
+  if (inlineIconIdx !== null) {
+    subcatFields[inlineIconIdx].icon = emoji;
+    if (inlineIconBtnEl) { inlineIconBtnEl.textContent = emoji; inlineIconBtnEl.classList.remove('empty'); }
+  }
+  document.getElementById('icon-picker-popup').classList.remove('open');
 }
 
 async function saveTrack() {
@@ -855,9 +938,10 @@ async function saveTrack() {
       if (s.id) {
         await sb.from('subcategories').update({name: s.name, color: s.color}).eq('id', s.id);
         const sc = subcategories.find(x => x.id === s.id);
-        if (sc) Object.assign(sc, {name: s.name, color: s.color});
+        if (sc) Object.assign(sc, {name: s.name, color: s.color, icon: s.icon||''});
+        await sb.from('subcategories').update({name: s.name, color: s.color, icon: s.icon||''}).eq('id', s.id);
       } else if (s.name) {
-        const {data} = await sb.from('subcategories').insert({track_id: editingTrackId, project_id: currentProjectId, name: s.name, color: s.color, position: subcatFields.indexOf(s)}).select().single();
+        const {data} = await sb.from('subcategories').insert({track_id: editingTrackId, project_id: currentProjectId, name: s.name, color: s.color, icon: s.icon||'', position: subcatFields.indexOf(s)}).select().single();
         if (data) subcategories.push(data);
       }
     }
@@ -908,7 +992,7 @@ function renderPhasesList() {
     <div class="phase-item" style="border-left-color:${ph.color||'#2D6A4F'}">
       <div style="width:12px;height:12px;border-radius:50%;background:${ph.color||'#2D6A4F'};flex-shrink:0;"></div>
       <div style="flex:1">
-        <div class="phase-name">${ph.name}</div>
+        <div class="phase-name">${ph.icon?ph.icon+' ':''}${ph.name}</div>
         <div class="phase-dates">${ph.start_date||''}${ph.start_date && ph.end_date?' → ':''}${ph.end_date||''}</div>
       </div>
       <button class="btn btn-sm btn-s" onclick="openModal('modal-phase','${ph.id}','edit')">✏️</button>
@@ -921,6 +1005,7 @@ async function savePhase() {
   if (!name) { alert('Naam is verplicht'); return; }
   const data = {
     name,
+    icon: document.getElementById('mph-icon').value || '',
     start_date: document.getElementById('mph-start').value || null,
     end_date: document.getElementById('mph-end').value || null,
     color: document.getElementById('mph-color').value
@@ -953,12 +1038,13 @@ async function saveSubcat() {
   const name = document.getElementById('msc-name').value.trim();
   if (!name) { alert('Naam verplicht'); return; }
   const color = document.getElementById('msc-color').value;
+  const icon = document.getElementById('msc-icon').value || '';
   if (editingSubcatId) {
-    await sb.from('subcategories').update({name, color}).eq('id', editingSubcatId);
+    await sb.from('subcategories').update({name, color, icon}).eq('id', editingSubcatId);
     const s = subcategories.find(x => x.id === editingSubcatId);
-    if (s) Object.assign(s, {name, color});
+    if (s) Object.assign(s, {name, color, icon});
   } else {
-    const {data} = await sb.from('subcategories').insert({track_id: editingSubcatTrackId, project_id: currentProjectId, name, color, position: subcategories.filter(s => s.track_id === editingSubcatTrackId).length}).select().single();
+    const {data} = await sb.from('subcategories').insert({track_id: editingSubcatTrackId, project_id: currentProjectId, name, color, icon, position: subcategories.filter(s => s.track_id === editingSubcatTrackId).length}).select().single();
     if (data) subcategories.push(data);
   }
   closeModal('modal-subcat');
@@ -1433,6 +1519,84 @@ function switchTab(name) {
 // ═══════════════════════════════════════════
 //  TOAST
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  ICON PICKER
+// ═══════════════════════════════════════════
+const ICON_CATS = [
+  { label: '⚙️', name: 'Proces', icons: ['⚙️','🔧','🔨','🛠️','🔩','⛏️','🔄','🔀','🔁','➡️','📋','📌','📍','🗂️','📁','📂','🗃️','📦'] },
+  { label: '👥', name: 'Mensen', icons: ['👥','👤','🤝','💼','🎓','👩‍💼','👨‍💼','🧑‍🤝‍🧑','💬','📣','📢','🗣️','✍️','📝'] },
+  { label: '📊', name: 'Data', icons: ['📊','📈','📉','🔍','🔎','💡','🧠','🗺️','🌐','💾','🖥️','📱','⌨️','🖨️'] },
+  { label: '🎯', name: 'Doel', icons: ['🎯','🏆','🥇','🎖️','🏅','🎗️','✅','☑️','🚀','🌟','⭐','💫','🔥','💪'] },
+  { label: '🌿', name: 'Natuur', icons: ['🌿','🌍','🌱','💚','🍀','🌾','🌻','🌲','🌳','♻️','💧','☀️','🌤️','❄️'] },
+  { label: '⚠️', name: 'Status', icons: ['⚠️','🚦','🔴','🟡','🟢','🔔','🔕','❗','❓','💬','💭','🗯️','📍','🚩'] },
+  { label: '1️⃣', name: 'Cijfers', icons: ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🅰️','🅱️','🆎','🆚'] },
+];
+
+let ipTargetInput = null;
+let ipTargetBtn = null;
+let ipActiveCat = 0;
+
+function openIconPicker(inputId, btnId) {
+  ipTargetInput = inputId;
+  ipTargetBtn = btnId;
+  const btn = document.getElementById(btnId);
+  const popup = document.getElementById('icon-picker-popup');
+  renderIpCats();
+  renderIpGrid(0);
+  const rect = btn.getBoundingClientRect();
+  const top = rect.bottom + 6;
+  const left = Math.min(rect.left, window.innerWidth - 320);
+  popup.style.top = top + 'px';
+  popup.style.left = left + 'px';
+  popup.classList.add('open');
+}
+
+function renderIpCats() {
+  document.getElementById('ip-cats').innerHTML = ICON_CATS.map((c, i) =>
+    `<button class="ip-cat${i===ipActiveCat?' active':''}" onclick="renderIpGrid(${i})" title="${c.name}">${c.label}</button>`
+  ).join('');
+}
+
+function renderIpGrid(catIdx) {
+  ipActiveCat = catIdx;
+  renderIpCats();
+  document.getElementById('ip-grid').innerHTML = ICON_CATS[catIdx].icons.map(em =>
+    `<div class="ip-em" onclick="selectIcon('${em}')">${em}</div>`
+  ).join('');
+}
+
+function selectIcon(emoji) {
+  if (ipTargetInput) {
+    document.getElementById(ipTargetInput).value = emoji;
+    const btn = document.getElementById(ipTargetBtn);
+    btn.textContent = emoji;
+    btn.classList.remove('empty');
+    document.getElementById('icon-picker-popup').classList.remove('open');
+  }
+}
+
+function clearIcon(inputId, btnId) {
+  document.getElementById(inputId).value = '';
+  const btn = document.getElementById(btnId);
+  btn.textContent = '＋';
+  btn.classList.add('empty');
+}
+
+function setIconBtn(inputId, btnId, val) {
+  document.getElementById(inputId).value = val || '';
+  const btn = document.getElementById(btnId);
+  if (val) { btn.textContent = val; btn.classList.remove('empty'); }
+  else { btn.textContent = '＋'; btn.classList.add('empty'); }
+}
+
+// Close picker on outside click
+document.addEventListener('click', e => {
+  const popup = document.getElementById('icon-picker-popup');
+  if (popup && popup.classList.contains('open') && !popup.contains(e.target) && !e.target.classList.contains('icon-pick-btn')) {
+    popup.classList.remove('open');
+  }
+});
+
 let toastTimer;
 function toast(msg) {
   const el = document.getElementById('toast');
