@@ -335,7 +335,8 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div id="timeline-content" style="display:none">
       <div class="card" style="padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
         <span style="font-size:15px;font-weight:700;color:var(--gy900)">📅 Tijdslijn</span>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-s btn-sm" id="tl-filter-toggle" onclick="tlToggleFilter()" title="Filters tonen/verbergen" style="background:var(--g100);">🔍 Filter</button>
           <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item</button>
           <button style="background:none;border:none;color:#1E40AF;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'" onclick="openModal('modal-meeting','','new')" id="btn-add-meeting">＋ Meeting</button>
           <button style="background:none;border:none;color:#5B21B6;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'" onclick="openModal('modal-milestone','','new')" id="btn-add-milestone">＋ Milestone</button>
@@ -1539,6 +1540,7 @@ function sbToggleFilter(type, value) {
 }
 
 let sbLegendOpen = false;
+let tlFilterOpen = true;
 
 async function sbClearAllItems() {
   const n = items.length;
@@ -1564,6 +1566,12 @@ function sbToggleLegend() {
   if (el) el.style.display = sbLegendOpen ? 'block' : 'none';
   if (btn) btn.style.background = sbLegendOpen ? 'var(--g100)' : '';
   if (sbLegendOpen) renderSbLegend();
+}
+function tlToggleFilter() {
+  tlFilterOpen = !tlFilterOpen;
+  const btn = document.getElementById('tl-filter-toggle');
+  if (btn) btn.style.background = tlFilterOpen ? 'var(--g100)' : '';
+  renderTimeline();
 }
 
 function sbClearFilters() {
@@ -1777,8 +1785,10 @@ function renderStoryboard() {
   if (!rowPhases.length) rowPhases = [null];
 
   const labelW = 140;
-  const gridCols = `${labelW}px ${colDefs.map(() => '1fr').join(' ')}`;
-  let html = `<div style="display:grid;grid-template-columns:${gridCols};width:100%;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
+  const MIN_COL_W = 170;
+  const minGridW = labelW + colDefs.length * MIN_COL_W;
+  const gridCols = `${labelW}px ${colDefs.map(() => `minmax(${MIN_COL_W}px, 1fr)`).join(' ')}`;
+  let html = `<div style="display:grid;grid-template-columns:${gridCols};width:max(100%, ${minGridW}px);border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
 
   // Header row 1: corner + track headers (spanning visible subcols)
   html += `<div style="grid-column:1;grid-row:1/span 2;background:var(--gy900);border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);"></div>`;
@@ -2368,9 +2378,9 @@ function renderTimeline() {
       <div style="flex:1;"></div>
       ${hasItemFilter ? `<button onclick="tlClearFilters()" style="padding:3px 10px;font-size:11px;border-radius:12px;border:1px solid #FCA5A5;background:#FEF2F2;cursor:pointer;color:#DC2626;font-weight:600;white-space:nowrap;">✕ Filters wissen</button>` : ''}
     </div>
-    <div style="padding:6px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+    ${tlFilterOpen ? `<div style="padding:6px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
       ${tlRow2Groups.join(tlVdiv)}
-    </div>
+    </div>` : ''}
     ${topGroups.length ? `<div style="display:flex;border-bottom:1px solid var(--gy200);">
       <div style="width:${LABEL_W}px;flex-shrink:0;border-right:1px solid var(--gy300);background:#F3F4F6;"></div>
       <div style="flex:1;display:flex;">
@@ -2441,7 +2451,7 @@ function renderTimeline() {
       return true;
     });
     const scheduled = visItems.filter(it => it.start_date || it.date);
-    const visMilestones = (laneMilestones || []).filter(ms => dateToPercent(ms.date) !== null);
+    const visMilestones = (laneMilestones || []).filter(ms => { const d = new Date(ms.date); return ms.date && d >= minDate && d <= maxDate; });
     // ── stacking algorithm (bars + milestones combined) ────────────────────
     const BAR_H = 28, BAR_GAP = 4, TOP_PAD = 8;
     const MS_W = 2; // pseudo-width for overlap detection
@@ -2526,7 +2536,9 @@ function renderTimeline() {
   // ── 11. Meetings lane ─────────────────────────────────────────────────────
   if (p.enable_meetings !== false && meetings.length > 0) {
     const visibleMeetings = meetings.filter(m => {
-      if (dateToPercent(m.date) === null) return false;
+      if (!m.date) return false;
+      const d = new Date(m.date);
+      if (d < minDate || d > maxDate) return false;
       if (tlFilterMeetingTypes.size && !tlFilterMeetingTypes.has(m.type_id)) return false;
       return true;
     });
@@ -2599,7 +2611,7 @@ function renderTimeline() {
     } else {
       subs.forEach(sub => {
         const laneUnsched = unscheduled.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id);
-        const laneMs = p.enable_milestones !== false ? milestones.filter(ms => ms.track_id === tr.id && ms.subcategory_id === sub.id) : [];
+        const laneMs = p.enable_milestones !== false ? milestones.filter(ms => ms.track_id === tr.id && ms.subcategory_id === sub.id && (!tlFilterMilestoneTypes.size || tlFilterMilestoneTypes.has(ms.type_id))) : [];
         html += renderLane(
           `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};flex-shrink:0;"></span><span style="padding-left:6px;">${renderIcon(sub.icon)}${sub.name}</span>`,
           items.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id),
