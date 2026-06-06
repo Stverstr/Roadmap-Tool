@@ -286,6 +286,22 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
           </div>
         </div>
 
+        <!-- Milestone Types -->
+        <div>
+          <div class="card">
+            <div class="card-row"><span class="card-title" style="margin:0">🔷 Milestone Types</span><button class="btn btn-p btn-sm" onclick="openModal('modal-mstype','','new')">＋ Type</button></div>
+            <div id="mstypes-list"><div class="loading">Laden…</div></div>
+          </div>
+        </div>
+
+        <!-- Meeting Types -->
+        <div>
+          <div class="card">
+            <div class="card-row"><span class="card-title" style="margin:0">📅 Meeting Types</span><button class="btn btn-p btn-sm" onclick="openModal('modal-meettype','','new')">＋ Type</button></div>
+            <div id="meettypes-list"><div class="loading">Laden…</div></div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -455,15 +471,18 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
 
 <!-- Meeting modal -->
 <div class="overlay" id="modal-meeting">
-  <div class="modal">
+  <div class="modal" style="max-width:420px">
     <div class="modal-head"><span class="modal-title" id="mm-title">📅 Meeting</span><button class="modal-close" onclick="closeModal('modal-meeting')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label class="label">Titel</label><input class="input" id="mm-name" placeholder="Stuurgroep, Sprint review…"></div>
-      <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="mm-desc" placeholder="Agenda, context…"></textarea></div>
+      <div class="field"><label class="label">Type</label>
+        <select class="input" id="mm-type"><option value="">— geen type —</option></select>
+      </div>
       <div class="input-row">
         <div class="field"><label class="label">Datum</label><input class="input" id="mm-date" type="date"></div>
         <div class="field"><label class="label">Einddatum (optioneel)</label><input class="input" id="mm-end" type="date"></div>
       </div>
+      <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="mm-desc" placeholder="Agenda, context…"></textarea></div>
       <div class="field"><label class="label">Deelnemers</label><input class="input" id="mm-participants" placeholder="bijv. Stijn, Ann, Tom"></div>
     </div>
     <div class="modal-foot">
@@ -474,20 +493,76 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
   </div>
 </div>
 
+<!-- Meeting Type modal -->
+<div class="overlay" id="modal-meettype">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><span class="modal-title" id="mmmt-title">📅 Meeting Type</span><button class="modal-close" onclick="closeModal('modal-meettype')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label class="label">Naam</label><input class="input" id="mmmt-name" placeholder="bijv. Stuurgroep, Werkgroep…"></div>
+      <div class="field"><label class="label">Icoon <span style="font-size:11px;color:var(--gy400)">(standaard 📅)</span></label>
+        <div class="icon-pick-wrap">
+          <button type="button" class="icon-pick-btn" id="mmmt-icon-btn" onclick="openIconPicker('mmmt-icon','mmmt-icon-btn')">📅</button>
+          <input type="hidden" id="mmmt-icon" value="📅">
+          <button type="button" class="icon-clear-btn" onclick="setIconBtn('mmmt-icon','mmmt-icon-btn','📅')" title="Reset naar 📅">↺ reset</button>
+        </div>
+      </div>
+      <div class="field"><label class="label">Kleur</label><input type="color" id="mmmt-color" value="#1E40AF"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="mmmt-del-btn" onclick="deleteMeetingType()" style="margin-right:auto;display:none">🗑 Verwijder</button>
+      <button class="btn btn-s" onclick="closeModal('modal-meettype')">Annuleer</button>
+      <button class="btn btn-p" onclick="saveMeetingType()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <!-- Milestone modal -->
 <div class="overlay" id="modal-milestone">
-  <div class="modal">
+  <div class="modal" style="max-width:420px">
     <div class="modal-head"><span class="modal-title" id="mms-title">🏁 Milestone</span><button class="modal-close" onclick="closeModal('modal-milestone')">✕</button></div>
     <div class="modal-body">
-      <div class="field"><label class="label">Titel</label><input class="input" id="mms-name" placeholder="Go-live, Oplevering…"></div>
-      <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="mms-desc" placeholder="Wat markeert deze milestone?"></textarea></div>
+      <div class="field"><label class="label">Titel <span style="font-size:11px;color:var(--gy400)">(max 20 tekens)</span></label><input class="input" id="mms-name" placeholder="Go-live, Oplevering…" maxlength="20"></div>
       <div class="field"><label class="label">Datum</label><input class="input" id="mms-date" type="date"></div>
-      <div class="field"><label class="label">Kleur</label><input type="color" id="mms-color" value="#7C3AED"></div>
+      <div class="field"><label class="label">Type</label>
+        <select class="input" id="mms-type"><option value="">— geen type —</option></select>
+      </div>
+      <div class="field"><label class="label">Stream</label>
+        <select class="input" id="mms-stream" onchange="msFilterSubcats()"><option value="">— geen stream —</option></select>
+      </div>
+      <div class="field"><label class="label">Subcategorie</label>
+        <select class="input" id="mms-subcat"><option value="">— geen subcategorie —</option></select>
+      </div>
+      <div class="field"><label class="label">Fase</label>
+        <select class="input" id="mms-phase"><option value="">— geen fase —</option></select>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger btn-sm" id="mms-del-btn" onclick="deleteMilestone()" style="margin-right:auto;display:none">🗑 Verwijder</button>
       <button class="btn btn-s" onclick="closeModal('modal-milestone')">Annuleer</button>
       <button class="btn btn-p" onclick="saveMilestone()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Milestone Type modal -->
+<div class="overlay" id="modal-mstype">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><span class="modal-title" id="mmst-title">🔷 Milestone Type</span><button class="modal-close" onclick="closeModal('modal-mstype')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label class="label">Naam</label><input class="input" id="mmst-name" placeholder="bijv. Go-live, Beslissing…"></div>
+      <div class="field"><label class="label">Icoon <span style="font-size:11px;color:var(--gy400)">(standaard ◆)</span></label>
+        <div class="icon-pick-wrap">
+          <button type="button" class="icon-pick-btn" id="mmst-icon-btn" onclick="openIconPicker('mmst-icon','mmst-icon-btn')">◆</button>
+          <input type="hidden" id="mmst-icon" value="◆">
+          <button type="button" class="icon-clear-btn" onclick="setIconBtn('mmst-icon','mmst-icon-btn','◆')" title="Reset naar ◆">↺ reset</button>
+        </div>
+      </div>
+      <div class="field"><label class="label">Kleur</label><input type="color" id="mmst-color" value="#7C3AED"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="mmst-del-btn" onclick="deleteMilestoneType()" style="margin-right:auto;display:none">🗑 Verwijder</button>
+      <button class="btn btn-s" onclick="closeModal('modal-mstype')">Annuleer</button>
+      <button class="btn btn-p" onclick="saveMilestoneType()">Opslaan</button>
     </div>
   </div>
 </div>
@@ -543,6 +618,8 @@ let phases = [];
 let items = [];
 let meetings = [];
 let milestones = [];
+let milestoneTypes = [];
+let meetingTypes = [];
 
 // modal editing state
 let editingTrackId = null;
@@ -550,6 +627,8 @@ let editingPhaseId = null;
 let editingItemId = null;
 let editingMeetingId = null;
 let editingMilestoneId = null;
+let editingMilestoneTypeId = null;
+let editingMeetingTypeId = null;
 let editingSubcatId = null;
 let editingSubcatTrackId = null;
 let subcatFields = []; // temp fields in track modal
@@ -664,6 +743,8 @@ async function onProjectChange(render = true) {
   if (render) {
     renderTracksList();
     renderPhasesList();
+    renderMilestoneTypesList();
+    renderMeetingTypesList();
     renderStoryboard();
     renderTimeline();
   }
@@ -671,13 +752,15 @@ async function onProjectChange(render = true) {
 
 async function loadProjectData() {
   const pid = currentProjectId;
-  const [t, s, ph, it, me, mi] = await Promise.all([
+  const [t, s, ph, it, me, mi, mst, mst2] = await Promise.all([
     sb.from('tracks').select('*').eq('project_id', pid).order('position'),
     sb.from('subcategories').select('*').eq('project_id', pid).order('position'),
     sb.from('phases').select('*').eq('project_id', pid).order('position'),
     sb.from('roadmap_items').select('*').eq('project_id', pid).order('position'),
     sb.from('meetings').select('*').eq('project_id', pid).order('date'),
     sb.from('milestones').select('*').eq('project_id', pid).order('date'),
+    sb.from('milestone_types').select('*').eq('project_id', pid).order('position'),
+    sb.from('meeting_types').select('*').eq('project_id', pid).order('position'),
   ]);
   tracks = t.data || [];
   subcategories = s.data || [];
@@ -685,6 +768,8 @@ async function loadProjectData() {
   items = it.data || [];
   meetings = me.data || [];
   milestones = mi.data || [];
+  milestoneTypes = mst.data || [];
+  meetingTypes = mst2.data || [];
 }
 
 function fillSetupForm() {
@@ -841,36 +926,49 @@ function openModal(modalId, recordId, mode, extra, extra2) {
     editingMeetingId = mode === 'edit' ? recordId : null;
     document.getElementById('mm-title').textContent = mode === 'edit' ? '✏️ Meeting bewerken' : '📅 Nieuwe meeting';
     document.getElementById('mm-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
-    if (mode === 'edit' && editingMeetingId) {
-      const m = meetings.find(x => x.id === editingMeetingId);
-      document.getElementById('mm-name').value = m.title;
-      document.getElementById('mm-date').value = m.date;
-      document.getElementById('mm-end').value = m.end_date || '';
-      document.getElementById('mm-desc').value = m.description || '';
-      document.getElementById('mm-participants').value = m.participants || '';
-    } else {
-      document.getElementById('mm-name').value = '';
-      document.getElementById('mm-date').value = '';
-      document.getElementById('mm-end').value = '';
-      document.getElementById('mm-desc').value = '';
-      document.getElementById('mm-participants').value = '';
-    }
+    document.getElementById('mm-type').innerHTML = '<option value="">— geen type —</option>' +
+      meetingTypes.map(mt => `<option value="${mt.id}">${mt.icon||'📅'} ${mt.name}</option>`).join('');
+    const me = mode === 'edit' ? meetings.find(x => x.id === editingMeetingId) : null;
+    document.getElementById('mm-name').value = me ? me.title : '';
+    document.getElementById('mm-date').value = me ? me.date : '';
+    document.getElementById('mm-end').value = me ? (me.end_date || '') : '';
+    document.getElementById('mm-desc').value = me ? (me.description || '') : '';
+    document.getElementById('mm-participants').value = me ? (me.participants || '') : '';
+    document.getElementById('mm-type').value = me ? (me.type_id || '') : '';
+  } else if (modalId === 'modal-meettype') {
+    editingMeetingTypeId = mode === 'edit' ? recordId : null;
+    document.getElementById('mmmt-title').textContent = mode === 'edit' ? '✏️ Type bewerken' : '📅 Nieuw Meeting Type';
+    document.getElementById('mmmt-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
+    const mt = mode === 'edit' ? meetingTypes.find(x => x.id === editingMeetingTypeId) : null;
+    document.getElementById('mmmt-name').value = mt ? mt.name : '';
+    setIconBtn('mmmt-icon','mmmt-icon-btn', mt ? (mt.icon || '📅') : '📅');
+    document.getElementById('mmmt-color').value = mt ? (mt.color || '#1E40AF') : '#1E40AF';
   } else if (modalId === 'modal-milestone') {
     editingMilestoneId = mode === 'edit' ? recordId : null;
     document.getElementById('mms-title').textContent = mode === 'edit' ? '✏️ Milestone bewerken' : '🏁 Nieuwe milestone';
     document.getElementById('mms-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
-    if (mode === 'edit' && editingMilestoneId) {
-      const m = milestones.find(x => x.id === editingMilestoneId);
-      document.getElementById('mms-name').value = m.title;
-      document.getElementById('mms-date').value = m.date;
-      document.getElementById('mms-desc').value = m.description || '';
-      document.getElementById('mms-color').value = m.color || '#7C3AED';
-    } else {
-      document.getElementById('mms-name').value = '';
-      document.getElementById('mms-date').value = '';
-      document.getElementById('mms-desc').value = '';
-      document.getElementById('mms-color').value = '#7C3AED';
-    }
+    // Populate dropdowns
+    document.getElementById('mms-type').innerHTML = '<option value="">— geen type —</option>' +
+      milestoneTypes.map(mt => `<option value="${mt.id}">${mt.icon||'◆'} ${mt.name}</option>`).join('');
+    document.getElementById('mms-stream').innerHTML = '<option value="">— geen stream —</option>' +
+      tracks.map(tr => `<option value="${tr.id}">${tr.name}</option>`).join('');
+    document.getElementById('mms-phase').innerHTML = '<option value="">— geen fase —</option>' +
+      phases.map(ph => `<option value="${ph.id}">${ph.icon||''}${ph.name}</option>`).join('');
+    const m = mode === 'edit' ? milestones.find(x => x.id === editingMilestoneId) : null;
+    document.getElementById('mms-name').value = m ? m.title : '';
+    document.getElementById('mms-date').value = m ? (m.date || '') : '';
+    document.getElementById('mms-type').value = m ? (m.type_id || '') : '';
+    document.getElementById('mms-stream').value = m ? (m.track_id || '') : '';
+    document.getElementById('mms-phase').value = m ? (m.phase_id || '') : '';
+    msFilterSubcats(m ? m.subcategory_id : null);
+  } else if (modalId === 'modal-mstype') {
+    editingMilestoneTypeId = mode === 'edit' ? recordId : null;
+    document.getElementById('mmst-title').textContent = mode === 'edit' ? '✏️ Type bewerken' : '🔷 Nieuw Milestone Type';
+    document.getElementById('mmst-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
+    const mt = mode === 'edit' ? milestoneTypes.find(x => x.id === editingMilestoneTypeId) : null;
+    document.getElementById('mmst-name').value = mt ? mt.name : '';
+    setIconBtn('mmst-icon','mmst-icon-btn', mt ? (mt.icon || '◆') : '◆');
+    document.getElementById('mmst-color').value = mt ? (mt.color || '#7C3AED') : '#7C3AED';
   } else if (modalId === 'modal-subcat') {
     editingSubcatId = mode === 'edit' ? recordId : null;
     editingSubcatTrackId = extra2;
@@ -1058,6 +1156,58 @@ async function deletePhase(id) {
   phases = phases.filter(p => p.id !== id);
   renderPhasesList(); renderStoryboard(); renderTimeline();
   toast('Fase verwijderd');
+}
+
+// ═══════════════════════════════════════════
+//  MILESTONE TYPES
+// ═══════════════════════════════════════════
+function renderMilestoneTypesList() {
+  const el = document.getElementById('mstypes-list');
+  if (!el) return;
+  if (!milestoneTypes.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-icon">🔷</div><div class="empty-sub">Nog geen types.</div></div>';
+    return;
+  }
+  el.innerHTML = milestoneTypes.map(mt => `
+    <div class="phase-item" style="border-left-color:${mt.color||'#7C3AED'}">
+      <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:15px;color:${mt.color||'#7C3AED'};flex-shrink:0;">${mt.icon||'◆'}</div>
+      <div style="flex:1">
+        <div class="phase-name">${mt.name}</div>
+      </div>
+      <button class="btn btn-sm btn-s" onclick="openModal('modal-mstype','${mt.id}','edit')">✏️</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteMilestoneType('${mt.id}')">🗑</button>
+    </div>`).join('');
+}
+
+async function saveMilestoneType() {
+  const name = document.getElementById('mmst-name').value.trim();
+  if (!name) { alert('Naam is verplicht'); return; }
+  const data = {
+    name,
+    icon: document.getElementById('mmst-icon').value || '◆',
+    color: document.getElementById('mmst-color').value,
+  };
+  if (editingMilestoneTypeId) {
+    await sb.from('milestone_types').update(data).eq('id', editingMilestoneTypeId);
+    const mt = milestoneTypes.find(x => x.id === editingMilestoneTypeId);
+    if (mt) Object.assign(mt, data);
+  } else {
+    const {data: nd} = await sb.from('milestone_types').insert({...data, project_id: currentProjectId, position: milestoneTypes.length}).select().single();
+    if (nd) milestoneTypes.push(nd);
+  }
+  closeModal('modal-mstype');
+  renderMilestoneTypesList();
+  toast('Milestone type opgeslagen ✓');
+}
+
+async function deleteMilestoneType(id) {
+  const delId = id || editingMilestoneTypeId;
+  if (!delId || !confirm('Type verwijderen?')) return;
+  await sb.from('milestone_types').delete().eq('id', delId);
+  milestoneTypes = milestoneTypes.filter(x => x.id !== delId);
+  closeModal('modal-mstype');
+  renderMilestoneTypesList();
+  toast('Type verwijderd');
 }
 
 // ═══════════════════════════════════════════
@@ -1273,7 +1423,8 @@ async function saveMeeting() {
     title, date,
     end_date: document.getElementById('mm-end').value || null,
     description: document.getElementById('mm-desc').value,
-    participants: document.getElementById('mm-participants').value
+    participants: document.getElementById('mm-participants').value,
+    type_id: document.getElementById('mm-type').value || null,
   };
   if (editingMeetingId) {
     await sb.from('meetings').update(data).eq('id', editingMeetingId);
@@ -1298,16 +1449,76 @@ async function deleteMeeting() {
 }
 
 // ═══════════════════════════════════════════
+//  MEETING TYPES
+// ═══════════════════════════════════════════
+function renderMeetingTypesList() {
+  const el = document.getElementById('meettypes-list');
+  if (!el) return;
+  if (!meetingTypes.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-icon">📅</div><div class="empty-sub">Nog geen types.</div></div>';
+    return;
+  }
+  el.innerHTML = meetingTypes.map(mt => `
+    <div class="phase-item" style="border-left-color:${mt.color||'#1E40AF'}">
+      <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:15px;color:${mt.color||'#1E40AF'};flex-shrink:0;">${mt.icon||'📅'}</div>
+      <div style="flex:1"><div class="phase-name">${mt.name}</div></div>
+      <button class="btn btn-sm btn-s" onclick="openModal('modal-meettype','${mt.id}','edit')">✏️</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteMeetingType('${mt.id}')">🗑</button>
+    </div>`).join('');
+}
+
+async function saveMeetingType() {
+  const name = document.getElementById('mmmt-name').value.trim();
+  if (!name) { alert('Naam is verplicht'); return; }
+  const data = {
+    name,
+    icon: document.getElementById('mmmt-icon').value || '📅',
+    color: document.getElementById('mmmt-color').value,
+  };
+  if (editingMeetingTypeId) {
+    await sb.from('meeting_types').update(data).eq('id', editingMeetingTypeId);
+    const mt = meetingTypes.find(x => x.id === editingMeetingTypeId);
+    if (mt) Object.assign(mt, data);
+  } else {
+    const {data: nd} = await sb.from('meeting_types').insert({...data, project_id: currentProjectId, position: meetingTypes.length}).select().single();
+    if (nd) meetingTypes.push(nd);
+  }
+  closeModal('modal-meettype');
+  renderMeetingTypesList();
+  toast('Meeting type opgeslagen ✓');
+}
+
+async function deleteMeetingType(id) {
+  const delId = id || editingMeetingTypeId;
+  if (!delId || !confirm('Type verwijderen?')) return;
+  await sb.from('meeting_types').delete().eq('id', delId);
+  meetingTypes = meetingTypes.filter(x => x.id !== delId);
+  closeModal('modal-meettype');
+  renderMeetingTypesList();
+  toast('Type verwijderd');
+}
+
+// ═══════════════════════════════════════════
 //  MILESTONES
 // ═══════════════════════════════════════════
+function msFilterSubcats(selectVal) {
+  const trackId = document.getElementById('mms-stream').value;
+  const subs = trackId ? subcategories.filter(s => s.track_id === trackId) : subcategories;
+  document.getElementById('mms-subcat').innerHTML = '<option value="">— geen subcategorie —</option>' +
+    subs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  if (selectVal) document.getElementById('mms-subcat').value = selectVal;
+}
+
 async function saveMilestone() {
-  const title = document.getElementById('mms-name').value.trim();
+  const title = document.getElementById('mms-name').value.trim().slice(0, 20);
   const date = document.getElementById('mms-date').value;
   if (!title || !date) { alert('Titel en datum zijn verplicht'); return; }
   const data = {
     title, date,
-    description: document.getElementById('mms-desc').value,
-    color: document.getElementById('mms-color').value
+    type_id: document.getElementById('mms-type').value || null,
+    track_id: document.getElementById('mms-stream').value || null,
+    subcategory_id: document.getElementById('mms-subcat').value || null,
+    phase_id: document.getElementById('mms-phase').value || null,
   };
   if (editingMilestoneId) {
     await sb.from('milestones').update(data).eq('id', editingMilestoneId);
@@ -2227,24 +2438,51 @@ function renderTimeline() {
 
   // ── 11. Meetings lane ─────────────────────────────────────────────────────
   if (p.enable_meetings !== false && meetings.length > 0) {
-    html += renderLane(
-      '📅 <span style="font-weight:700;color:#1E40AF;">Meetings</span>',
-      meetings, '#EFF6FF', 'background:#EFF6FF;', '#3B82F6',
-      (m) => `openModal('modal-meeting','${m.id}','edit')`, null, false, []
-    );
+    const visibleMeetings = meetings.filter(m => {
+      const pct = dateToPercent(m.date);
+      return pct !== null;
+    });
+    if (visibleMeetings.length > 0) {
+      html += `<div style="display:flex;border-bottom:1px solid var(--gy200);min-height:48px;background:#EFF6FF;align-items:stretch;">
+        <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:#EFF6FF;font-weight:700;color:#1E40AF;">📅 Meetings</div>
+        <div style="flex:1;position:relative;min-height:48px;">${phaseBandsHtml}${colGridLines()}`;
+      visibleMeetings.forEach(me => {
+        const startPct = dateToPercent(me.date);
+        const endPct = me.end_date ? dateToPercent(me.end_date) : startPct;
+        const mtype = meetingTypes.find(t => t.id === me.type_id);
+        const mColor = mtype ? mtype.color : '#1E40AF';
+        const mIcon = mtype ? (mtype.icon || '📅') : '📅';
+        const w = Math.max(1.5, (endPct || startPct) - startPct);
+        html += `<div style="position:absolute;left:${startPct}%;width:${w}%;height:28px;top:10px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:white;background:${mColor};z-index:2;cursor:pointer;overflow:hidden;white-space:nowrap;gap:4px;"
+          onclick="openModal('modal-meeting','${me.id}','edit')" title="${me.title}${mtype?' ('+mtype.name+')':''}">
+          <span style="flex-shrink:0;">${mIcon}</span>
+          <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;">${me.title}</span>
+        </div>`;
+      });
+      const meSdCell = hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;"></div>` : '';
+      html += `</div>${meSdCell}</div>`;
+    }
   }
 
   // ── 12. Milestones lane ───────────────────────────────────────────────────
   if (p.enable_milestones !== false && milestones.length > 0) {
-    html += `<div style="display:flex;border-bottom:1px solid var(--gy200);min-height:48px;background:#F5F3FF;align-items:stretch;">
+    html += `<div style="display:flex;border-bottom:1px solid var(--gy200);min-height:52px;background:#F5F3FF;align-items:stretch;">
       <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:#F5F3FF;font-weight:700;color:#5B21B6;">🏁 Milestones</div>
-      <div style="flex:1;position:relative;min-height:48px;">${phaseBandsHtml}`;
+      <div style="flex:1;position:relative;min-height:52px;">${phaseBandsHtml}`;
     milestones.forEach(ms => {
       const pct = dateToPercent(ms.date);
       if (pct === null) return;
-      html += `<div style="position:absolute;left:${pct}%;top:50%;transform:translate(-50%,-50%);z-index:3;cursor:pointer;" onclick="openModal('modal-milestone','${ms.id}','edit')" title="${ms.title}">
-        <div style="width:20px;height:20px;background:${ms.color||'#7C3AED'};transform:rotate(45deg);border-radius:3px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.2);"></div>
-        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;color:${ms.color||'#7C3AED'};white-space:nowrap;background:white;padding:2px 5px;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);">${ms.title}</div>
+      const mtype = milestoneTypes.find(t => t.id === ms.type_id);
+      const msColor = mtype ? mtype.color : '#7C3AED';
+      const msIcon = mtype ? mtype.icon : '◆';
+      // Render as icon if text/emoji, otherwise as diamond
+      const isText = msIcon && /\S/.test(msIcon);
+      const iconHtml = isText
+        ? `<div style="font-size:18px;line-height:1;color:${msColor};filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));">${msIcon}</div>`
+        : `<div style="width:20px;height:20px;background:${msColor};transform:rotate(45deg);border-radius:3px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.2);"></div>`;
+      html += `<div style="position:absolute;left:${pct}%;top:50%;transform:translate(-50%,-50%);z-index:3;cursor:pointer;display:flex;flex-direction:column;align-items:center;" onclick="openModal('modal-milestone','${ms.id}','edit')" title="${ms.title}${mtype?' ('+mtype.name+')':''}">
+        ${iconHtml}
+        <div style="margin-top:3px;font-size:10px;font-weight:700;color:${msColor};white-space:nowrap;background:white;padding:2px 5px;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);">${ms.title}</div>
       </div>`;
     });
     const msSdCell = hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;"></div>` : '';
@@ -2374,7 +2612,7 @@ function switchTab(name) {
   });
   if (name === 'storyboard' && currentProjectId) { if (prev === 'timeline') syncFiltersToStoryboard(); renderStoryboard(); }
   if (name === 'timeline'   && currentProjectId) { if (prev === 'storyboard') syncFiltersToTimeline(); renderTimeline(); }
-  if (name === 'setup' && currentProjectId) { renderTracksList(); renderPhasesList(); }
+  if (name === 'setup' && currentProjectId) { renderTracksList(); renderPhasesList(); renderMilestoneTypesList(); renderMeetingTypesList(); }
 }
 
 // ═══════════════════════════════════════════
