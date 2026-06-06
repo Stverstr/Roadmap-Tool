@@ -1978,7 +1978,7 @@ function renderTimeline() {
     cur.setDate(cur.getDate() - (dow === 0 ? 6 : dow - 1));
     while (cur <= maxDate) {
       const d = new Date(cur);
-      cols.push({ date: d, label: `W${getWeekNumber(d)} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}` });
+      cols.push({ date: d, label: `W${getWeekNumber(d)} '${String(d.getFullYear()).slice(-2)}` });
       cur = new Date(cur.getTime() + 7 * 86400000);
     }
   } else if (tlZoom === 'month') {
