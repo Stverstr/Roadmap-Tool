@@ -1232,71 +1232,85 @@ async function deleteMilestone() {
 // ═══════════════════════════════════════════
 function renderStoryboard() {
   const el = document.getElementById('sb-grid');
-  const noPhases = !phases.length;
-  const noTracks = !tracks.length;
 
-  if (noTracks && noPhases) {
+  if (!tracks.length && !phases.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Geen sporen of fasen</div><div class="empty-sub">Stel eerst sporen en fasen in via Setup.</div></div>';
     return;
   }
 
-  const cols = phases.length || 1;
-  const labelW = 180;
-  const colW = Math.max(200, Math.floor((1200 - labelW) / cols));
-
-  // Build grid template
-  const gridCols = `${labelW}px ${phases.length ? phases.map(() => `${colW}px`).join(' ') : `${colW}px`}`;
-
-  let html = `<div style="display:grid;grid-template-columns:${gridCols};min-width:${labelW + cols * colW}px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
-
-  // Header row
-  html += `<div style="background:var(--gy900);padding:10px 14px;border-right:1px solid rgba(255,255,255,.1);"></div>`;
-  if (phases.length) {
-    phases.forEach(ph => {
-      html += `<div style="background:${ph.color||'#2D6A4F'};color:white;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(255,255,255,.15);">${ph.icon ? ph.icon+' ' : ''}${ph.name}<div style="font-size:10px;opacity:.75;font-weight:400;margin-top:2px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div></div>`;
-    });
-  } else {
-    html += `<div style="background:var(--g700);color:white;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;">Alle items</div>`;
-  }
-
-  // Track rows
+  // Build column list: one column per subcat (or one per track if no subcats)
+  const colDefs = [];
   tracks.forEach(tr => {
     const subs = subcategories.filter(s => s.track_id === tr.id);
-    // Track header cell (spans if subcats)
-    const rowSpan = subs.length > 0 ? subs.length : 1;
-
     if (subs.length === 0) {
-      // Simple row
-      html += `<div style="background:var(--gy100);padding:10px 14px;font-size:12px;font-weight:700;color:var(--gy700);border-right:1px solid var(--gy300);border-top:1px solid var(--gy300);display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${tr.color};flex-shrink:0;"></span>${tr.icon||''} ${tr.name}</div>`;
-      if (phases.length) {
-        phases.forEach(ph => {
-          const cellItems = items.filter(i => i.track_id === tr.id && !i.subcategory_id && i.phase_id === ph.id);
-          html += renderSbCell(cellItems, tr.id, null, ph.id, tr.color);
-        });
-      } else {
-        const cellItems = items.filter(i => i.track_id === tr.id && !i.subcategory_id);
-        html += renderSbCell(cellItems, tr.id, null, null, tr.color);
-      }
+      colDefs.push({ track: tr, sub: null });
     } else {
-      // Track label row (first subcat)
-      subs.forEach((sub, si) => {
-        if (si === 0) {
-          // Track name column
-          html += `<div style="background:var(--gy100);padding:10px 14px;font-size:12px;font-weight:700;color:var(--gy700);border-right:1px solid var(--gy300);border-top:1px solid var(--gy300);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${tr.color};flex-shrink:0;"></span>${tr.icon||''} ${tr.name}</div><div style="display:flex;align-items:center;gap:5px;padding-left:16px;color:var(--gy500);font-weight:500;font-size:11px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};"></span>${sub.icon ? sub.icon+' ' : ''}${sub.name}</div></div>`;
-        } else {
-          html += `<div style="background:var(--gy50,#f9fafb);padding:10px 14px;font-size:11px;font-weight:500;color:var(--gy500);border-right:1px solid var(--gy300);border-top:1px solid var(--gy200);padding-left:26px;display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};flex-shrink:0;"></span>${sub.icon ? sub.icon+' ' : ''}${sub.name}</div>`;
-        }
-        if (phases.length) {
-          phases.forEach(ph => {
-            const cellItems = items.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id && i.phase_id === ph.id);
-            html += renderSbCell(cellItems, tr.id, sub.id, ph.id, sub.color);
-          });
-        } else {
-          const cellItems = items.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id);
-          html += renderSbCell(cellItems, tr.id, sub.id, null, sub.color);
-        }
-      });
+      subs.forEach(sub => colDefs.push({ track: tr, sub }));
     }
+  });
+
+  if (!colDefs.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Geen sporen</div><div class="empty-sub">Voeg sporen toe via Setup.</div></div>';
+    return;
+  }
+
+  const labelW = 160;
+  const colW = Math.max(180, Math.floor((1300 - labelW) / colDefs.length));
+  const totalW = labelW + colDefs.length * colW;
+
+  // We need 2 header rows + 1 per phase (or 1 fallback)
+  // Use CSS grid with explicit grid-column/grid-row for spans
+  const numCols = 1 + colDefs.length;
+  const gridCols = `${labelW}px ${colDefs.map(() => `${colW}px`).join(' ')}`;
+
+  let html = `<div style="display:grid;grid-template-columns:${gridCols};min-width:${totalW}px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
+
+  // ── Header row 1: corner + track names spanning their subcats ──
+  html += `<div style="grid-column:1;grid-row:1/span 2;background:var(--gy900);border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);"></div>`;
+
+  let colIdx = 2;
+  tracks.forEach(tr => {
+    const subs = subcategories.filter(s => s.track_id === tr.id);
+    const span = subs.length || 1;
+    html += `<div style="grid-column:${colIdx}/span ${span};grid-row:1;background:${tr.color};color:white;padding:8px 12px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(255,255,255,.15);border-bottom:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;gap:5px;">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);flex-shrink:0;"></span>${tr.icon ? tr.icon+' ' : ''}${tr.name}
+    </div>`;
+    colIdx += span;
+  });
+
+  // ── Header row 2: subcat names (or track name if no subcats) ──
+  colIdx = 2;
+  colDefs.forEach(c => {
+    const bg = c.sub ? c.sub.color : c.track.color;
+    const label = c.sub ? `${c.sub.icon ? c.sub.icon+' ' : ''}${c.sub.name}` : `${c.track.icon ? c.track.icon+' ' : ''}${c.track.name}`;
+    html += `<div style="grid-column:${colIdx};grid-row:2;background:${bg};color:white;padding:6px 10px;font-size:11px;font-weight:600;text-align:center;border-right:1px solid rgba(255,255,255,.15);border-bottom:1px solid var(--gy300);opacity:.88;">${label}</div>`;
+    colIdx++;
+  });
+
+  // ── Phase rows (or one fallback row) ──
+  const rowPhases = phases.length ? phases : [null];
+  let rowNum = 3;
+  rowPhases.forEach(ph => {
+    // Phase label cell
+    const phBg = ph ? (ph.color || '#2D6A4F') : 'var(--g700)';
+    const phLabel = ph
+      ? `<div style="font-size:13px;font-weight:700;">${ph.icon ? ph.icon+' ' : ''}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
+      : `<div style="font-size:13px;font-weight:700;">Alle items</div>`;
+    html += `<div style="grid-column:1;grid-row:${rowNum};background:${phBg};color:white;padding:10px 12px;border-right:1px solid rgba(255,255,255,.2);border-top:1px solid rgba(255,255,255,.1);">${phLabel}</div>`;
+
+    // Data cells
+    colIdx = 2;
+    colDefs.forEach(c => {
+      const cellItems = items.filter(i =>
+        i.track_id === c.track.id &&
+        (c.sub ? i.subcategory_id === c.sub.id : !i.subcategory_id) &&
+        (ph ? i.phase_id === ph.id : true)
+      );
+      const color = c.sub ? c.sub.color : c.track.color;
+      html += `<div style="grid-column:${colIdx};grid-row:${rowNum};">${renderSbCell(cellItems, c.track.id, c.sub ? c.sub.id : null, ph ? ph.id : null, color)}</div>`;
+      colIdx++;
+    });
+    rowNum++;
   });
 
   html += '</div>';
