@@ -475,11 +475,11 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
   <div class="modal" style="max-width:420px">
     <div class="modal-head"><span class="modal-title" id="mm-title">📅 Meeting</span><button class="modal-close" onclick="closeModal('modal-meeting')">✕</button></div>
     <div class="modal-body">
-      <div class="field"><label class="label">Titel</label><input class="input" id="mm-name" placeholder="Stuurgroep, Sprint review…"></div>
       <div class="field"><label class="label">Type</label>
         <select class="input" id="mm-type"><option value="">— geen type —</option></select>
       </div>
       <div class="field"><label class="label">Datum</label><input class="input" id="mm-date" type="date"></div>
+      <div class="field"><label class="label">Info <span style="font-size:11px;color:var(--gy400);font-weight:400;">(optioneel, max 20 tekens)</span></label><input class="input" id="mm-name" maxlength="20" placeholder="bijv. Stuurgroep, Sprint review…"></div>
       <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="mm-desc" placeholder="Agenda, context…"></textarea></div>
       <div class="field"><label class="label">Deelnemers</label><input class="input" id="mm-participants" placeholder="bijv. Stijn, Ann, Tom"></div>
     </div>
@@ -497,11 +497,11 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div class="modal-head"><span class="modal-title" id="mmmt-title">📅 Meeting Type</span><button class="modal-close" onclick="closeModal('modal-meettype')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label class="label">Naam</label><input class="input" id="mmmt-name" placeholder="bijv. Stuurgroep, Werkgroep…"></div>
-      <div class="field"><label class="label">Icoon <span style="font-size:11px;color:var(--gy400)">(standaard 📅)</span></label>
+      <div class="field"><label class="label">Icoon <span style="font-size:11px;color:var(--gy400)">(standaard ▶)</span></label>
         <div class="icon-pick-wrap">
-          <button type="button" class="icon-pick-btn" id="mmmt-icon-btn" onclick="openIconPicker('mmmt-icon','mmmt-icon-btn')">📅</button>
-          <input type="hidden" id="mmmt-icon" value="📅">
-          <button type="button" class="icon-clear-btn" onclick="setIconBtn('mmmt-icon','mmmt-icon-btn','📅')" title="Reset naar 📅">↺ reset</button>
+          <button type="button" class="icon-pick-btn" id="mmmt-icon-btn" onclick="openIconPicker('mmmt-icon','mmmt-icon-btn')">▶</button>
+          <input type="hidden" id="mmmt-icon" value="▶">
+          <button type="button" class="icon-clear-btn" onclick="setIconBtn('mmmt-icon','mmmt-icon-btn','▶')" title="Reset naar ▶">↺ reset</button>
         </div>
       </div>
       <div class="field"><label class="label">Kleur</label><input type="color" id="mmmt-color" value="#1E40AF"></div>
@@ -908,7 +908,7 @@ function openModal(modalId, recordId, mode, extra, extra2) {
     document.getElementById('mm-title').textContent = mode === 'edit' ? '✏️ Meeting bewerken' : '📅 Nieuwe meeting';
     document.getElementById('mm-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
     document.getElementById('mm-type').innerHTML = '<option value="">— geen type —</option>' +
-      meetingTypes.map(mt => `<option value="${mt.id}">${mt.icon||'📅'} ${mt.name}</option>`).join('');
+      meetingTypes.map(mt => `<option value="${mt.id}">${mt.icon||'▶'} ${mt.name}</option>`).join('');
     const me = mode === 'edit' ? meetings.find(x => x.id === editingMeetingId) : null;
     document.getElementById('mm-name').value = me ? me.title : '';
     document.getElementById('mm-date').value = me ? me.date : '';
@@ -921,7 +921,7 @@ function openModal(modalId, recordId, mode, extra, extra2) {
     document.getElementById('mmmt-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
     const mt = mode === 'edit' ? meetingTypes.find(x => x.id === editingMeetingTypeId) : null;
     document.getElementById('mmmt-name').value = mt ? mt.name : '';
-    setIconBtn('mmmt-icon','mmmt-icon-btn', mt ? (mt.icon || '📅') : '📅');
+    setIconBtn('mmmt-icon','mmmt-icon-btn', mt ? (mt.icon || '▶') : '▶');
     document.getElementById('mmmt-color').value = mt ? (mt.color || '#1E40AF') : '#1E40AF';
   } else if (modalId === 'modal-milestone') {
     editingMilestoneId = mode === 'edit' ? recordId : null;
@@ -1393,11 +1393,11 @@ async function copyItem(itemId) {
 //  MEETINGS
 // ═══════════════════════════════════════════
 async function saveMeeting() {
-  const title = document.getElementById('mm-name').value.trim();
+  const title = document.getElementById('mm-name').value.trim().slice(0, 20);
   const date = document.getElementById('mm-date').value;
-  if (!title || !date) { alert('Titel en datum zijn verplicht'); return; }
+  if (!date) { alert('Datum is verplicht'); return; }
   const data = {
-    title, date,
+    title: title || '', date,
     description: document.getElementById('mm-desc').value,
     participants: document.getElementById('mm-participants').value,
     type_id: document.getElementById('mm-type').value || null,
@@ -1436,7 +1436,7 @@ function renderMeetingTypesList() {
   }
   el.innerHTML = meetingTypes.map(mt => `
     <div class="phase-item" style="border-left-color:${mt.color||'#1E40AF'}">
-      <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:15px;color:${mt.color||'#1E40AF'};flex-shrink:0;">${mt.icon||'📅'}</div>
+      <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:15px;color:${mt.color||'#1E40AF'};flex-shrink:0;">${mt.icon||'▶'}</div>
       <div style="flex:1"><div class="phase-name">${mt.name}</div></div>
       <button class="btn btn-sm btn-s" onclick="openModal('modal-meettype','${mt.id}','edit')">✏️</button>
       <button class="btn btn-sm btn-danger" onclick="deleteMeetingType('${mt.id}')">🗑</button>
@@ -1448,7 +1448,7 @@ async function saveMeetingType() {
   if (!name) { alert('Naam is verplicht'); return; }
   const data = {
     name,
-    icon: document.getElementById('mmmt-icon').value || '📅',
+    icon: document.getElementById('mmmt-icon').value || '▶',
     color: document.getElementById('mmmt-color').value,
   };
   if (editingMeetingTypeId) {
@@ -1561,7 +1561,7 @@ function sbToggleLegend() {
   sbLegendOpen = !sbLegendOpen;
   const el = document.getElementById('sb-legend');
   const btn = document.getElementById('sb-legend-toggle');
-  if (el) el.style.display = sbLegendOpen ? 'flex' : 'none';
+  if (el) el.style.display = sbLegendOpen ? 'block' : 'none';
   if (btn) btn.style.background = sbLegendOpen ? 'var(--g100)' : '';
   if (sbLegendOpen) renderSbLegend();
 }
@@ -1582,57 +1582,44 @@ function renderSbLegend() {
     const bgStyle = active ? (bg ? bg + '33' : 'var(--g50)') : 'var(--gy100)';
     return `<span onclick="${onclick}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:${border};background:${bgStyle};color:${fg||'var(--gy700)'};transition:all .15s;user-select:none;">${label}</span>`;
   };
+  const lbl = (text, color) => `<span style="font-size:10px;font-weight:700;color:${color||'var(--gy500)'};text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;margin-right:2px;">${text}</span>`;
+  const vdiv = `<div style="width:1px;min-height:24px;background:var(--gy200);flex-shrink:0;align-self:stretch;margin:0 2px;"></div>`;
 
-  let html = '';
-
-  // Streams
+  // Row 1: Streams | Categorieën  (content structure)
+  const row1 = [];
   if (tracks.length) {
-    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Streams</span>`;
-    tracks.forEach(tr => {
-      html += chip(`<span style="width:8px;height:8px;border-radius:50%;background:${tr.color};flex-shrink:0;display:inline-block;"></span>${tr.icon?tr.icon+' ':''}${tr.name}`,
-        sbFilterTracks.has(tr.id), `sbToggleFilter('track','${tr.id}')`, tr.color, '#111827');
-    });
-    html += `</div>`;
+    row1.push(`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${lbl('Streams')}${tracks.map(tr => chip(
+      `<span style="width:8px;height:8px;border-radius:50%;background:${tr.color};flex-shrink:0;display:inline-block;"></span>${tr.icon?tr.icon+' ':''}${tr.name}`,
+      sbFilterTracks.has(tr.id), `sbToggleFilter('track','${tr.id}')`, tr.color, '#111827'
+    )).join('')}</div>`);
   }
-
-  // Categorieën
   if (subcategories.length) {
-    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Categ.</span>`;
-    subcategories.forEach(sc => {
-      html += chip(`<span style="width:8px;height:8px;border-radius:50%;background:${sc.color};flex-shrink:0;display:inline-block;"></span>${sc.icon?sc.icon+' ':''}${sc.name}`,
-        sbFilterSubcats.has(sc.id), `sbToggleFilter('subcat','${sc.id}')`, sc.color, '#111827');
-    });
-    html += `</div>`;
+    row1.push(`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${lbl('Categorieën')}${subcategories.map(sc => chip(
+      `<span style="width:8px;height:8px;border-radius:50%;background:${sc.color};flex-shrink:0;display:inline-block;"></span>${sc.icon?sc.icon+' ':''}${sc.name}`,
+      sbFilterSubcats.has(sc.id), `sbToggleFilter('subcat','${sc.id}')`, sc.color, '#111827'
+    )).join('')}</div>`);
   }
 
-  // Fasen
+  // Row 2: Fasen | Status | Key | Clear  (planning / state)
+  const row2 = [];
   if (phases.length) {
-    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Fasen</span>`;
-    phases.forEach(ph => {
+    row2.push(`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${lbl('Fasen')}${phases.map(ph => {
       const bg = ph.color || '#2D6A4F';
-      html += chip(`${ph.icon?ph.icon+' ':''}${ph.name}`,
-        sbFilterPhases.has(ph.id), `sbToggleFilter('phase','${ph.id}')`, bg, textColor(bg)==='#ffffff'?bg:'#111827');
-    });
-    html += `</div>`;
+      return chip(`${ph.icon?ph.icon+' ':''}${ph.name}`, sbFilterPhases.has(ph.id), `sbToggleFilter('phase','${ph.id}')`, bg, textColor(bg)==='#ffffff'?bg:'#111827');
+    }).join('')}</div>`);
   }
-
-  // Status
-  html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Status</span>`;
-  [['pending','○ Te doen','#374151','#F3F4F6'],['active','▶ Actief','#1E40AF','#DBEAFE'],['done','✓ Klaar','#14532D','#DCFCE7']].forEach(([val,lbl,fg,bg]) => {
-    html += chip(lbl, sbFilterStatuses.has(val), `sbToggleFilter('status','${val}')`, bg, fg);
-  });
-  html += `</div>`;
-
-  // Key activity
-  html += `<div style="display:flex;gap:6px;align-items:center;">`;
-  html += chip('⭐ Key activity', sbFilterKeyOnly, `sbToggleFilter('key')`, '#FEF9C3', '#713F12');
-  html += `</div>`;
-
+  row2.push(`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${lbl('Status')}${[['pending','○ Te doen','#374151','#F3F4F6'],['active','▶ Actief','#1E40AF','#DBEAFE'],['done','✓ Klaar','#14532D','#DCFCE7']].map(([val,l,fg,bg]) => chip(l, sbFilterStatuses.has(val), `sbToggleFilter('status','${val}')`, bg, fg)).join('')}</div>`);
+  row2.push(`<div style="display:flex;align-items:center;">${chip('⭐ Key', sbFilterKeyOnly, `sbToggleFilter('key')`, '#FEF9C3', '#713F12')}</div>`);
   if (anyActive) {
-    html += `<div style="display:flex;align-items:center;"><span onclick="sbClearFilters()" style="font-size:12px;color:var(--red);cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;background:#FEE2E2;">✕ Wissen</span></div>`;
+    row2.push(`<span onclick="sbClearFilters()" style="font-size:12px;color:#DC2626;cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;background:#FEE2E2;white-space:nowrap;">✕ Wissen</span>`);
   }
 
-  el.innerHTML = html;
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:0;width:100%;">
+    ${row1.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:10px;">${row1.join(vdiv)}</div>` : ''}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;${row1.length?'border-top:1px solid var(--gy100);padding-top:10px;':''}">
+      ${row2.join(vdiv)}
+    </div>
+  </div>`;
 }
 
 // ═══════════════════════════════════════════
@@ -2318,7 +2305,7 @@ function renderTimeline() {
 
   const meetTypeChips = meetingTypes.length ? meetingTypes.map(mt => {
     const act = tlFilterMeetingTypes.has(mt.id);
-    return `<button onclick="toggleTlFilterMeetingType('${mt.id}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?(mt.color||'#1E40AF'):'var(--gy300)'};background:${act?(mt.color||'#1E40AF'):'white'};color:${act?'white':'var(--gy700)'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">${mt.icon||'📅'} ${mt.name}</button>`;
+    return `<button onclick="toggleTlFilterMeetingType('${mt.id}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?(mt.color||'#1E40AF'):'var(--gy300)'};background:${act?(mt.color||'#1E40AF'):'white'};color:${act?'white':'var(--gy700)'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">${mt.icon||'▶'} ${mt.name}</button>`;
   }).join('') : '';
 
   const msTypeChips = milestoneTypes.length ? milestoneTypes.map(mt => {
@@ -2335,12 +2322,23 @@ function renderTimeline() {
   // ── Filter bar → goes into #tl-filter-bar (sticky, outside the card) ──────
   const filterBarEl = document.getElementById('tl-filter-bar');
   if (filterBarEl) {
+    const tlLbl = (text, color) => `<span style="font-size:10px;font-weight:700;color:${color||'var(--gy500)'};text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;margin-right:2px;">${text}</span>`;
+    const tlVdiv = `<div style="width:1px;min-height:22px;background:var(--gy200);flex-shrink:0;align-self:stretch;margin:0 2px;"></div>`;
+    const tlRow2Groups = [];
+    if (tracks.length) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Streams')}${streamChips}</div>`);
+    if (subcatChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Subcategorieën')}${subcatChips}</div>`);
+    if (phaseChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Fasen')}${phaseChips}</div>`);
+    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}</div>`);
+    if (meetTypeChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Meetings','#1E40AF')}${meetTypeChips}</div>`);
+    if (msTypeChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Mijlpalen','#5B21B6')}${msTypeChips}</div>`);
+
     filterBarEl.innerHTML = `
-    <div style="padding:8px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+    <div style="padding:7px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
       <div style="display:flex;border:1px solid var(--gy300);border-radius:6px;overflow:hidden;flex-shrink:0;">${zoomBtns}</div>
       <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
       <div style="display:flex;border:1px solid var(--gy300);border-radius:6px;overflow:hidden;flex-shrink:0;">${ymodeBtns}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">${yearChips}</div>
+      <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
         <span style="font-size:11px;color:var(--gy500);font-weight:600;">Van</span>
         <input type="date" value="${tlFromDate}" onchange="setTlFromDate(this.value)" style="padding:3px 6px;font-size:11px;border:1px solid var(--gy300);border-radius:5px;color:var(--gy700);">
@@ -2348,20 +2346,12 @@ function renderTimeline() {
         <input type="date" value="${tlToDate}" onchange="setTlToDate(this.value)" style="padding:3px 6px;font-size:11px;border:1px solid var(--gy300);border-radius:5px;color:var(--gy700);">
         ${hasDateFilter ? `<button onclick="tlClearDateFilter()" style="padding:2px 7px;font-size:11px;border-radius:5px;border:1px solid var(--gy300);background:white;cursor:pointer;color:var(--gy500);">✕</button>` : ''}
       </div>
-      <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
-      ${streamChips}
-      ${phaseChips ? `<div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>${phaseChips}` : ''}
-      <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
-      ${statusChips}
-      ${keyChip}
-      ${hasItemFilter ? `<button onclick="tlClearFilters()" style="padding:3px 9px;font-size:11px;border-radius:12px;border:1px solid var(--gy300);background:white;cursor:pointer;color:var(--gy500);">✕ Wis</button>` : ''}
+      <div style="flex:1;"></div>
+      ${hasItemFilter ? `<button onclick="tlClearFilters()" style="padding:3px 10px;font-size:11px;border-radius:12px;border:1px solid #FCA5A5;background:#FEF2F2;cursor:pointer;color:#DC2626;font-weight:600;white-space:nowrap;">✕ Filters wissen</button>` : ''}
     </div>
-    ${subcatChips ? `<div style="padding:5px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:5px;align-items:center;"><span style="font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;padding-right:2px;">Subcat</span>${subcatChips}</div>` : ''}
-    ${(meetTypeChips || msTypeChips) ? `<div style="padding:5px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
-      ${meetTypeChips ? `<span style="font-size:10px;font-weight:700;color:#1E40AF;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;">📅</span>${meetTypeChips}` : ''}
-      ${meetTypeChips && msTypeChips ? `<span style="width:1px;height:16px;background:var(--gy300);display:inline-block;margin:0 4px;flex-shrink:0;align-self:center;"></span>` : ''}
-      ${msTypeChips ? `<span style="font-size:10px;font-weight:700;color:#5B21B6;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;">🏁</span>${msTypeChips}` : ''}
-    </div>` : ''}
+    <div style="padding:6px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+      ${tlRow2Groups.join(tlVdiv)}
+    </div>
     <div style="display:flex;border-bottom:1px solid var(--gy300);">
       <div style="width:${LABEL_W}px;flex-shrink:0;border-right:1px solid var(--gy300);"></div>
       <div style="flex:1;display:flex;">${cols.map(c => `<div style="flex:1;text-align:center;padding:6px 2px;font-size:11px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.label}">${c.label}</div>`).join('')}</div>
@@ -2543,11 +2533,14 @@ function renderTimeline() {
         const top = ME_TOP_PAD + rowIdx * (ME_BAR_H + ME_BAR_GAP);
         const mtype = meetingTypes.find(t => t.id === me.type_id);
         const mColor = mtype ? mtype.color : '#1E40AF';
-        const mIcon = mtype ? (mtype.icon || '📅') : '📅';
-        html += `<div style="position:absolute;left:${startPct}%;width:${w}%;height:${ME_BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:white;background:${mColor};z-index:2;cursor:pointer;overflow:hidden;white-space:nowrap;gap:4px;"
-          onclick="openModal('modal-meeting','${me.id}','edit')" title="${me.title}${mtype?' ('+mtype.name+')':''}">
-          <span style="flex-shrink:0;">${mIcon}</span>
-          <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;">${me.title}</span>
+        const mIcon = mtype ? (mtype.icon || '▶') : '▶';
+        html += `<div data-tl-bar="${me.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:${ME_BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:white;background:${mColor};z-index:2;cursor:grab;overflow:hidden;white-space:nowrap;gap:4px;user-select:none;"
+          onmousedown="tlBarMouseDown(event,'${me.id}','move')"
+          onclick="if(!tlBarDragged){openModal('modal-meeting','${me.id}','edit')}else{tlBarDragged=false;}"
+          onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''"
+          title="${me.title ? me.title + (mtype?' — '+mtype.name:'') : (mtype?mtype.name:'Meeting')}">
+          <span style="flex-shrink:0;font-size:10px;">${mIcon}</span>
+          ${me.title ? `<span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;">${me.title}</span>` : ''}
         </div>`;
       });
       const meSdCell = hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;"></div>` : '';
