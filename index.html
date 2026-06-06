@@ -1253,7 +1253,7 @@ function renderStoryboard() {
   html += `<div style="background:var(--gy900);padding:10px 14px;border-right:1px solid rgba(255,255,255,.1);"></div>`;
   if (phases.length) {
     phases.forEach(ph => {
-      html += `<div style="background:${ph.color||'#2D6A4F'};color:white;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(255,255,255,.15);">${ph.name}<div style="font-size:10px;opacity:.75;font-weight:400;margin-top:2px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div></div>`;
+      html += `<div style="background:${ph.color||'#2D6A4F'};color:white;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(255,255,255,.15);">${ph.icon ? ph.icon+' ' : ''}${ph.name}<div style="font-size:10px;opacity:.75;font-weight:400;margin-top:2px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div></div>`;
     });
   } else {
     html += `<div style="background:var(--g700);color:white;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;">Alle items</div>`;
@@ -1282,9 +1282,9 @@ function renderStoryboard() {
       subs.forEach((sub, si) => {
         if (si === 0) {
           // Track name column
-          html += `<div style="background:var(--gy100);padding:10px 14px;font-size:12px;font-weight:700;color:var(--gy700);border-right:1px solid var(--gy300);border-top:1px solid var(--gy300);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${tr.color};flex-shrink:0;"></span>${tr.icon||''} ${tr.name}</div><div style="display:flex;align-items:center;gap:5px;padding-left:16px;color:var(--gy500);font-weight:500;font-size:11px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};"></span>${sub.name}</div></div>`;
+          html += `<div style="background:var(--gy100);padding:10px 14px;font-size:12px;font-weight:700;color:var(--gy700);border-right:1px solid var(--gy300);border-top:1px solid var(--gy300);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${tr.color};flex-shrink:0;"></span>${tr.icon||''} ${tr.name}</div><div style="display:flex;align-items:center;gap:5px;padding-left:16px;color:var(--gy500);font-weight:500;font-size:11px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};"></span>${sub.icon ? sub.icon+' ' : ''}${sub.name}</div></div>`;
         } else {
-          html += `<div style="background:var(--gy50,#f9fafb);padding:10px 14px;font-size:11px;font-weight:500;color:var(--gy500);border-right:1px solid var(--gy300);border-top:1px solid var(--gy200);padding-left:26px;display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};flex-shrink:0;"></span>${sub.name}</div>`;
+          html += `<div style="background:var(--gy50,#f9fafb);padding:10px 14px;font-size:11px;font-weight:500;color:var(--gy500);border-right:1px solid var(--gy300);border-top:1px solid var(--gy200);padding-left:26px;display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};flex-shrink:0;"></span>${sub.icon ? sub.icon+' ' : ''}${sub.name}</div>`;
         }
         if (phases.length) {
           phases.forEach(ph => {
@@ -1475,7 +1475,7 @@ function renderTimeline() {
       subs.forEach(sub => {
         const subItems = items.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id);
         html += renderLane(
-          `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};flex-shrink:0;"></span><span style="padding-left:6px;">${sub.name}</span>`,
+          `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};flex-shrink:0;"></span><span style="padding-left:6px;">${sub.icon ? sub.icon+' ' : ''}${sub.name}</span>`,
           subItems,
           'white',
           'padding-left:26px;',
