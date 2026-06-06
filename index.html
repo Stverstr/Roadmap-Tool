@@ -1326,16 +1326,10 @@ function renderStoryboard() {
     return;
   }
 
-  const labelW = 160;
-  const colW = Math.max(180, Math.floor((1300 - labelW) / colDefs.length));
-  const totalW = labelW + colDefs.length * colW;
+  const labelW = 140;
+  const gridCols = `${labelW}px ${colDefs.map(() => `1fr`).join(' ')}`;
 
-  // We need 2 header rows + 1 per phase (or 1 fallback)
-  // Use CSS grid with explicit grid-column/grid-row for spans
-  const numCols = 1 + colDefs.length;
-  const gridCols = `${labelW}px ${colDefs.map(() => `${colW}px`).join(' ')}`;
-
-  let html = `<div style="display:grid;grid-template-columns:${gridCols};min-width:${totalW}px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
+  let html = `<div style="display:grid;grid-template-columns:${gridCols};width:100%;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
 
   // ── Header row 1: corner + track names spanning their subcats ──
   html += `<div style="grid-column:1;grid-row:1/span 2;background:var(--gy900);border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);"></div>`;
@@ -1344,7 +1338,7 @@ function renderStoryboard() {
   tracks.forEach(tr => {
     const subs = subcategories.filter(s => s.track_id === tr.id);
     const span = subs.length || 1;
-    html += `<div style="grid-column:${colIdx}/span ${span};grid-row:1;background:${tr.color};color:white;padding:8px 12px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(255,255,255,.15);border-bottom:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;gap:5px;">
+    html += `<div style="grid-column:${colIdx}/span ${span};grid-row:1;background:${tr.color};color:${textColor(tr.color)};padding:8px 12px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(0,0,0,.1);border-bottom:1px solid rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;gap:5px;">
       <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);flex-shrink:0;"></span>${tr.icon ? tr.icon+' ' : ''}${tr.name}
     </div>`;
     colIdx += span;
@@ -1355,7 +1349,7 @@ function renderStoryboard() {
   colDefs.forEach(c => {
     const bg = c.sub ? c.sub.color : c.track.color;
     const label = c.sub ? `${c.sub.icon ? c.sub.icon+' ' : ''}${c.sub.name}` : `${c.track.icon ? c.track.icon+' ' : ''}${c.track.name}`;
-    html += `<div style="grid-column:${colIdx};grid-row:2;background:${bg};color:white;padding:6px 10px;font-size:11px;font-weight:600;text-align:center;border-right:1px solid rgba(255,255,255,.15);border-bottom:1px solid var(--gy300);opacity:.88;">${label}</div>`;
+    html += `<div style="grid-column:${colIdx};grid-row:2;background:${bg};color:${textColor(bg)};padding:6px 10px;font-size:11px;font-weight:600;text-align:center;border-right:1px solid rgba(0,0,0,.1);border-bottom:1px solid var(--gy300);">${label}</div>`;
     colIdx++;
   });
 
@@ -1368,7 +1362,7 @@ function renderStoryboard() {
     const phLabel = ph
       ? `<div style="font-size:13px;font-weight:700;">${ph.icon ? ph.icon+' ' : ''}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
       : `<div style="font-size:13px;font-weight:700;">Alle items</div>`;
-    html += `<div style="grid-column:1;grid-row:${rowNum};background:${phBg};color:white;padding:10px 12px;border-right:1px solid rgba(255,255,255,.2);border-top:1px solid rgba(255,255,255,.1);">${phLabel}</div>`;
+    html += `<div style="grid-column:1;grid-row:${rowNum};background:${phBg};color:${textColor(phBg)};padding:10px 12px;border-right:1px solid rgba(0,0,0,.1);border-top:1px solid rgba(0,0,0,.08);">${phLabel}</div>`;
 
     // Data cells
     colIdx = 2;
@@ -1596,6 +1590,15 @@ function switchTab(name) {
 // ═══════════════════════════════════════════
 //  ICON PICKER
 // ═══════════════════════════════════════════
+function textColor(hex) {
+  if (!hex || !hex.startsWith('#')) return '#ffffff';
+  const c = hex.replace('#','');
+  const r = parseInt(c.substr(0,2),16);
+  const g = parseInt(c.substr(2,2),16);
+  const b = parseInt(c.substr(4,2),16);
+  return (0.299*r + 0.587*g + 0.114*b) / 255 > 0.5 ? '#111827' : '#ffffff';
+}
+
 const ICON_CATS = [
   { label: '⚙️', name: 'Werk & Proces', icons: ['⚙️','🔧','🔨','🛠️','🔩','⛏️','🪛','🪚','🔄','🔀','🔁','🔃','➡️','⬆️','⬇️','↩️','↪️','🔗','📋','📌','📍','🗂️','📁','📂','🗃️','📦','📫','📬','📭','📮','🗳️','🗄️','🗑️','📇','🗒️','🗓️','📅','📆','🗑️','📐','📏','✂️','🖇️','📎','🖊️','✒️','🖋️','📝','✏️','🖍️','📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🏷️'] },
   { label: '👥', name: 'Mensen & Teams', icons: ['👥','👤','🤝','💼','🎓','🧑‍💼','👩‍💼','👨‍💼','🧑‍🏫','👩‍🏫','👨‍🏫','🧑‍🔬','👩‍🔬','👨‍🔬','🧑‍💻','👩‍💻','👨‍💻','🧑‍🎨','👩‍🎨','👨‍🎨','🧑‍🔧','👩‍🔧','👨‍🔧','💬','📣','📢','🗣️','✍️','🙋','🙌','👏','🤜','🤛','💪','🫱','🫲','🫶','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','🫂','🫀','🧠'] },
