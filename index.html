@@ -1980,19 +1980,16 @@ function renderTimeline() {
       return true;
     });
     const scheduled = visItems.filter(it => it.start_date || it.date);
-    const rowCount = Math.max(1, scheduled.reduce((acc, _, i) => Math.max(acc, (i % 3) + 1), 1));
-    const minH = Math.max(48, 10 + rowCount * 34 + 10);
-    let cells = `<div style="flex:1;position:relative;min-height:${minH}px;"
+    let cells = `<div style="flex:1;position:relative;min-height:48px;"
       ${droppable ? `ondragover="tlLaneDragOver(event)" ondragleave="tlLaneDragLeave(event)" ondrop="tlLaneDrop(event)"` : ''}>
       ${phaseBandsHtml}
       ${colGridLines()}`;
-    scheduled.forEach((it, idx) => {
+    scheduled.forEach((it) => {
       const startPct = dateToPercent(it.start_date || it.date);
       const endPct   = dateToPercent(it.end_date || it.start_date || it.date);
       if (startPct === null) return;
       const w = Math.max(0.5, (endPct || startPct) - startPct);
-      const row = idx % 3;
-      const top = 10 + row * 34;
+      const top = 10;
       const content = contentFn ? contentFn(it) : (it.title || it.name);
       const opacity = it.status === 'done' ? '.6' : '1';
       cells += `<div style="position:absolute;left:${startPct}%;width:${Math.max(w, 2)}%;height:28px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:600;color:white;background:${barColor};cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:2;transition:filter .15s;opacity:${opacity};" onclick="${clickFn(it)}" title="${it.title||it.name}" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">${content}</div>`;
