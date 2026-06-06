@@ -297,9 +297,12 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div id="storyboard-content" style="display:none">
       <div class="card" style="padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
         <span style="font-size:15px;font-weight:700;color:var(--gy900)">📋 Storyboard</span>
-        <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item toevoegen</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-s btn-sm" id="sb-legend-toggle" onclick="sbToggleLegend()" title="Legende tonen/verbergen">🔍 Legende</button>
+          <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item toevoegen</button>
+        </div>
       </div>
-      <div id="sb-legend" class="card" style="padding:12px 18px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;"></div>
+      <div id="sb-legend" class="card" style="padding:12px 18px;margin-bottom:14px;display:none;flex-wrap:wrap;gap:16px;align-items:flex-start;"></div>
       <div class="sb-wrap">
         <div id="sb-grid" style="overflow-x:auto;"></div>
       </div>
@@ -1332,79 +1335,91 @@ async function deleteMilestone() {
 // ═══════════════════════════════════════════
 //  STORYBOARD FILTERS
 // ═══════════════════════════════════════════
-let sbFilterTracks = new Set();
+let sbFilterTracks  = new Set();
 let sbFilterSubcats = new Set();
+let sbFilterPhases  = new Set();
 let sbFilterStatuses = new Set();
 let sbFilterKeyOnly = false;
 
 function sbItemVisible(it) {
   if (sbFilterKeyOnly && !it.key_activity) return false;
   if (sbFilterStatuses.size && !sbFilterStatuses.has(it.status || 'pending')) return false;
-  if (sbFilterTracks.size && !sbFilterTracks.has(it.track_id)) return false;
-  if (sbFilterSubcats.size && !sbFilterSubcats.has(it.subcategory_id)) return false;
   return true;
 }
 
 function sbToggleFilter(type, value) {
-  if (type === 'key') {
-    sbFilterKeyOnly = !sbFilterKeyOnly;
-  } else if (type === 'track') {
-    sbFilterTracks.has(value) ? sbFilterTracks.delete(value) : sbFilterTracks.add(value);
-  } else if (type === 'subcat') {
-    sbFilterSubcats.has(value) ? sbFilterSubcats.delete(value) : sbFilterSubcats.add(value);
-  } else if (type === 'status') {
-    sbFilterStatuses.has(value) ? sbFilterStatuses.delete(value) : sbFilterStatuses.add(value);
-  }
+  const map = {track: sbFilterTracks, subcat: sbFilterSubcats, phase: sbFilterPhases, status: sbFilterStatuses};
+  if (type === 'key') { sbFilterKeyOnly = !sbFilterKeyOnly; }
+  else { const s = map[type]; s.has(value) ? s.delete(value) : s.add(value); }
   renderSbLegend();
   renderStoryboard();
 }
 
+let sbLegendOpen = false;
+
+function sbToggleLegend() {
+  sbLegendOpen = !sbLegendOpen;
+  const el = document.getElementById('sb-legend');
+  const btn = document.getElementById('sb-legend-toggle');
+  if (el) el.style.display = sbLegendOpen ? 'flex' : 'none';
+  if (btn) btn.style.background = sbLegendOpen ? 'var(--g100)' : '';
+  if (sbLegendOpen) renderSbLegend();
+}
+
 function sbClearFilters() {
-  sbFilterTracks.clear(); sbFilterSubcats.clear(); sbFilterStatuses.clear(); sbFilterKeyOnly = false;
-  renderSbLegend();
-  renderStoryboard();
+  sbFilterTracks.clear(); sbFilterSubcats.clear(); sbFilterPhases.clear();
+  sbFilterStatuses.clear(); sbFilterKeyOnly = false;
+  renderSbLegend(); renderStoryboard();
 }
 
 function renderSbLegend() {
   const el = document.getElementById('sb-legend');
-  if (!el) return;
-  const anyActive = sbFilterTracks.size || sbFilterSubcats.size || sbFilterStatuses.size || sbFilterKeyOnly;
-  const chip = (label, active, onclick, bg, fg) =>
-    `<span onclick="${onclick}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid ${active ? (bg||'var(--g700)') : 'transparent'};background:${active ? (bg ? bg+'22' : 'var(--g50)') : 'var(--gy100)'};color:${fg||'var(--gy700)'};transition:all .15s;user-select:none;">${label}</span>`;
+  if (!el || !sbLegendOpen) return;
+  const anyActive = sbFilterTracks.size || sbFilterSubcats.size || sbFilterPhases.size || sbFilterStatuses.size || sbFilterKeyOnly;
+
+  const chip = (label, active, onclick, bg, fg) => {
+    const border = active ? `2px solid ${bg||'var(--g700)'}` : '2px solid transparent';
+    const bgStyle = active ? (bg ? bg + '33' : 'var(--g50)') : 'var(--gy100)';
+    return `<span onclick="${onclick}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:${border};background:${bgStyle};color:${fg||'var(--gy700)'};transition:all .15s;user-select:none;">${label}</span>`;
+  };
 
   let html = '';
 
-  // Tracks
+  // Sporen
   if (tracks.length) {
-    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;">Sporen</span>`;
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Sporen</span>`;
     tracks.forEach(tr => {
-      const active = sbFilterTracks.has(tr.id);
-      html += chip(
-        `<span style="width:8px;height:8px;border-radius:50%;background:${tr.color};flex-shrink:0;display:inline-block;"></span>${tr.icon ? tr.icon+' ' : ''}${tr.name}`,
-        active, `sbToggleFilter('track','${tr.id}')`, tr.color, textColor(tr.color) === '#ffffff' ? tr.color : '#111827'
-      );
+      html += chip(`<span style="width:8px;height:8px;border-radius:50%;background:${tr.color};flex-shrink:0;display:inline-block;"></span>${tr.icon?tr.icon+' ':''}${tr.name}`,
+        sbFilterTracks.has(tr.id), `sbToggleFilter('track','${tr.id}')`, tr.color, '#111827');
     });
     html += `</div>`;
   }
 
-  // Subcategories
+  // Categorieën
   if (subcategories.length) {
-    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;">Categorieën</span>`;
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Categ.</span>`;
     subcategories.forEach(sc => {
-      const active = sbFilterSubcats.has(sc.id);
-      html += chip(
-        `<span style="width:8px;height:8px;border-radius:50%;background:${sc.color};flex-shrink:0;display:inline-block;"></span>${sc.icon ? sc.icon+' ' : ''}${sc.name}`,
-        active, `sbToggleFilter('subcat','${sc.id}')`, sc.color, '#111827'
-      );
+      html += chip(`<span style="width:8px;height:8px;border-radius:50%;background:${sc.color};flex-shrink:0;display:inline-block;"></span>${sc.icon?sc.icon+' ':''}${sc.name}`,
+        sbFilterSubcats.has(sc.id), `sbToggleFilter('subcat','${sc.id}')`, sc.color, '#111827');
+    });
+    html += `</div>`;
+  }
+
+  // Fasen
+  if (phases.length) {
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Fasen</span>`;
+    phases.forEach(ph => {
+      const bg = ph.color || '#2D6A4F';
+      html += chip(`${ph.icon?ph.icon+' ':''}${ph.name}`,
+        sbFilterPhases.has(ph.id), `sbToggleFilter('phase','${ph.id}')`, bg, textColor(bg)==='#ffffff'?bg:'#111827');
     });
     html += `</div>`;
   }
 
   // Status
-  html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;">Status</span>`;
-  [['pending','⏳ Te doen','#92400E','#FEF3C7'],['active','▶ Actief','#1E40AF','#DBEAFE'],['done','✓ Klaar','#14532D','#DCFCE7']].forEach(([val,label,fg,bg]) => {
-    const active = sbFilterStatuses.has(val);
-    html += chip(label, active, `sbToggleFilter('status','${val}')`, bg, fg);
+  html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Status</span>`;
+  [['pending','⏳ Te doen','#92400E','#FEF3C7'],['active','▶ Actief','#1E40AF','#DBEAFE'],['done','✓ Klaar','#14532D','#DCFCE7']].forEach(([val,lbl,fg,bg]) => {
+    html += chip(lbl, sbFilterStatuses.has(val), `sbToggleFilter('status','${val}')`, bg, fg);
   });
   html += `</div>`;
 
@@ -1413,9 +1428,8 @@ function renderSbLegend() {
   html += chip('⭐ Key activity', sbFilterKeyOnly, `sbToggleFilter('key')`, '#FEF3C7', '#92400E');
   html += `</div>`;
 
-  // Clear
   if (anyActive) {
-    html += `<div style="display:flex;align-items:center;"><span onclick="sbClearFilters()" style="font-size:12px;color:var(--red);cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;background:#FEE2E2;">✕ Filters wissen</span></div>`;
+    html += `<div style="display:flex;align-items:center;"><span onclick="sbClearFilters()" style="font-size:12px;color:var(--red);cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;background:#FEE2E2;">✕ Wissen</span></div>`;
   }
 
   el.innerHTML = html;
@@ -1488,70 +1502,70 @@ function renderStoryboard() {
     return;
   }
 
-  // Build column list: one column per subcat (or one per track if no subcats)
-  const colDefs = [];
+  // Build full column list
+  let colDefs = [];
   tracks.forEach(tr => {
     const subs = subcategories.filter(s => s.track_id === tr.id);
-    if (subs.length === 0) {
-      colDefs.push({ track: tr, sub: null });
-    } else {
-      subs.forEach(sub => colDefs.push({ track: tr, sub }));
-    }
+    if (subs.length === 0) { colDefs.push({ track: tr, sub: null }); }
+    else { subs.forEach(sub => colDefs.push({ track: tr, sub })); }
   });
 
+  // Apply column filters (tracks hide entire columns, subcats hide sub-columns)
+  if (sbFilterTracks.size)  colDefs = colDefs.filter(c => sbFilterTracks.has(c.track.id));
+  if (sbFilterSubcats.size) colDefs = colDefs.filter(c => c.sub && sbFilterSubcats.has(c.sub.id));
+
   if (!colDefs.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Geen sporen</div><div class="empty-sub">Voeg sporen toe via Setup.</div></div>';
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Geen zichtbare sporen</div><div class="empty-sub">Pas je filters aan.</div></div>';
     return;
   }
 
-  const labelW = 140;
-  const gridCols = `${labelW}px ${colDefs.map(() => `1fr`).join(' ')}`;
+  // Apply row filters (phases)
+  let rowPhases = phases.length ? phases : [null];
+  if (sbFilterPhases.size) rowPhases = rowPhases.filter(ph => ph && sbFilterPhases.has(ph.id));
+  if (!rowPhases.length) rowPhases = [null];
 
+  const labelW = 140;
+  const gridCols = `${labelW}px ${colDefs.map(() => '1fr').join(' ')}`;
   let html = `<div style="display:grid;grid-template-columns:${gridCols};width:100%;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
 
-  // ── Header row 1: corner + track names spanning their subcats ──
+  // Header row 1: corner + track headers (spanning visible subcols)
   html += `<div style="grid-column:1;grid-row:1/span 2;background:var(--gy900);border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);"></div>`;
-
   let colIdx = 2;
   tracks.forEach(tr => {
-    const subs = subcategories.filter(s => s.track_id === tr.id);
-    const span = subs.length || 1;
-    html += `<div style="grid-column:${colIdx}/span ${span};grid-row:1;background:${tr.color};color:${textColor(tr.color)};padding:8px 12px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(0,0,0,.1);border-bottom:1px solid rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;gap:5px;">
-      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);flex-shrink:0;"></span>${tr.icon ? tr.icon+' ' : ''}${tr.name}
+    const trCols = colDefs.filter(c => c.track.id === tr.id);
+    if (!trCols.length) return;
+    html += `<div style="grid-column:${colIdx}/span ${trCols.length};grid-row:1;background:${tr.color};color:${textColor(tr.color)};padding:8px 12px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(0,0,0,.1);border-bottom:1px solid rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;gap:5px;">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);flex-shrink:0;"></span>${tr.icon?tr.icon+' ':''}${tr.name}
     </div>`;
-    colIdx += span;
+    colIdx += trCols.length;
   });
 
-  // ── Header row 2: subcat names (or track name if no subcats) ──
+  // Header row 2: subcat/track labels
   colIdx = 2;
   colDefs.forEach(c => {
     const bg = c.sub ? c.sub.color : c.track.color;
-    const label = c.sub ? `${c.sub.icon ? c.sub.icon+' ' : ''}${c.sub.name}` : `${c.track.icon ? c.track.icon+' ' : ''}${c.track.name}`;
+    const label = c.sub ? `${c.sub.icon?c.sub.icon+' ':''}${c.sub.name}` : `${c.track.icon?c.track.icon+' ':''}${c.track.name}`;
     html += `<div style="grid-column:${colIdx};grid-row:2;background:${bg};color:${textColor(bg)};padding:6px 10px;font-size:11px;font-weight:600;text-align:center;border-right:1px solid rgba(0,0,0,.1);border-bottom:1px solid var(--gy300);">${label}</div>`;
     colIdx++;
   });
 
-  // ── Phase rows (or one fallback row) ──
-  const rowPhases = phases.length ? phases : [null];
+  // Phase rows
   let rowNum = 3;
   rowPhases.forEach(ph => {
-    // Phase label cell
     const phBg = ph ? (ph.color || '#2D6A4F') : 'var(--g700)';
     const phLabel = ph
-      ? `<div style="font-size:13px;font-weight:700;">${ph.icon ? ph.icon+' ' : ''}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
+      ? `<div style="font-size:13px;font-weight:700;">${ph.icon?ph.icon+' ':''}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
       : `<div style="font-size:13px;font-weight:700;">Alle items</div>`;
     html += `<div style="grid-column:1;grid-row:${rowNum};background:${phBg};color:${textColor(phBg)};padding:10px 12px;border-right:1px solid rgba(0,0,0,.1);border-top:1px solid rgba(0,0,0,.08);">${phLabel}</div>`;
-
-    // Data cells
     colIdx = 2;
     colDefs.forEach(c => {
       const cellItems = items.filter(i =>
         i.track_id === c.track.id &&
         (c.sub ? i.subcategory_id === c.sub.id : !i.subcategory_id) &&
         (ph ? i.phase_id === ph.id : true)
-      );
+      ).sort((a,b) => (a.position||0) - (b.position||0));
       const color = c.sub ? c.sub.color : c.track.color;
-      html += `<div style="grid-column:${colIdx};grid-row:${rowNum};">${renderSbCell(cellItems, c.track.id, c.sub ? c.sub.id : null, ph ? ph.id : null, color)}</div>`;
+      html += `<div style="grid-column:${colIdx};grid-row:${rowNum};">${renderSbCell(cellItems, c.track.id, c.sub?c.sub.id:null, ph?ph.id:null, color)}</div>`;
       colIdx++;
     });
     rowNum++;
