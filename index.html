@@ -3033,58 +3033,107 @@ async function exportToPptx() {
       if (!colDefs.length) {
         s.addText('Geen zichtbare data op basis van actieve filters.', { x: 0.5, y: 2, w: 12, h: 1, fontSize: 14, color: C.gray });
       } else {
-        const MAX_ITEMS = 5;
-        const siIcon = { pending: '○', active: '▶', done: '✓' };
-        const LABEL_COL_W = 1.35;
-        const TOTAL_W = 12.5;
-        const nCols = colDefs.length;
-        const DATA_COL_W = Math.max(1.0, (TOTAL_W - LABEL_COL_W) / nCols);
-        const colW = [LABEL_COL_W, ...colDefs.map(() => DATA_COL_W)];
-        const nRows = 1 + rowPhases.length;
-        const ROW_H = Math.min(1.45, 6.3 / nRows);
+        // ── Layout ──────────────────────────────────────────
+        const LMAR = 0.28, RMAR = 0.28;
+        const PHASE_COL_W = 1.18;
+        const DATA_W = 13.3 - LMAR - RMAR - PHASE_COL_W;
+        const COL_W = Math.max(0.9, DATA_W / colDefs.length);
+        const hasSubcats = colDefs.some(c => c.sub !== null);
+        const HDR_Y = 0.62;
+        const HDR_STREAM_H = 0.28;
+        const HDR_SUBCAT_H = hasSubcats ? 0.22 : 0;
+        const HDR_TOTAL_H = HDR_STREAM_H + HDR_SUBCAT_H;
+        const LANES_Y = HDR_Y + HDR_TOTAL_H;
+        const PHASE_AREA_H = 7.22 - LANES_Y;
+        const PHASE_ROW_H = PHASE_AREA_H / rowPhases.length;
+        const CARD_H = 0.28, CARD_GAP = 0.04, CELL_PAD = 0.06, CBORDER = 0.055;
+        const MAX_CARDS = Math.max(1, Math.floor((PHASE_ROW_H - CELL_PAD * 2) / (CARD_H + CARD_GAP)));
+        const stColors = { pending: '9CA3AF', active: '3B82F6', done: '22C55E' };
+        const stIcons  = { pending: '○', active: '▶', done: '✓' };
 
-        const tableData = [];
-        // Header row
-        const hRow = [{ text: 'Fase', options: { bold: true, fill: { color: C.dark }, color: C.white, fontSize: 9, align: 'center', valign: 'middle' } }];
-        colDefs.forEach(c => {
-          const bg = hx(c.sub ? c.sub.color : c.track.color);
-          const lbl = c.sub ? c.track.name + '\n' + c.sub.name : c.track.name;
-          hRow.push({ text: lbl, options: { bold: true, fill: { color: bg }, color: C.white, fontSize: 9, align: 'center', valign: 'middle' } });
+        // ── Phase label corner ────────────────────────────
+        s.addShape(pptx.shapes.RECTANGLE, { x: LMAR, y: HDR_Y, w: PHASE_COL_W, h: HDR_TOTAL_H, fill: { color: C.dark }, line: { color: C.dark } });
+        s.addText('Fase', { x: LMAR, y: HDR_Y, w: PHASE_COL_W, h: HDR_TOTAL_H, fontSize: 9, bold: true, color: C.white, align: 'center', valign: 'middle', margin: 0 });
+
+        // ── Stream header row ─────────────────────────────
+        let streamX = LMAR + PHASE_COL_W;
+        tracks.forEach(tr => {
+          const trCols = colDefs.filter(c => c.track.id === tr.id);
+          if (!trCols.length) return;
+          const w = trCols.length * COL_W;
+          s.addShape(pptx.shapes.RECTANGLE, { x: streamX, y: HDR_Y, w, h: HDR_STREAM_H, fill: { color: hx(tr.color) }, line: { color: hx(tr.color) } });
+          s.addText(tr.name, { x: streamX, y: HDR_Y, w, h: HDR_STREAM_H, fontSize: 9, bold: true, color: C.white, align: 'center', valign: 'middle', margin: 0 });
+          streamX += w;
         });
-        tableData.push(hRow);
 
-        // Phase rows
-        rowPhases.forEach(ph => {
-          const phBg = ph ? hx(ph.color || '#2D6A4F') : C.med;
-          const row = [{ text: ph ? ph.name : 'Items', options: { bold: true, fill: { color: phBg }, color: C.white, fontSize: 9, valign: 'top', align: 'center' } }];
+        // ── Subcat header row ────────────────────────────
+        if (hasSubcats) {
+          let scX = LMAR + PHASE_COL_W;
           colDefs.forEach(c => {
+            const bg = hx(c.sub ? c.sub.color : c.track.color);
+            s.addShape(pptx.shapes.RECTANGLE, { x: scX, y: HDR_Y + HDR_STREAM_H, w: COL_W, h: HDR_SUBCAT_H, fill: { color: bg }, line: { color: bg } });
+            const scLbl = c.sub ? c.sub.name : '';
+            if (scLbl) s.addText(scLbl, { x: scX, y: HDR_Y + HDR_STREAM_H, w: COL_W, h: HDR_SUBCAT_H, fontSize: 8, color: C.white, align: 'center', valign: 'middle', margin: 0 });
+            scX += COL_W;
+          });
+        }
+
+        // ── Phase rows with card-based cells ─────────────
+        rowPhases.forEach((ph, phIdx) => {
+          const phY = LANES_Y + phIdx * PHASE_ROW_H;
+          const phBg = ph ? hx(ph.color || '#2D6A4F') : C.med;
+
+          // Phase label
+          s.addShape(pptx.shapes.RECTANGLE, { x: LMAR, y: phY, w: PHASE_COL_W, h: PHASE_ROW_H, fill: { color: phBg }, line: { color: phBg } });
+          s.addText(ph ? ph.name : 'Items', { x: LMAR, y: phY, w: PHASE_COL_W, h: PHASE_ROW_H, fontSize: 10, bold: true, color: C.white, align: 'center', valign: 'middle', margin: 0 });
+
+          // Row bottom border
+          if (phIdx < rowPhases.length - 1) {
+            s.addShape(pptx.shapes.LINE, { x: LMAR, y: phY + PHASE_ROW_H, w: PHASE_COL_W + colDefs.length * COL_W, h: 0, line: { color: C.lgray, width: 0.75 } });
+          }
+
+          // Cells
+          colDefs.forEach((c, colIdx) => {
+            const cellX = LMAR + PHASE_COL_W + colIdx * COL_W;
+            const cellBg = colIdx % 2 === 1 ? 'F9FAFB' : C.white;
+            s.addShape(pptx.shapes.RECTANGLE, { x: cellX, y: phY, w: COL_W, h: PHASE_ROW_H, fill: { color: cellBg }, line: { color: C.lgray, width: 0.25 } });
+
             const cellItems = items.filter(i =>
               i.track_id === c.track.id &&
               (c.sub ? i.subcategory_id === c.sub.id : !i.subcategory_id) &&
               (ph ? i.phase_id === ph.id : true) &&
               itemVis(i)
             ).sort((a, b) => (a.position || 0) - (b.position || 0));
-            const shown = cellItems.slice(0, MAX_ITEMS);
+
+            const shown = cellItems.slice(0, MAX_CARDS);
             const more = cellItems.length - shown.length;
-            if (!shown.length) {
-              row.push({ text: '', options: { fontSize: 8, valign: 'top', fill: { color: C.offwhite } } });
-            } else {
-              const textArr = [];
-              shown.forEach((it, idx) => {
-                textArr.push({ text: siIcon[it.status || 'pending'] + ' ' + (it.key_activity ? '★ ' : '') + it.title, options: { breakLine: idx < shown.length - 1 || more > 0, fontSize: 8, bold: !!it.key_activity, color: it.status === 'done' ? '9CA3AF' : C.text } });
+
+            shown.forEach((it, ci) => {
+              const cardY = phY + CELL_PAD + ci * (CARD_H + CARD_GAP);
+              const cardX = cellX + CELL_PAD;
+              const cardW = COL_W - CELL_PAD * 2;
+              const st = it.status || 'pending';
+              const stC = stColors[st];
+              const isDone = st === 'done';
+              // Card background
+              s.addShape(pptx.shapes.RECTANGLE, { x: cardX, y: cardY, w: cardW, h: CARD_H, fill: { color: C.white }, line: { color: 'E5E7EB', width: 0.5 }, shadow: { type: 'outer', blur: 2, offset: 1, angle: 135, color: '000000', opacity: 0.08 } });
+              // Status border
+              s.addShape(pptx.shapes.RECTANGLE, { x: cardX, y: cardY, w: CBORDER, h: CARD_H, fill: { color: stC }, line: { color: stC } });
+              // Status icon
+              s.addText(stIcons[st], { x: cardX + CBORDER + 0.02, y: cardY, w: 0.13, h: CARD_H, fontSize: 7, color: stC, valign: 'middle', bold: true, margin: 0 });
+              // Title
+              s.addText((it.key_activity ? '★ ' : '') + it.title, {
+                x: cardX + CBORDER + 0.16, y: cardY,
+                w: cardW - CBORDER - 0.18, h: CARD_H,
+                fontSize: 7, color: isDone ? '9CA3AF' : C.text, fontFace: 'Calibri',
+                valign: 'middle', bold: st === 'active', margin: 0
               });
-              if (more > 0) textArr.push({ text: '+ ' + more + ' meer…', options: { fontSize: 7, color: C.gray, italic: true } });
-              row.push({ text: textArr, options: { fontSize: 8, valign: 'top', fill: { color: C.white } } });
+            });
+            if (more > 0) {
+              const moreY = phY + CELL_PAD + shown.length * (CARD_H + CARD_GAP);
+              s.addText('+ ' + more + ' meer…', { x: cellX + CELL_PAD, y: moreY, w: COL_W - CELL_PAD * 2, h: 0.18, fontSize: 7, color: C.gray, italic: true });
             }
           });
-          tableData.push(row);
-        });
-
-        s.addTable(tableData, {
-          x: 0.4, y: 0.75, w: TOTAL_W,
-          colW, rowH: ROW_H,
-          border: { pt: 0.5, color: C.lgray },
-          autoPage: false
         });
       }
     }
@@ -3146,6 +3195,30 @@ async function exportToPptx() {
         s.addText('Nu', { x: todayX - 0.22, y: HDR_Y + 0.02, w: 0.44, h: HDR_H - 0.04, fontSize: 7, color: 'EF4444', bold: true, align: 'center', margin: 0 });
       }
 
+      // Stacking helper: assigns each item/milestone to a sub-row so nothing overlaps
+      function stackLane(laneItems, laneMilestones) {
+        const BH = 0.21, BG = 0.03, TP = 0.05, BP = 0.05, MSW = 0.02;
+        const forStack = [
+          ...laneItems.map(it => ({ _id: 'i' + it.id, _type: 'bar', _s: it.start_date, _e: it.end_date || it.start_date })),
+          ...(laneMilestones || []).map(ms => ({ _id: 'm' + ms.id, _type: 'ms', _s: ms.date, _e: ms.date }))
+        ].sort((a, b) => (a._s < b._s ? -1 : a._s > b._s ? 1 : 0));
+        const rowEnds = [], rowMap = new Map();
+        forStack.forEach(({ _id, _type, _s, _e }) => {
+          const sp = d2pct(_s);
+          if (sp === null) return;
+          const ep = d2pct(_e || _s);
+          const wf = _type === 'ms' ? MSW : Math.max(0.005, (ep !== null ? ep : sp) - sp);
+          const effEnd = sp + wf + 0.003;
+          let row = 0;
+          while (row < rowEnds.length && rowEnds[row] > sp) row++;
+          rowEnds[row] = effEnd;
+          rowMap.set(_id, { sp, ep: ep !== null ? ep : sp, row });
+        });
+        const nRows = Math.max(1, rowEnds.length);
+        const laneH = TP + nRows * (BH + BG) - BG + BP;
+        return { rowMap, laneH, BH, TP, STEP: BH + BG, nRows };
+      }
+
       let curY = LANE_Y0;
 
       // Draw tracks
@@ -3165,18 +3238,10 @@ async function exportToPptx() {
           : [null];
 
         laneDefs.forEach(sub => {
-          if (curY + LANE_H > MAX_Y) return;
+          if (curY + 0.28 > MAX_Y) return;
           const bColor = hx(sub ? (sub.color || tr.color) : tr.color);
 
-          // Lane label
-          if (sub) {
-            s.addShape(pptx.shapes.OVAL, { x: LX + 0.22, y: curY + (LANE_H - 0.10) / 2, w: 0.10, h: 0.10, fill: { color: bColor }, line: { color: bColor } });
-            s.addText(sub.name, { x: LX + 0.36, y: curY, w: LW - 0.33, h: LANE_H, fontSize: 8, color: '374151', fontFace: 'Calibri', valign: 'middle', margin: 0 });
-          }
-          // Bottom border
-          s.addShape(pptx.shapes.LINE, { x: LX, y: curY + LANE_H, w: 13.0 - LX, h: 0, line: { color: C.lgray, width: 0.5 } });
-
-          // Filtered + in-range items for this lane
+          // Gather items for this lane
           const laneItems = items.filter(it => {
             if (it.track_id !== tr.id) return false;
             if (sub ? it.subcategory_id !== sub.id : it.subcategory_id) return false;
@@ -3187,54 +3252,67 @@ async function exportToPptx() {
             return e2 >= minDate && s2 <= maxDate;
           });
 
+          // Gather milestones for this lane (within their stream/subcat)
+          const laneMilestones = p.enable_milestones !== false ? milestones.filter(ms => {
+            if (tlFilterMilestoneTypes.size && !tlFilterMilestoneTypes.has(ms.type_id)) return false;
+            if (ms.track_id !== tr.id) return false;
+            if (sub && ms.subcategory_id !== sub.id) return false;
+            if (!ms.date) return false;
+            const d = new Date(ms.date);
+            return d >= minDate && d <= maxDate;
+          }) : [];
+
+          // Stack items + milestones into rows
+          const { rowMap, laneH, BH, TP, STEP } = stackLane(laneItems, laneMilestones);
+          const actualH = Math.min(laneH, MAX_Y - curY);
+
+          // Lane label
+          if (sub) {
+            s.addShape(pptx.shapes.OVAL, { x: LX + 0.22, y: curY + (actualH - 0.10) / 2, w: 0.10, h: 0.10, fill: { color: bColor }, line: { color: bColor } });
+            s.addText(sub.name, { x: LX + 0.36, y: curY, w: LW - 0.33, h: actualH, fontSize: 8, color: '374151', fontFace: 'Calibri', valign: 'middle', margin: 0 });
+          }
+          // Bottom border
+          s.addShape(pptx.shapes.LINE, { x: LX, y: curY + actualH, w: 13.0 - LX, h: 0, line: { color: C.lgray, width: 0.5 } });
+
+          // Draw bars with stacking
           laneItems.forEach(it => {
-            const sp = d2pct(it.start_date);
-            const ep = d2pct(it.end_date || it.start_date);
-            if (sp === null) return;
-            const bx = TX + sp * TW;
-            const bw = Math.max(0.1, ((ep !== null ? ep : sp + 0.04) - sp) * TW);
+            const pos = rowMap.get('i' + it.id);
+            if (!pos) return;
+            const bx = TX + pos.sp * TW;
+            const bw = Math.max(0.1, (pos.ep - pos.sp) * TW);
             const isDone = it.status === 'done';
-            const by = curY + (LANE_H - BAR_H) / 2;
+            const by = curY + TP + pos.row * STEP;
+            if (by + BH > curY + actualH) return;
             s.addShape(pptx.shapes.RECTANGLE, {
-              x: bx, y: by, w: bw, h: BAR_H,
+              x: bx, y: by, w: bw, h: BH,
               fill: { color: bColor, transparency: isDone ? 40 : 0 },
               line: { color: bColor, width: 0.5 }
             });
             if (bw > 0.18) {
               const lbl = (it.key_activity ? '★ ' : '') + it.title;
-              s.addText(lbl, { x: bx + 0.04, y: by, w: Math.max(0.08, bw - 0.07), h: BAR_H, fontSize: 6, color: C.white, fontFace: 'Calibri', valign: 'middle', margin: 0 });
+              s.addText(lbl, { x: bx + 0.04, y: by, w: Math.max(0.08, bw - 0.07), h: BH, fontSize: 6, color: C.white, fontFace: 'Calibri', valign: 'middle', margin: 0 });
             }
           });
 
-          curY += LANE_H;
-        });
-      });
-
-      // Milestones lane (if any in range)
-      if (p.enable_milestones !== false) {
-        const visMsAll = milestones.filter(ms => {
-          if (tlFilterMilestoneTypes.size && !tlFilterMilestoneTypes.has(ms.type_id)) return false;
-          if (!ms.date) return false;
-          const d = new Date(ms.date);
-          return d >= minDate && d <= maxDate;
-        });
-        if (visMsAll.length > 0 && curY + LANE_H <= MAX_Y) {
-          s.addText('Mijlpalen', { x: LX, y: curY, w: LW, h: LANE_H, fontSize: 8, bold: true, color: '7C3AED', valign: 'middle', margin: 0 });
-          s.addShape(pptx.shapes.LINE, { x: LX, y: curY + LANE_H, w: 13.0 - LX, h: 0, line: { color: C.lgray, width: 0.5 } });
-          visMsAll.forEach(ms => {
-            const pct = d2pct(ms.date);
-            if (pct === null) return;
-            const mx = TX + pct * TW;
+          // Draw milestones within lane (stacked, not separate lane)
+          laneMilestones.forEach(ms => {
+            const pos = rowMap.get('m' + ms.id);
+            if (!pos) return;
+            const mx = TX + pos.sp * TW;
+            const by = curY + TP + pos.row * STEP;
+            if (by + BH > curY + actualH) return;
             const mtype = milestoneTypes.find(t => t.id === ms.type_id);
             const mcolor = hx(mtype ? mtype.color : '#7C3AED');
             const micon = mtype ? (mtype.icon || '◆') : '◆';
-            s.addText(micon, { x: mx - 0.13, y: curY + (LANE_H - 0.22) / 2, w: 0.26, h: 0.22, fontSize: 11, color: mcolor, align: 'center', margin: 0 });
+            s.addText(micon, { x: mx - 0.13, y: by, w: 0.26, h: BH, fontSize: 10, color: mcolor, align: 'center', valign: 'middle', margin: 0 });
             if (ms.title) {
-              s.addText(ms.title, { x: Math.max(TX, mx - 0.45), y: curY + LANE_H - 0.14, w: 0.9, h: 0.14, fontSize: 6, color: mcolor, align: 'center', margin: 0 });
+              s.addText(ms.title, { x: Math.max(TX, mx - 0.45), y: by + BH - 0.01, w: 0.9, h: 0.13, fontSize: 5.5, color: mcolor, align: 'center', margin: 0 });
             }
           });
-        }
-      }
+
+          curY += actualH;
+        });
+      });
     }
 
     // ════════════════════════════════════════════
