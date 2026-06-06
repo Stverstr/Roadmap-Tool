@@ -316,6 +316,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <span style="font-size:15px;font-weight:700;color:var(--gy900)">📋 Storyboard</span>
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn btn-s btn-sm" id="sb-legend-toggle" onclick="sbToggleLegend()" title="Legende tonen/verbergen">🔍 Legende</button>
+          <button class="btn btn-danger btn-sm" onclick="sbClearAllItems()" title="Alle activiteiten verwijderen">🗑 Alles wissen</button>
           <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item toevoegen</button>
         </div>
       </div>
@@ -336,8 +337,8 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <span style="font-size:15px;font-weight:700;color:var(--gy900)">📅 Tijdslijn</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item</button>
-          <button class="btn btn-sm" style="background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE;" onclick="openModal('modal-meeting','','new')" id="btn-add-meeting">＋ Meeting</button>
-          <button class="btn btn-sm" style="background:#F5F3FF;color:#5B21B6;border:1px solid #DDD6FE;" onclick="openModal('modal-milestone','','new')" id="btn-add-milestone">＋ Milestone</button>
+          <button style="background:none;border:none;color:#1E40AF;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'" onclick="openModal('modal-meeting','','new')" id="btn-add-meeting">＋ Meeting</button>
+          <button style="background:none;border:none;color:#5B21B6;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'" onclick="openModal('modal-milestone','','new')" id="btn-add-milestone">＋ Milestone</button>
         </div>
       </div>
       <div id="tl-filter-bar" style="position:sticky;top:108px;z-index:60;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:0;border-radius:10px 10px 0 0;overflow:hidden;"></div>
@@ -478,10 +479,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div class="field"><label class="label">Type</label>
         <select class="input" id="mm-type"><option value="">— geen type —</option></select>
       </div>
-      <div class="input-row">
-        <div class="field"><label class="label">Datum</label><input class="input" id="mm-date" type="date"></div>
-        <div class="field"><label class="label">Einddatum (optioneel)</label><input class="input" id="mm-end" type="date"></div>
-      </div>
+      <div class="field"><label class="label">Datum</label><input class="input" id="mm-date" type="date"></div>
       <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="mm-desc" placeholder="Agenda, context…"></textarea></div>
       <div class="field"><label class="label">Deelnemers</label><input class="input" id="mm-participants" placeholder="bijv. Stijn, Ann, Tom"></div>
     </div>
@@ -526,11 +524,8 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div class="field"><label class="label">Type</label>
         <select class="input" id="mms-type"><option value="">— geen type —</option></select>
       </div>
-      <div class="field"><label class="label">Stream</label>
-        <select class="input" id="mms-stream" onchange="msFilterSubcats()"><option value="">— geen stream —</option></select>
-      </div>
-      <div class="field"><label class="label">Subcategorie</label>
-        <select class="input" id="mms-subcat"><option value="">— geen subcategorie —</option></select>
+      <div class="field"><label class="label">Stream / Subcategorie</label>
+        <select class="input" id="mms-track-sub"><option value="">— kies stream —</option></select>
       </div>
       <div class="field"><label class="label">Fase</label>
         <select class="input" id="mms-phase"><option value="">— geen fase —</option></select>
@@ -663,25 +658,11 @@ function showAuth() {
 // ═══════════════════════════════════════════
 //  AUTH
 // ═══════════════════════════════════════════
-let authMode = 'login';
-function toggleAuthMode() {
-  authMode = authMode === 'login' ? 'signup' : 'login';
-  document.getElementById('auth-login-form').style.display = authMode === 'login' ? 'block' : 'none';
-  document.getElementById('auth-signup-form').style.display = authMode === 'signup' ? 'block' : 'none';
-  document.getElementById('auth-err').style.display = 'none';
-}
 async function doLogin() {
   const email = document.getElementById('auth-email').value.trim();
   const pass = document.getElementById('auth-pass').value;
   const { error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error) showAuthErr(error.message);
-}
-async function doSignup() {
-  const email = document.getElementById('su-email').value.trim();
-  const pass = document.getElementById('su-pass').value;
-  const { error } = await sb.auth.signUp({ email, password: pass });
-  if (error) showAuthErr(error.message);
-  else showAuthErr('Check je e-mail om te bevestigen!', '#065f46', '#D1FAE5');
 }
 async function doLogout() { await sb.auth.signOut(); }
 function showAuthErr(msg, c='#991B1B', bg='#FEE2E2') {
@@ -785,9 +766,10 @@ function fillSetupForm() {
 }
 
 function updateMeetingMilestoneButtons() {
-  // Buttons always visible; toggles in Setup control lane visibility only
-  document.getElementById('btn-add-meeting').style.display = 'inline-flex';
-  document.getElementById('btn-add-milestone').style.display = 'inline-flex';
+  const p = projects.find(x => x.id === currentProjectId);
+  if (!p) return;
+  document.getElementById('btn-add-meeting').style.display = p.enable_meetings !== false ? 'inline-flex' : 'none';
+  document.getElementById('btn-add-milestone').style.display = p.enable_milestones !== false ? 'inline-flex' : 'none';
 }
 
 let autoSaveTimeout = null;
@@ -930,7 +912,6 @@ function openModal(modalId, recordId, mode, extra, extra2) {
     const me = mode === 'edit' ? meetings.find(x => x.id === editingMeetingId) : null;
     document.getElementById('mm-name').value = me ? me.title : '';
     document.getElementById('mm-date').value = me ? me.date : '';
-    document.getElementById('mm-end').value = me ? (me.end_date || '') : '';
     document.getElementById('mm-desc').value = me ? (me.description || '') : '';
     document.getElementById('mm-participants').value = me ? (me.participants || '') : '';
     document.getElementById('mm-type').value = me ? (me.type_id || '') : '';
@@ -949,17 +930,14 @@ function openModal(modalId, recordId, mode, extra, extra2) {
     // Populate dropdowns
     document.getElementById('mms-type').innerHTML = '<option value="">— geen type —</option>' +
       milestoneTypes.map(mt => `<option value="${mt.id}">${mt.icon||'◆'} ${mt.name}</option>`).join('');
-    document.getElementById('mms-stream').innerHTML = '<option value="">— geen stream —</option>' +
-      tracks.map(tr => `<option value="${tr.id}">${tr.name}</option>`).join('');
     document.getElementById('mms-phase').innerHTML = '<option value="">— geen fase —</option>' +
       phases.map(ph => `<option value="${ph.id}">${ph.icon||''}${ph.name}</option>`).join('');
     const m = mode === 'edit' ? milestones.find(x => x.id === editingMilestoneId) : null;
     document.getElementById('mms-name').value = m ? m.title : '';
     document.getElementById('mms-date').value = m ? (m.date || '') : '';
     document.getElementById('mms-type').value = m ? (m.type_id || '') : '';
-    document.getElementById('mms-stream').value = m ? (m.track_id || '') : '';
     document.getElementById('mms-phase').value = m ? (m.phase_id || '') : '';
-    msFilterSubcats(m ? m.subcategory_id : null);
+    fillTrackSubDropdown(m ? m.track_id : null, m ? m.subcategory_id : null, 'mms-track-sub');
   } else if (modalId === 'modal-mstype') {
     editingMilestoneTypeId = mode === 'edit' ? recordId : null;
     document.getElementById('mmst-title').textContent = mode === 'edit' ? '✏️ Type bewerken' : '🔷 Nieuw Milestone Type';
@@ -1282,8 +1260,8 @@ function getDateFromMonthYear(monthId, yearId, isEnd) {
   return `${y}-${mm}-01`;
 }
 
-function fillTrackSubDropdown(selectedTrackId, selectedSubcatId) {
-  const sel = document.getElementById('mi-track-sub');
+function fillTrackSubDropdown(selectedTrackId, selectedSubcatId, selectId) {
+  const sel = document.getElementById(selectId || 'mi-track-sub');
   sel.innerHTML = '<option value="">— Kies stream —</option>';
   tracks.forEach(tr => {
     const subs = subcategories.filter(s => s.track_id === tr.id);
@@ -1420,7 +1398,6 @@ async function saveMeeting() {
   if (!title || !date) { alert('Titel en datum zijn verplicht'); return; }
   const data = {
     title, date,
-    end_date: document.getElementById('mm-end').value || null,
     description: document.getElementById('mm-desc').value,
     participants: document.getElementById('mm-participants').value,
     type_id: document.getElementById('mm-type').value || null,
@@ -1500,23 +1477,17 @@ async function deleteMeetingType(id) {
 // ═══════════════════════════════════════════
 //  MILESTONES
 // ═══════════════════════════════════════════
-function msFilterSubcats(selectVal) {
-  const trackId = document.getElementById('mms-stream').value;
-  const subs = trackId ? subcategories.filter(s => s.track_id === trackId) : subcategories;
-  document.getElementById('mms-subcat').innerHTML = '<option value="">— geen subcategorie —</option>' +
-    subs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  if (selectVal) document.getElementById('mms-subcat').value = selectVal;
-}
-
 async function saveMilestone() {
   const title = document.getElementById('mms-name').value.trim().slice(0, 20);
   const date = document.getElementById('mms-date').value;
   if (!title || !date) { alert('Titel en datum zijn verplicht'); return; }
+  const trackSubVal = document.getElementById('mms-track-sub').value;
+  const [track_id, subcategory_id] = trackSubVal ? trackSubVal.split('|') : ['', ''];
   const data = {
     title, date,
     type_id: document.getElementById('mms-type').value || null,
-    track_id: document.getElementById('mms-stream').value || null,
-    subcategory_id: document.getElementById('mms-subcat').value || null,
+    track_id: track_id || null,
+    subcategory_id: subcategory_id || null,
     phase_id: document.getElementById('mms-phase').value || null,
   };
   if (editingMilestoneId) {
@@ -1568,6 +1539,23 @@ function sbToggleFilter(type, value) {
 }
 
 let sbLegendOpen = false;
+
+async function sbClearAllItems() {
+  const n = items.length;
+  if (!n) { toast('Er zijn geen activiteiten om te verwijderen.'); return; }
+  const confirmed = confirm(
+    `⚠️ OPGELET — Dit verwijdert ALLE ${n} activiteit${n === 1 ? '' : 'en'} van dit project permanent.\n\nDeze actie kan niet ongedaan worden gemaakt.\n\nBen je zeker?`
+  );
+  if (!confirmed) return;
+  // Double confirmation for safety
+  const confirmed2 = confirm(`Laatste kans: verwijder ${n} activiteit${n === 1 ? '' : 'en'}?`);
+  if (!confirmed2) return;
+  await sb.from('roadmap_items').delete().eq('project_id', currentProjectId);
+  items = [];
+  renderStoryboard();
+  renderTimeline();
+  toast(`🗑 ${n} activiteit${n === 1 ? '' : 'en'} verwijderd`);
+}
 
 function sbToggleLegend() {
   sbLegendOpen = !sbLegendOpen;
@@ -1667,6 +1655,8 @@ let tlMinDate = null;
 let tlMaxDate = null;
 let tlDragItemId = null;
 let tlFilterSubcats = new Set();
+let tlFilterMeetingTypes = new Set();
+let tlFilterMilestoneTypes = new Set();
 let tlBarDrag = null;
 let tlBarDragged = false;
 
@@ -1952,12 +1942,14 @@ function setTlFromDate(v) { tlFromDate = v; tlFilterYears = new Set(); renderTim
 function setTlToDate(v) { tlToDate = v; tlFilterYears = new Set(); renderTimeline(); }
 function tlClearDateFilter() { tlFromDate = ''; tlToDate = ''; tlFilterYears = new Set(); renderTimeline(); }
 function toggleTlFilterPhase(id) { tlFilterPhases.has(id) ? tlFilterPhases.delete(id) : tlFilterPhases.add(id); renderTimeline(); }
-function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterYears = new Set(); renderTimeline(); }
+function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); renderTimeline(); }
 function toggleTlFilterSubcat(id) { tlFilterSubcats.has(id) ? tlFilterSubcats.delete(id) : tlFilterSubcats.add(id); renderTimeline(); }
+function toggleTlFilterMeetingType(id) { tlFilterMeetingTypes.has(id) ? tlFilterMeetingTypes.delete(id) : tlFilterMeetingTypes.add(id); renderTimeline(); }
+function toggleTlFilterMilestoneType(id) { tlFilterMilestoneTypes.has(id) ? tlFilterMilestoneTypes.delete(id) : tlFilterMilestoneTypes.add(id); renderTimeline(); }
 
 function tlBarMouseDown(e, id, mode) {
   e.preventDefault();
-  const it = items.find(i => i.id === id) || meetings.find(i => i.id === id);
+  const it = items.find(i => i.id === id) || meetings.find(i => i.id === id) || milestones.find(i => i.id === id);
   if (!it) return;
   const grid = e.currentTarget.closest('[data-tl-grid]');
   if (!grid) return;
@@ -2057,21 +2049,43 @@ async function tlBarMouseUp(e) {
   if (lastHighlightedGrid) lastHighlightedGrid.style.background = '';
   if (!wasDragged) return;
   const it = items.find(i => i.id === id);
-  if (!it) return;
+  const ms = !it ? milestones.find(i => i.id === id) : null;
+  const meObj = !it && !ms ? meetings.find(i => i.id === id) : null;
+  if (!it && !ms && !meObj) return;
   const updates = {};
   if (crossLane && crossLaneTarget) {
-    updates.track_id = crossLaneTarget.trackId;
+    updates.track_id = crossLaneTarget.trackId || null;
     updates.subcategory_id = crossLaneTarget.subcatId || null;
   }
-  if (projectedStart) {
-    updates.start_date = projectedStart;
-    updates.end_date = projectedEnd;
-  }
-  if (Object.keys(updates).length) {
-    await sb.from('roadmap_items').update(updates).eq('id', id);
-    Object.assign(it, updates);
-    renderTimeline();
-    showToast(crossLane && crossLaneTarget ? '↕️ Rij gewijzigd' : '📅 Datum bijgewerkt: ' + projectedStart + ' → ' + projectedEnd);
+  if (ms) {
+    // milestone: single date
+    if (projectedStart) updates.date = projectedStart;
+    if (Object.keys(updates).length) {
+      await sb.from('milestones').update(updates).eq('id', id);
+      Object.assign(ms, updates);
+      renderTimeline();
+      toast(crossLane && crossLaneTarget ? '↕️ Rij gewijzigd' : '📅 Datum bijgewerkt: ' + (updates.date || projectedStart));
+    }
+  } else if (meObj) {
+    // meeting: single date
+    if (projectedStart) updates.date = projectedStart;
+    if (Object.keys(updates).length) {
+      await sb.from('meetings').update(updates).eq('id', id);
+      Object.assign(meObj, updates);
+      renderTimeline();
+      toast('📅 Datum bijgewerkt: ' + (updates.date || projectedStart));
+    }
+  } else {
+    if (projectedStart) {
+      updates.start_date = projectedStart;
+      updates.end_date = projectedEnd;
+    }
+    if (Object.keys(updates).length) {
+      await sb.from('roadmap_items').update(updates).eq('id', id);
+      Object.assign(it, updates);
+      renderTimeline();
+      toast(crossLane && crossLaneTarget ? '↕️ Rij gewijzigd' : '📅 Datum bijgewerkt: ' + projectedStart + ' → ' + projectedEnd);
+    }
   }
 }
 
@@ -2136,7 +2150,7 @@ async function tlLaneDrop(e) {
   Object.assign(item, updates);
   tlDragItemId = null;
   renderTimeline();
-  showToast(`📅 Datum ingesteld: ${updates.start_date} → ${updates.end_date}`);
+  toast(`📅 Datum ingesteld: ${updates.start_date} → ${updates.end_date}`);
 }
 
 // ═══════════════════════════════════════════
@@ -2302,8 +2316,18 @@ function renderTimeline() {
       return `<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;"><span style="font-size:10px;font-weight:700;color:${tr.color};white-space:nowrap;padding-right:1px;">${tr.name}</span>${chips}</span>`;
     }).join(`<span style="width:1px;height:16px;background:var(--gy300);display:inline-block;margin:0 4px;flex-shrink:0;align-self:center;"></span>`);
 
+  const meetTypeChips = meetingTypes.length ? meetingTypes.map(mt => {
+    const act = tlFilterMeetingTypes.has(mt.id);
+    return `<button onclick="toggleTlFilterMeetingType('${mt.id}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?(mt.color||'#1E40AF'):'var(--gy300)'};background:${act?(mt.color||'#1E40AF'):'white'};color:${act?'white':'var(--gy700)'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">${mt.icon||'📅'} ${mt.name}</button>`;
+  }).join('') : '';
+
+  const msTypeChips = milestoneTypes.length ? milestoneTypes.map(mt => {
+    const act = tlFilterMilestoneTypes.has(mt.id);
+    return `<button onclick="toggleTlFilterMilestoneType('${mt.id}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?(mt.color||'#7C3AED'):'var(--gy300)'};background:${act?(mt.color||'#7C3AED'):'white'};color:${act?'white':'var(--gy700)'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">${mt.icon||'◆'} ${mt.name}</button>`;
+  }).join('') : '';
+
   const hasDateFilter = tlFromDate || tlToDate || tlFilterYears.size;
-  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterKeyOnly || tlFilterSubcats.size;
+  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterKeyOnly || tlFilterSubcats.size || tlFilterMeetingTypes.size || tlFilterMilestoneTypes.size;
 
   const hasSidebar = unscheduled.length > 0;
   const SIDEBAR_W = 168;
@@ -2333,6 +2357,11 @@ function renderTimeline() {
       ${hasItemFilter ? `<button onclick="tlClearFilters()" style="padding:3px 9px;font-size:11px;border-radius:12px;border:1px solid var(--gy300);background:white;cursor:pointer;color:var(--gy500);">✕ Wis</button>` : ''}
     </div>
     ${subcatChips ? `<div style="padding:5px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:5px;align-items:center;"><span style="font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;padding-right:2px;">Subcat</span>${subcatChips}</div>` : ''}
+    ${(meetTypeChips || msTypeChips) ? `<div style="padding:5px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+      ${meetTypeChips ? `<span style="font-size:10px;font-weight:700;color:#1E40AF;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;">📅</span>${meetTypeChips}` : ''}
+      ${meetTypeChips && msTypeChips ? `<span style="width:1px;height:16px;background:var(--gy300);display:inline-block;margin:0 4px;flex-shrink:0;align-self:center;"></span>` : ''}
+      ${msTypeChips ? `<span style="font-size:10px;font-weight:700;color:#5B21B6;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;">🏁</span>${msTypeChips}` : ''}
+    </div>` : ''}
     <div style="display:flex;border-bottom:1px solid var(--gy300);">
       <div style="width:${LABEL_W}px;flex-shrink:0;border-right:1px solid var(--gy300);"></div>
       <div style="flex:1;display:flex;">${cols.map(c => `<div style="flex:1;text-align:center;padding:6px 2px;font-size:11px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.label}">${c.label}</div>`).join('')}</div>
@@ -2387,7 +2416,7 @@ function renderTimeline() {
   }
 
   // ── 10. renderLane helper ─────────────────────────────────────────────────
-  function renderLane(label, laneItems, bgColor, labelStyle, barColor, clickFn, contentFn, droppable, sidebarItems, laneTrackId, laneSubcatId) {
+  function renderLane(label, laneItems, bgColor, labelStyle, barColor, clickFn, contentFn, droppable, sidebarItems, laneTrackId, laneSubcatId, laneMilestones) {
     const visItems = laneItems.filter(it => {
       if (tlFilterPhases.size && !tlFilterPhases.has(it.phase_id)) return false;
       if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
@@ -2396,24 +2425,26 @@ function renderTimeline() {
       return true;
     });
     const scheduled = visItems.filter(it => it.start_date || it.date);
-    // ── stacking algorithm ──────────────────────────────────────────────────
+    const visMilestones = (laneMilestones || []).filter(ms => dateToPercent(ms.date) !== null);
+    // ── stacking algorithm (bars + milestones combined) ────────────────────
     const BAR_H = 28, BAR_GAP = 4, TOP_PAD = 8;
-    const sorted = [...scheduled].sort((a, b) => {
-      const as = a.start_date || a.date || '', bs = b.start_date || b.date || '';
-      return as < bs ? -1 : as > bs ? 1 : 0;
-    });
-    const rowEnds = []; // rowEnds[i] = end-% of last bar placed in sub-row i
-    const barRows = new Map(); // item.id → { startPct, endPct, w, rowIdx }
-    sorted.forEach(it => {
-      const startPct = dateToPercent(it.start_date || it.date);
-      const endPct   = dateToPercent(it.end_date || it.start_date || it.date);
+    const MS_W = 2; // pseudo-width for overlap detection
+    const allForStack = [
+      ...scheduled.map(it => ({ _id: it.id, _type: 'bar', _start: it.start_date || it.date, _end: it.end_date || it.start_date || it.date })),
+      ...visMilestones.map(ms => ({ _id: ms.id, _type: 'ms', _start: ms.date, _end: ms.date })),
+    ].sort((a, b) => a._start < b._start ? -1 : a._start > b._start ? 1 : 0);
+    const rowEnds = [];
+    const barRows = new Map();
+    allForStack.forEach(({ _id, _type, _start, _end }) => {
+      const startPct = dateToPercent(_start);
+      const endPct   = dateToPercent(_end);
       if (startPct === null) return;
-      const w = Math.max(0.5, (endPct || startPct) - startPct);
-      const effectiveEnd = startPct + w + 0.3; // tiny gap between bars
+      const w = _type === 'ms' ? MS_W : Math.max(0.5, (endPct || startPct) - startPct);
+      const effectiveEnd = startPct + w + 0.3;
       let rowIdx = 0;
       while (rowIdx < rowEnds.length && rowEnds[rowIdx] > startPct) rowIdx++;
       rowEnds[rowIdx] = effectiveEnd;
-      barRows.set(it.id, { startPct, endPct, w, rowIdx });
+      barRows.set(_id, { startPct, endPct, w, rowIdx, _type });
     });
     const numRows = Math.max(1, rowEnds.length);
     const laneH = TOP_PAD + numRows * (BAR_H + BAR_GAP) + TOP_PAD;
@@ -2423,7 +2454,8 @@ function renderTimeline() {
       ${droppable ? `ondragover="tlLaneDragOver(event)" ondragleave="tlLaneDragLeave(event)" ondrop="tlLaneDrop(event)"` : ''}>
       ${phaseBandsHtml}
       ${colGridLines()}`;
-    sorted.forEach((it) => {
+    // bars
+    scheduled.forEach((it) => {
       const bm = barRows.get(it.id);
       if (!bm) return;
       const { startPct, w, rowIdx } = bm;
@@ -2447,6 +2479,25 @@ function renderTimeline() {
         <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
       </div>`;
     });
+    // milestones
+    visMilestones.forEach(ms => {
+      const bm = barRows.get(ms.id);
+      if (!bm) return;
+      const { startPct, rowIdx } = bm;
+      const top = TOP_PAD + rowIdx * (BAR_H + BAR_GAP);
+      const mtype = milestoneTypes.find(t => t.id === ms.type_id);
+      const msColor = mtype ? mtype.color : '#7C3AED';
+      const msIcon = mtype ? (mtype.icon || '◆') : '◆';
+      const safeTitle = ms.title.replace(/"/g,'&quot;');
+      cells += `<div data-tl-bar="${ms.id}" style="position:absolute;left:${startPct}%;top:${top}px;height:${BAR_H}px;transform:translateX(-50%);z-index:4;cursor:grab;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;gap:2px;"
+        onmousedown="tlBarMouseDown(event,'${ms.id}','move')"
+        onclick="if(!tlBarDragged){openModal('modal-milestone','${ms.id}','edit')}else{tlBarDragged=false;}"
+        title="${safeTitle}"
+        onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+        <span style="font-size:16px;line-height:1;color:${msColor};filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));">${msIcon}</span>
+        <span style="font-size:9px;font-weight:700;color:${msColor};white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);max-width:80px;overflow:hidden;text-overflow:ellipsis;">${ms.title}</span>
+      </div>`;
+    });
     cells += `</div>`;
     const sdCell = hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;padding:3px 4px;display:flex;flex-direction:column;gap:2px;">${(sidebarItems||[]).map(sit => `<div draggable="true" ondragstart="tlCardDragStart(event,'${sit.id}')" onclick="openModal('modal-item','${sit.id}','edit')" style="border-left:3px solid ${barColor};border-radius:0 4px 4px 0;padding:3px 5px;background:white;border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);cursor:pointer;font-size:10px;font-weight:600;color:var(--gy900);line-height:1.3;" title="${(sit.title||'').replace(/"/g,'&quot;')}">${sit.key_activity?'⭐ ':''}${sit.title}</div>`).join('')}</div>` : '';
     return `<div style="display:flex;border-bottom:1px solid var(--gy200);background:${bgColor||'white'};align-items:stretch;">
@@ -2459,8 +2510,9 @@ function renderTimeline() {
   // ── 11. Meetings lane ─────────────────────────────────────────────────────
   if (p.enable_meetings !== false && meetings.length > 0) {
     const visibleMeetings = meetings.filter(m => {
-      const pct = dateToPercent(m.date);
-      return pct !== null;
+      if (dateToPercent(m.date) === null) return false;
+      if (tlFilterMeetingTypes.size && !tlFilterMeetingTypes.has(m.type_id)) return false;
+      return true;
     });
     if (visibleMeetings.length > 0) {
       // stacking voor meetings
@@ -2503,31 +2555,6 @@ function renderTimeline() {
     }
   }
 
-  // ── 12. Milestones lane ───────────────────────────────────────────────────
-  if (p.enable_milestones !== false && milestones.length > 0) {
-    html += `<div style="display:flex;border-bottom:1px solid var(--gy200);min-height:52px;background:#F5F3FF;align-items:stretch;">
-      <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:#F5F3FF;font-weight:700;color:#5B21B6;">🏁 Milestones</div>
-      <div style="flex:1;position:relative;min-height:52px;">${phaseBandsHtml}`;
-    milestones.forEach(ms => {
-      const pct = dateToPercent(ms.date);
-      if (pct === null) return;
-      const mtype = milestoneTypes.find(t => t.id === ms.type_id);
-      const msColor = mtype ? mtype.color : '#7C3AED';
-      const msIcon = mtype ? mtype.icon : '◆';
-      // Render as icon if text/emoji, otherwise as diamond
-      const isText = msIcon && /\S/.test(msIcon);
-      const iconHtml = isText
-        ? `<div style="font-size:18px;line-height:1;color:${msColor};filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));">${msIcon}</div>`
-        : `<div style="width:20px;height:20px;background:${msColor};transform:rotate(45deg);border-radius:3px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.2);"></div>`;
-      html += `<div style="position:absolute;left:${pct}%;top:50%;transform:translate(-50%,-50%);z-index:3;cursor:pointer;display:flex;flex-direction:column;align-items:center;" onclick="openModal('modal-milestone','${ms.id}','edit')" title="${ms.title}${mtype?' ('+mtype.name+')':''}">
-        ${iconHtml}
-        <div style="margin-top:3px;font-size:10px;font-weight:700;color:${msColor};white-space:nowrap;background:white;padding:2px 5px;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);">${ms.title}</div>
-      </div>`;
-    });
-    const msSdCell = hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;"></div>` : '';
-    html += `</div>${msSdCell}</div>`;
-  }
-
   // ── 13. Track lanes ────────────────────────────────────────────────────────
   const keyContentFn = (it) => (it.key_activity ? '⭐ ' : '') + it.title;
   tracks.forEach(tr => {
@@ -2542,22 +2569,24 @@ function renderTimeline() {
     </div>`;
     if (subs.length === 0) {
       const laneUnsched = unscheduled.filter(i => i.track_id === tr.id && !i.subcategory_id);
+      const laneMs = p.enable_milestones !== false ? milestones.filter(ms => ms.track_id === tr.id && !ms.subcategory_id && (!tlFilterMilestoneTypes.size || tlFilterMilestoneTypes.has(ms.type_id))) : [];
       html += renderLane(
         `<span style="padding-left:14px;color:var(--gy500);font-style:italic;">Items</span>`,
         items.filter(i => i.track_id === tr.id && !i.subcategory_id),
         'white', '', tr.color,
         (it) => `openModal('modal-item','${it.id}','edit')`,
-        keyContentFn, true, laneUnsched, tr.id, null
+        keyContentFn, true, laneUnsched, tr.id, null, laneMs
       );
     } else {
       subs.forEach(sub => {
         const laneUnsched = unscheduled.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id);
+        const laneMs = p.enable_milestones !== false ? milestones.filter(ms => ms.track_id === tr.id && ms.subcategory_id === sub.id) : [];
         html += renderLane(
           `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};flex-shrink:0;"></span><span style="padding-left:6px;">${renderIcon(sub.icon)}${sub.name}</span>`,
           items.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id),
           'white', 'padding-left:26px;', sub.color,
           (it) => `openModal('modal-item','${it.id}','edit')`,
-          keyContentFn, true, laneUnsched, tr.id, sub.id
+          keyContentFn, true, laneUnsched, tr.id, sub.id, laneMs
         );
       });
     }
