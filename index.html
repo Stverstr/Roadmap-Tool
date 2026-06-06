@@ -621,7 +621,10 @@ async function loadProjects() {
   const saved = localStorage.getItem('rs_project_' + currentUser.id);
   if (saved && projects.find(p => p.id === saved)) {
     sel.value = saved;
-    await onProjectChange(false);
+    await onProjectChange(true);
+  } else if (projects.length === 1) {
+    sel.value = projects[0].id;
+    await onProjectChange(true);
   } else {
     showNoProject();
   }
