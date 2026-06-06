@@ -1450,7 +1450,7 @@ let tlFilterPhases  = new Set();
 let tlFilterStatuses = new Set();
 let tlFilterKeyOnly = false;
 let tlYearMode = 'calendar';
-let tlYear = null;
+let tlFilterYears = new Set();
 let tlFromDate = '';
 let tlToDate = '';
 let tlMinDate = null;
@@ -1733,16 +1733,16 @@ function getWeekNumber(d) {
   return 1 + Math.round(((date - w1) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
 }
 function setTlZoom(z) { tlZoom = z; renderTimeline(); }
-function setTlYear(y) { tlYear = y === '' ? null : parseInt(y); tlFromDate = ''; tlToDate = ''; renderTimeline(); }
-function setTlYearMode(m) { tlYearMode = m; tlYear = null; renderTimeline(); }
+function toggleTlFilterYear(y) { tlFilterYears.has(y) ? tlFilterYears.delete(y) : tlFilterYears.add(y); tlFromDate = ''; tlToDate = ''; renderTimeline(); }
+function setTlYearMode(m) { tlYearMode = m; tlFilterYears = new Set(); renderTimeline(); }
 function toggleTlFilterStream(id) { tlFilterStreams.has(id) ? tlFilterStreams.delete(id) : tlFilterStreams.add(id); renderTimeline(); }
 function toggleTlFilterStatus(s) { tlFilterStatuses.has(s) ? tlFilterStatuses.delete(s) : tlFilterStatuses.add(s); renderTimeline(); }
 function setTlFilterKeyOnly(v) { tlFilterKeyOnly = v; renderTimeline(); }
-function setTlFromDate(v) { tlFromDate = v; tlYear = null; renderTimeline(); }
-function setTlToDate(v) { tlToDate = v; tlYear = null; renderTimeline(); }
-function tlClearDateFilter() { tlFromDate = ''; tlToDate = ''; tlYear = null; renderTimeline(); }
+function setTlFromDate(v) { tlFromDate = v; tlFilterYears = new Set(); renderTimeline(); }
+function setTlToDate(v) { tlToDate = v; tlFilterYears = new Set(); renderTimeline(); }
+function tlClearDateFilter() { tlFromDate = ''; tlToDate = ''; tlFilterYears = new Set(); renderTimeline(); }
 function toggleTlFilterPhase(id) { tlFilterPhases.has(id) ? tlFilterPhases.delete(id) : tlFilterPhases.add(id); renderTimeline(); }
-function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; renderTimeline(); }
+function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterYears = new Set(); renderTimeline(); }
 function toggleTlFilterSubcat(id) { tlFilterSubcats.has(id) ? tlFilterSubcats.delete(id) : tlFilterSubcats.add(id); renderTimeline(); }
 
 function tlBarMouseDown(e, id, mode) {
@@ -1957,13 +1957,15 @@ function renderTimeline() {
     maxDate = tlToDate   ? new Date(tlToDate)   : dataMax;
     minDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
     maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
-  } else if (tlYear !== null) {
+  } else if (tlFilterYears.size) {
+    const sortedYears = [...tlFilterYears].sort((a, b) => a - b);
+    const yMin = sortedYears[0], yMax = sortedYears[sortedYears.length - 1];
     if (tlYearMode === 'fiscal') {
-      minDate = new Date(tlYear, 3, 1);       // 1 april
-      maxDate = new Date(tlYear + 1, 2, 31);  // 31 maart
+      minDate = new Date(yMin, 3, 1);       // 1 april van vroegst geselecteerd jaar
+      maxDate = new Date(yMax + 1, 2, 31);  // 31 maart na laatste geselecteerd jaar
     } else {
-      minDate = new Date(tlYear, 0, 1);
-      maxDate = new Date(tlYear, 11, 31);
+      minDate = new Date(yMin, 0, 1);
+      maxDate = new Date(yMax, 11, 31);
     }
   } else {
     minDate = dataMin; maxDate = dataMax;
@@ -2046,10 +2048,10 @@ function renderTimeline() {
     return `<button onclick="setTlYearMode('${m}')" style="padding:4px 11px;font-size:11px;font-weight:600;border:none;background:${act?'#1E40AF':'transparent'};color:${act?'white':'var(--gy600,#4B5563)'};cursor:pointer;transition:all .15s;">${lbl}</button>`;
   }).join('');
 
-  const yearOpts = `<option value="">Alle jaren</option>` + availableYears.map(y => {
+  const yearChips = availableYears.map(y => {
+    const act = tlFilterYears.has(y);
     const lbl = tlYearMode === 'fiscal' ? `${String(y).slice(-2)}/${String(y+1).slice(-2)}` : String(y);
-    const sel = tlYear !== null && tlYear === y ? 'selected' : '';
-    return `<option value="${y}" ${sel}>${lbl}</option>`;
+    return `<button onclick="toggleTlFilterYear(${y})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?'#1E40AF':'var(--gy300)'};background:${act?'#EFF6FF':'white'};color:${act?'#1E40AF':'var(--gy700)'};cursor:pointer;white-space:nowrap;">${lbl}</button>`;
   }).join('');
 
   const streamChips = tracks.map(tr => {
@@ -2090,7 +2092,7 @@ function renderTimeline() {
       return `<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;"><span style="font-size:10px;font-weight:700;color:${tr.color};white-space:nowrap;padding-right:1px;">${tr.name}</span>${chips}</span>`;
     }).join(`<span style="width:1px;height:16px;background:var(--gy300);display:inline-block;margin:0 4px;flex-shrink:0;align-self:center;"></span>`);
 
-  const hasDateFilter = tlFromDate || tlToDate || tlYear !== null;
+  const hasDateFilter = tlFromDate || tlToDate || tlFilterYears.size;
   const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterKeyOnly || tlFilterSubcats.size;
 
   const hasSidebar = unscheduled.length > 0;
@@ -2104,7 +2106,7 @@ function renderTimeline() {
       <div style="display:flex;border:1px solid var(--gy300);border-radius:6px;overflow:hidden;flex-shrink:0;">${zoomBtns}</div>
       <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
       <div style="display:flex;border:1px solid var(--gy300);border-radius:6px;overflow:hidden;flex-shrink:0;">${ymodeBtns}</div>
-      <select onchange="setTlYear(this.value)" style="padding:4px 8px;font-size:11px;border:1px solid var(--gy300);border-radius:5px;background:white;color:var(--gy700);cursor:pointer;">${yearOpts}</select>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">${yearChips}</div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
         <span style="font-size:11px;color:var(--gy500);font-weight:600;">Van</span>
         <input type="date" value="${tlFromDate}" onchange="setTlFromDate(this.value)" style="padding:3px 6px;font-size:11px;border:1px solid var(--gy300);border-radius:5px;color:var(--gy700);">
@@ -2350,13 +2352,28 @@ function renderTimeline() {
 // ═══════════════════════════════════════════
 //  TAB SWITCHING
 // ═══════════════════════════════════════════
+function syncFiltersToTimeline() {
+  tlFilterStreams  = new Set(sbFilterTracks);
+  tlFilterSubcats  = new Set(sbFilterSubcats);
+  tlFilterPhases   = new Set(sbFilterPhases);
+  tlFilterStatuses = new Set(sbFilterStatuses);
+  tlFilterKeyOnly  = sbFilterKeyOnly;
+}
+function syncFiltersToStoryboard() {
+  sbFilterTracks   = new Set(tlFilterStreams);
+  sbFilterSubcats  = new Set(tlFilterSubcats);
+  sbFilterPhases   = new Set(tlFilterPhases);
+  sbFilterStatuses = new Set(tlFilterStatuses);
+  sbFilterKeyOnly  = tlFilterKeyOnly;
+}
 function switchTab(name) {
+  const prev = [...document.querySelectorAll('.ntab.active')].map(b => b.id.replace('tab-','').replace('-btn',''))[0];
   ['setup','storyboard','timeline'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
     document.getElementById(`tab-${t}-btn`).classList.toggle('active', t === name);
   });
-  if (name === 'storyboard' && currentProjectId) renderStoryboard();
-  if (name === 'timeline' && currentProjectId) renderTimeline();
+  if (name === 'storyboard' && currentProjectId) { if (prev === 'timeline') syncFiltersToStoryboard(); renderStoryboard(); }
+  if (name === 'timeline'   && currentProjectId) { if (prev === 'storyboard') syncFiltersToTimeline(); renderTimeline(); }
   if (name === 'setup' && currentProjectId) { renderTracksList(); renderPhasesList(); }
 }
 
