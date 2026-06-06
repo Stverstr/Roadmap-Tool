@@ -1927,8 +1927,11 @@ function renderTimeline() {
   const hasDateFilter = tlFromDate || tlToDate || tlYear !== null;
   const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterKeyOnly;
 
-  let html = `<div style="display:flex;align-items:flex-start;"><div style="flex:1;min-width:0;">
-  <div style="position:sticky;top:108px;z-index:50;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);">
+  const hasSidebar = unscheduled.length > 0;
+  const SIDEBAR_W = 168;
+
+  // ── Sticky filter bar + column header (outside flex body) ─────────────────
+  let html = `<div style="position:sticky;top:108px;z-index:50;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);">
     <div style="padding:8px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
       <div style="display:flex;border:1px solid var(--gy300);border-radius:6px;overflow:hidden;flex-shrink:0;">${zoomBtns}</div>
       <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
@@ -1943,7 +1946,7 @@ function renderTimeline() {
       </div>
       <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
       ${streamChips}
-      ${phaseChips.length ? `<div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>${phaseChips}` : ''}
+      ${phaseChips ? `<div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>${phaseChips}` : ''}
       <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
       ${statusChips}
       ${keyChip}
@@ -1952,8 +1955,10 @@ function renderTimeline() {
     <div style="display:flex;border-bottom:1px solid var(--gy300);">
       <div style="width:${LABEL_W}px;flex-shrink:0;padding:7px 12px;font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;border-right:1px solid var(--gy300);">Stream / Lane</div>
       <div style="flex:1;display:flex;">${cols.map(c => `<div style="flex:1;text-align:center;padding:6px 2px;font-size:11px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.label}">${c.label}</div>`).join('')}</div>
+      ${hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FEF3C7;padding:7px 8px;font-size:10px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:.3px;">📋 Nog te plannen</div>` : ''}
     </div>
-  </div>`;
+  </div>
+  <div style="display:flex;align-items:flex-start;"><div style="flex:1;min-width:0;">`;
 
   // ── 7. Phase row + background bands ──────────────────────────────────────
   const visPhases = tlFilterPhases.size ? phases.filter(ph => tlFilterPhases.has(ph.id)) : phases;
@@ -2110,17 +2115,16 @@ function renderTimeline() {
   html += `</div>`; // close inner timeline column
 
   // ── 15. Right sidebar: unscheduled items ──────────────────────────────────
-  if (unscheduled.length > 0) {
+  if (hasSidebar) {
     const byTrack = {};
     unscheduled.forEach(it => {
       const key = it.track_id || '__none__';
       if (!byTrack[key]) byTrack[key] = [];
       byTrack[key].push(it);
     });
-    let sidebarHtml = `<div style="width:168px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;position:sticky;top:108px;align-self:flex-start;max-height:calc(100vh - 140px);overflow-y:auto;">
-      <div style="padding:10px 10px 6px;border-bottom:1px solid #FDE68A;background:#FEF3C7;">
-        <div style="font-size:10px;font-weight:800;color:#92400E;text-transform:uppercase;letter-spacing:.5px;">📋 Nog te plannen</div>
-        <div style="font-size:10px;color:#B45309;margin-top:3px;">Sleep naar de tijdslijn →</div>
+    let sidebarHtml = `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;">
+      <div style="padding:6px 8px;border-bottom:1px solid #FDE68A;background:#FEF9C3;">
+        <div style="font-size:10px;color:#B45309;font-style:italic;">Sleep naar de tijdslijn →</div>
       </div>
       <div style="padding:8px;">`;
     Object.entries(byTrack).forEach(([trackId, trackItems]) => {
