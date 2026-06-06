@@ -272,7 +272,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <!-- Tracks & subcategories -->
         <div>
           <div class="card">
-            <div class="card-row"><span class="card-title" style="margin:0">🚦 Sporen & Subcategorieën</span><button class="btn btn-p btn-sm" onclick="openModal('modal-track','','new')">＋ Spoor</button></div>
+            <div class="card-row"><span class="card-title" style="margin:0">🚦 Streams & Subcategorieën</span><button class="btn btn-p btn-sm" onclick="openModal('modal-track','','new')">＋ Stream</button></div>
             <div id="tracks-list"><div class="loading">Laden…</div></div>
           </div>
         </div>
@@ -353,7 +353,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
 <!-- Track modal -->
 <div class="overlay" id="modal-track">
   <div class="modal">
-    <div class="modal-head"><span class="modal-title" id="mt-title">🚦 Spoor</span><button class="modal-close" onclick="closeModal('modal-track')">✕</button></div>
+    <div class="modal-head"><span class="modal-title" id="mt-title">🚦 Stream</span><button class="modal-close" onclick="closeModal('modal-track')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label class="label">Naam</label><input class="input" id="mt-name" placeholder="bijv. Proces, Mensen, Data…"></div>
       <div class="field"><label class="label">Icoon</label>
@@ -369,7 +369,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div id="mt-subcats"></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-danger btn-sm" id="mt-del-btn" onclick="deleteTrackModal()" style="margin-right:auto;display:none">🗑 Verwijder spoor</button>
+      <button class="btn btn-danger btn-sm" id="mt-del-btn" onclick="deleteTrackModal()" style="margin-right:auto;display:none">🗑 Verwijder stream</button>
       <button class="btn btn-s" onclick="closeModal('modal-track')">Annuleer</button>
       <button class="btn btn-p" onclick="saveTrack()">Opslaan</button>
     </div>
@@ -411,14 +411,14 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div class="field">
         <label class="label" style="display:flex;align-items:center;gap:8px;">
           <input type="checkbox" id="mi-key" style="width:15px;height:15px;accent-color:var(--g700);cursor:pointer;flex-shrink:0;">
-          Key activity
+          ⭐ Key activity
         </label>
       </div>
       <div class="field"><label class="label" style="display:flex;justify-content:space-between;">Context / Scope <span id="mi-context-count" style="font-weight:400;color:var(--gy500);">0/30</span></label><textarea class="textarea" id="mi-context" placeholder="Korte situatieschets en afbakening…" style="min-height:60px;" maxlength="30" oninput="document.getElementById('mi-context-count').textContent=this.value.length+'/30'"></textarea></div>
       <div class="field"><label class="label">Verwachte deliverables</label><textarea class="textarea" id="mi-deliverables" placeholder="Wat moet er concreet opgeleverd worden?"></textarea></div>
       <div class="field">
-        <label class="label">Spoor & Subcategorie</label>
-        <select class="select" id="mi-track-sub"><option value="">— Kies spoor —</option></select>
+        <label class="label">Stream & Subcategorie</label>
+        <select class="select" id="mi-track-sub"><option value="">— Kies stream —</option></select>
       </div>
       <div class="field"><label class="label">Fase</label><select class="select" id="mi-phase"><option value="">— Geen fase —</option></select></div>
       <div class="input-row">
@@ -776,7 +776,7 @@ async function deleteProject() {
 // ═══════════════════════════════════════════
 function renderTracksList() {
   const el = document.getElementById('tracks-list');
-  if (!tracks.length) { el.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-icon">🚦</div><div class="empty-sub">Nog geen sporen. Voeg er een toe.</div></div>'; return; }
+  if (!tracks.length) { el.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-icon">🚦</div><div class="empty-sub">Nog geen streams. Voeg er een toe.</div></div>'; return; }
   el.innerHTML = tracks.map(tr => {
     const subs = subcategories.filter(s => s.track_id === tr.id);
     return `<div class="track-item">
@@ -799,7 +799,7 @@ function renderTracksList() {
 function openModal(modalId, recordId, mode, extra, extra2) {
   if (modalId === 'modal-track') {
     editingTrackId = mode === 'edit' ? recordId : null;
-    document.getElementById('mt-title').textContent = mode === 'edit' ? '✏️ Spoor bewerken' : '🚦 Nieuw spoor';
+    document.getElementById('mt-title').textContent = mode === 'edit' ? '✏️ Stream bewerken' : '🚦 Nieuwe stream';
     document.getElementById('mt-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
     subcatFields = [];
     if (mode === 'edit' && editingTrackId) {
@@ -990,7 +990,7 @@ async function saveTrack() {
   renderTracksList();
   renderStoryboard();
   renderTimeline();
-  toast('Spoor opgeslagen ✓');
+  toast('Stream opgeslagen ✓');
 }
 
 async function deleteTrackModal() {
@@ -1000,13 +1000,13 @@ async function deleteTrackModal() {
 }
 
 async function deleteTrack(id) {
-  if (!confirm('Spoor en alle items verwijderen?')) return;
+  if (!confirm('Stream en alle items verwijderen?')) return;
   await sb.from('tracks').delete().eq('id', id);
   tracks = tracks.filter(t => t.id !== id);
   subcategories = subcategories.filter(s => s.track_id !== id);
   items = items.filter(i => i.track_id !== id);
   renderTracksList(); renderStoryboard(); renderTimeline();
-  toast('Spoor verwijderd');
+  toast('Stream verwijderd');
 }
 
 // ═══════════════════════════════════════════
@@ -1133,7 +1133,7 @@ function getDateFromMonthYear(monthId, yearId, isEnd) {
 
 function fillTrackSubDropdown(selectedTrackId, selectedSubcatId) {
   const sel = document.getElementById('mi-track-sub');
-  sel.innerHTML = '<option value="">— Kies spoor —</option>';
+  sel.innerHTML = '<option value="">— Kies stream —</option>';
   tracks.forEach(tr => {
     const subs = subcategories.filter(s => s.track_id === tr.id);
     if (subs.length === 0) {
@@ -1385,9 +1385,9 @@ function renderSbLegend() {
 
   let html = '';
 
-  // Sporen
+  // Streams
   if (tracks.length) {
-    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Sporen</span>`;
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Streams</span>`;
     tracks.forEach(tr => {
       html += chip(`<span style="width:8px;height:8px;border-radius:50%;background:${tr.color};flex-shrink:0;display:inline-block;"></span>${tr.icon?tr.icon+' ':''}${tr.name}`,
         sbFilterTracks.has(tr.id), `sbToggleFilter('track','${tr.id}')`, tr.color, '#111827');
@@ -1544,7 +1544,7 @@ function renderStoryboard() {
   const el = document.getElementById('sb-grid');
 
   if (!tracks.length && !phases.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Geen sporen of fasen</div><div class="empty-sub">Stel eerst sporen en fasen in via Setup.</div></div>';
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Geen streams of fasen</div><div class="empty-sub">Stel eerst streams en fasen in via Setup.</div></div>';
     return;
   }
 
@@ -1561,7 +1561,7 @@ function renderStoryboard() {
   if (sbFilterSubcats.size) colDefs = colDefs.filter(c => c.sub && sbFilterSubcats.has(c.sub.id));
 
   if (!colDefs.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Geen zichtbare sporen</div><div class="empty-sub">Pas je filters aan.</div></div>';
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Geen zichtbare streams</div><div class="empty-sub">Pas je filters aan.</div></div>';
     return;
   }
 
@@ -1581,7 +1581,7 @@ function renderStoryboard() {
     const trCols = colDefs.filter(c => c.track.id === tr.id);
     if (!trCols.length) return;
     html += `<div style="grid-column:${colIdx}/span ${trCols.length};grid-row:1;background:${tr.color};color:${textColor(tr.color)};padding:8px 12px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(0,0,0,.1);border-bottom:1px solid rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;gap:5px;">
-      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);flex-shrink:0;"></span>${renderIcon(tr.icon)}${tr.name}
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);flex-shrink:0;"></span>${renderIcon(tr.icon, tr.color)}${tr.name}
     </div>`;
     colIdx += trCols.length;
   });
@@ -1590,7 +1590,7 @@ function renderStoryboard() {
   colIdx = 2;
   colDefs.forEach(c => {
     const bg = c.sub ? c.sub.color : c.track.color;
-    const label = c.sub ? `${renderIcon(c.sub.icon)}${c.sub.name}` : `${renderIcon(c.track.icon)}${c.track.name}`;
+    const label = c.sub ? `${renderIcon(c.sub.icon, bg)}${c.sub.name}` : `${renderIcon(c.track.icon, bg)}${c.track.name}`;
     html += `<div style="grid-column:${colIdx};grid-row:2;background:${bg};color:${textColor(bg)};padding:6px 10px;font-size:11px;font-weight:600;text-align:center;border-right:1px solid rgba(0,0,0,.1);border-bottom:1px solid var(--gy300);">${label}</div>`;
     colIdx++;
   });
@@ -1600,7 +1600,7 @@ function renderStoryboard() {
   rowPhases.forEach(ph => {
     const phBg = ph ? (ph.color || '#2D6A4F') : 'var(--g700)';
     const phLabel = ph
-      ? `<div style="font-size:13px;font-weight:700;">${renderIcon(ph.icon)}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
+      ? `<div style="font-size:13px;font-weight:700;">${renderIcon(ph.icon, phBg)}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
       : `<div style="font-size:13px;font-weight:700;">Alle items</div>`;
     html += `<div style="grid-column:1;grid-row:${rowNum};background:${phBg};color:${textColor(phBg)};padding:10px 12px;border-right:1px solid rgba(0,0,0,.1);border-top:1px solid rgba(0,0,0,.08);">${phLabel}</div>`;
     colIdx = 2;
@@ -1617,30 +1617,48 @@ function renderStoryboard() {
     rowNum++;
   });
 
-  // Backlog row — items with no phase assigned
-  // Only show when there are real phases AND we're showing real phase rows (not the "all filtered" fallback)
+  // Backlog row — fully unassigned items (no track, no phase). Spans all columns as one zone.
   const showingRealPhaseRows = rowPhases.some(ph => ph !== null);
   if (phases.length && showingRealPhaseRows) {
-    html += `<div style="grid-column:1;grid-row:${rowNum};background:#F8FAFC;color:var(--gy500);padding:10px 12px;border-right:1px solid rgba(0,0,0,.08);border-top:2px dashed var(--gy300);display:flex;align-items:flex-start;gap:6px;">
-      <div>
-        <div style="font-size:12px;font-weight:700;color:var(--gy500);">📥 Backlog</div>
-        <div style="font-size:10px;opacity:.7;margin-top:2px;">Nog niet gepland</div>
-      </div>
+    const backlogItems = items.filter(i => !i.track_id && !i.phase_id)
+      .sort((a,b) => (a.position||0) - (b.position||0));
+    const totalTrackCols = colDefs.length;
+    const blStatusIcon = {
+      pending: '<span style="font-size:11px;color:var(--gy500);font-weight:700;line-height:1;">○</span>',
+      active:  '<span style="font-size:11px;color:#1E40AF;font-weight:700;line-height:1;">▶</span>',
+      done:    '<span style="font-size:11px;color:#14532D;font-weight:700;line-height:1;">✓</span>'
+    };
+
+    html += `<div style="grid-column:1;grid-row:${rowNum};background:#F8FAFC;color:var(--gy600,#6B7280);padding:10px 12px;border-right:1px solid var(--gy300);border-top:2px dashed var(--gy300);display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
+      <div style="font-size:12px;font-weight:700;color:var(--gy500);">📥 Backlog</div>
+      <div style="font-size:10px;opacity:.7;">Niet toegewezen</div>
     </div>`;
-    colIdx = 2;
-    colDefs.forEach(c => {
-      const backlogItems = items.filter(i =>
-        i.track_id === c.track.id &&
-        (c.sub ? i.subcategory_id === c.sub.id : !i.subcategory_id) &&
-        !i.phase_id
-      ).sort((a,b) => (a.position||0) - (b.position||0));
-      const color = c.sub ? c.sub.color : c.track.color;
-      const cellHtml = renderSbCell(backlogItems, c.track.id, c.sub?c.sub.id:null, null, color)
-        .replace('background:white;', 'background:#F8FAFC;')
-        .replace('border-top:1px solid var(--gy200)', 'border-top:2px dashed var(--gy300)');
-      html += `<div style="grid-column:${colIdx};grid-row:${rowNum};">${cellHtml}</div>`;
-      colIdx++;
+
+    let blHtml = `<div style="grid-column:2/span ${totalTrackCols};grid-row:${rowNum};background:#F8FAFC;border-top:2px dashed var(--gy300);padding:8px;min-height:80px;"
+      ondragover="sbCellDragOver(event,'','','')"
+      ondragleave="sbCellDragLeave(event)"
+      ondrop="sbCellDrop(event,'','','')">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;">`;
+
+    backlogItems.filter(it => sbItemVisible(it)).forEach(it => {
+      const st = it.status || 'pending';
+      const borderCol = {pending:'#9CA3AF',active:'#3B82F6',done:'#22C55E'}[st]||'#9CA3AF';
+      blHtml += `<div draggable="true" data-item-id="${it.id}"
+        style="border-left:3px solid ${borderCol};border-radius:0 7px 7px 0;padding:8px 10px;cursor:grab;background:#fafafa;border:1px solid var(--gy200);border-left:3px solid ${borderCol};position:relative;user-select:none;transition:opacity .15s;min-width:130px;max-width:220px;"
+        ondragstart="sbCardDragStart(event,'${it.id}')"
+        ondragend="sbCardDragEnd(event,'${it.id}')"
+        onclick="if(!sbDragging)openModal('modal-item','${it.id}','edit')">
+        <button onclick="event.stopPropagation();copyItem('${it.id}')" title="Kopiëren" draggable="false" style="position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--gy400);padding:2px;line-height:1;" onmouseover="this.style.color='var(--g700)'" onmouseout="this.style.color='var(--gy400)'">⧉</button>
+        <div style="font-size:12px;font-weight:700;color:var(--gy900);margin-bottom:3px;line-height:1.3;padding-right:18px;">${it.title}</div>
+        ${it.context_scope ? `<div style="font-size:11px;color:var(--gy500);line-height:1.4;margin-bottom:4px;">${it.context_scope}</div>` : ''}
+        <div style="display:flex;align-items:center;gap:5px;">${blStatusIcon[st]||blStatusIcon.pending}${it.key_activity?'<span style="font-size:11px;opacity:.55;" title="Key activity">⭐</span>':''}</div>
+      </div>`;
     });
+
+    blHtml += `</div>
+      <button draggable="false" style="margin-top:6px;background:var(--g50);border:1px dashed #74C69D;color:var(--g700);border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;font-weight:600;" onclick="openAddItemPrefill(null,null,null)">＋ Backlog item</button>
+    </div>`;
+    html += blHtml;
   }
 
   html += '</div>';
@@ -1725,7 +1743,7 @@ function renderTimeline() {
 
   // Header
   let html = `<div style="display:flex;border-bottom:2px solid var(--gy300);background:white;position:sticky;top:108px;z-index:50;">
-    <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;border-right:1px solid var(--gy300);">Spoor / Lane</div>
+    <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;border-right:1px solid var(--gy300);">Stream / Lane</div>
     <div style="flex:1;display:flex;">`;
   months.forEach(m => {
     html += `<div style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);">${m.toLocaleDateString('nl-BE',{month:'short',year:'numeric'})}</div>`;
@@ -1841,7 +1859,7 @@ function renderTimeline() {
   }
 
   if (!tracks.length) {
-    html += `<div class="empty" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-title">Geen sporen</div><div class="empty-sub">Voeg sporen toe via Setup om de tijdslijn te zien.</div></div>`;
+    html += `<div class="empty" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-title">Geen streams</div><div class="empty-sub">Voeg streams toe via Setup om de tijdslijn te zien.</div></div>`;
   }
 
   el.innerHTML = html;
@@ -1875,11 +1893,16 @@ function textColor(hex) {
   return (0.299*r + 0.587*g + 0.114*b) / 255 > 0.5 ? '#111827' : '#ffffff';
 }
 function isTextIcon(s) { return !!s && /^[\x20-\x7E]+$/.test(s); } // global — also used by icon picker
-function renderIcon(icon, bgOverride) {
+function renderIcon(icon, parentBg) {
   if (!icon) return '';
   if (isTextIcon(icon)) {
-    const bg = bgOverride || 'var(--g800)';
-    return `<span style="font-size:9px;font-weight:800;background:${bg};color:white;padding:1px 5px;border-radius:4px;letter-spacing:-.3px;vertical-align:middle;display:inline-block;line-height:1.5;">${icon}</span> `;
+    let badgeBg = 'var(--g800)', badgeFg = 'white';
+    if (parentBg && parentBg.startsWith('#')) {
+      const isDark = textColor(parentBg) === '#ffffff';
+      badgeBg = isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.14)';
+      badgeFg = isDark ? 'white' : '#111827';
+    }
+    return `<span style="font-size:9px;font-weight:800;background:${badgeBg};color:${badgeFg};padding:1px 5px;border-radius:4px;letter-spacing:-.3px;vertical-align:middle;display:inline-block;line-height:1.5;">${icon}</span> `;
   }
   return icon + ' ';
 }
@@ -1960,8 +1983,17 @@ function clearIcon(inputId, btnId) {
 function setIconBtn(inputId, btnId, val) {
   document.getElementById(inputId).value = val || '';
   const btn = document.getElementById(btnId);
-  if (val) { btn.textContent = val; btn.classList.remove('empty'); }
-  else { btn.textContent = '＋'; btn.classList.add('empty'); }
+  if (val) {
+    if (isTextIcon(val)) {
+      btn.innerHTML = `<span style="font-size:10px;font-weight:800;background:var(--g800);color:white;padding:2px 6px;border-radius:5px;letter-spacing:-.3px;line-height:1.4;display:inline-block;">${val}</span>`;
+    } else {
+      btn.textContent = val;
+    }
+    btn.classList.remove('empty');
+  } else {
+    btn.textContent = '＋';
+    btn.classList.add('empty');
+  }
 }
 
 // Stop propagation inside picker so it never accidentally closes
