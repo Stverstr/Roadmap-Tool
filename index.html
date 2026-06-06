@@ -1418,14 +1418,14 @@ function renderSbLegend() {
 
   // Status
   html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:60px;">Status</span>`;
-  [['pending','⏳ Te doen','#92400E','#FEF3C7'],['active','▶ Actief','#1E40AF','#DBEAFE'],['done','✓ Klaar','#14532D','#DCFCE7']].forEach(([val,lbl,fg,bg]) => {
+  [['pending','○ Te doen','#374151','#F3F4F6'],['active','▶ Actief','#1E40AF','#DBEAFE'],['done','✓ Klaar','#14532D','#DCFCE7']].forEach(([val,lbl,fg,bg]) => {
     html += chip(lbl, sbFilterStatuses.has(val), `sbToggleFilter('status','${val}')`, bg, fg);
   });
   html += `</div>`;
 
   // Key activity
   html += `<div style="display:flex;gap:6px;align-items:center;">`;
-  html += chip('⭐ Key activity', sbFilterKeyOnly, `sbToggleFilter('key')`, '#FEF3C7', '#92400E');
+  html += chip('⭐ Key activity', sbFilterKeyOnly, `sbToggleFilter('key')`, '#FEF9C3', '#713F12');
   html += `</div>`;
 
   if (anyActive) {
@@ -1493,6 +1493,52 @@ async function sbApplyDrop(itemId, trackId, subcatId, phaseId, insertIdx, dest) 
   toast('Verplaatst ✓');
 }
 
+function sbCellDragOver(e, trackId, subcatId, phaseId) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const cell = e.currentTarget;
+  cell.querySelectorAll('.sb-drop-line').forEach(el => el.remove());
+  const cards = [...cell.querySelectorAll('[data-item-id]')];
+  let insertBefore = null;
+  for (const card of cards) {
+    const rect = card.getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height / 2) { insertBefore = card; break; }
+  }
+  const line = document.createElement('div');
+  line.className = 'sb-drop-line';
+  line.style.cssText = 'height:3px;background:var(--g700);border-radius:2px;margin:2px 0;pointer-events:none;';
+  const addBtn = cell.querySelector('button[draggable="false"]');
+  cell.insertBefore(line, insertBefore || addBtn);
+}
+
+function sbCellDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    e.currentTarget.querySelectorAll('.sb-drop-line').forEach(el => el.remove());
+  }
+}
+
+function sbCellDrop(e, trackId, subcatId, phaseId) {
+  e.preventDefault();
+  if (!sbDragItemId) return;
+  const cell = e.currentTarget;
+  cell.querySelectorAll('.sb-drop-line').forEach(el => el.remove());
+  const tid = trackId || null; const sid = subcatId || null; const pid = phaseId || null;
+  const cards = [...cell.querySelectorAll('[data-item-id]')];
+  let insertBeforeId = null;
+  for (const card of cards) {
+    const rect = card.getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height / 2) { insertBeforeId = card.dataset.itemId; break; }
+  }
+  const dest = items.filter(i => i.track_id === tid && i.subcategory_id === sid && i.phase_id === pid && i.id !== sbDragItemId)
+    .sort((a,b) => (a.position||0) - (b.position||0));
+  let insertIdx = dest.length;
+  if (insertBeforeId && insertBeforeId !== sbDragItemId) {
+    const idx = dest.findIndex(i => i.id === insertBeforeId);
+    if (idx >= 0) insertIdx = idx;
+  }
+  sbApplyDrop(sbDragItemId, tid, sid, pid, insertIdx, dest);
+}
+
 function renderStoryboard() {
   renderSbLegend();
   const el = document.getElementById('sb-grid');
@@ -1535,7 +1581,7 @@ function renderStoryboard() {
     const trCols = colDefs.filter(c => c.track.id === tr.id);
     if (!trCols.length) return;
     html += `<div style="grid-column:${colIdx}/span ${trCols.length};grid-row:1;background:${tr.color};color:${textColor(tr.color)};padding:8px 12px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(0,0,0,.1);border-bottom:1px solid rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;gap:5px;">
-      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);flex-shrink:0;"></span>${tr.icon?tr.icon+' ':''}${tr.name}
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);flex-shrink:0;"></span>${renderIcon(tr.icon)}${tr.name}
     </div>`;
     colIdx += trCols.length;
   });
@@ -1544,7 +1590,7 @@ function renderStoryboard() {
   colIdx = 2;
   colDefs.forEach(c => {
     const bg = c.sub ? c.sub.color : c.track.color;
-    const label = c.sub ? `${c.sub.icon?c.sub.icon+' ':''}${c.sub.name}` : `${c.track.icon?c.track.icon+' ':''}${c.track.name}`;
+    const label = c.sub ? `${renderIcon(c.sub.icon)}${c.sub.name}` : `${renderIcon(c.track.icon)}${c.track.name}`;
     html += `<div style="grid-column:${colIdx};grid-row:2;background:${bg};color:${textColor(bg)};padding:6px 10px;font-size:11px;font-weight:600;text-align:center;border-right:1px solid rgba(0,0,0,.1);border-bottom:1px solid var(--gy300);">${label}</div>`;
     colIdx++;
   });
@@ -1554,7 +1600,7 @@ function renderStoryboard() {
   rowPhases.forEach(ph => {
     const phBg = ph ? (ph.color || '#2D6A4F') : 'var(--g700)';
     const phLabel = ph
-      ? `<div style="font-size:13px;font-weight:700;">${ph.icon?ph.icon+' ':''}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
+      ? `<div style="font-size:13px;font-weight:700;">${renderIcon(ph.icon)}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
       : `<div style="font-size:13px;font-weight:700;">Alle items</div>`;
     html += `<div style="grid-column:1;grid-row:${rowNum};background:${phBg};color:${textColor(phBg)};padding:10px 12px;border-right:1px solid rgba(0,0,0,.1);border-top:1px solid rgba(0,0,0,.08);">${phLabel}</div>`;
     colIdx = 2;
@@ -1571,35 +1617,60 @@ function renderStoryboard() {
     rowNum++;
   });
 
+  // Backlog row — items with no phase assigned (only when phases exist)
+  if (phases.length) {
+    html += `<div style="grid-column:1;grid-row:${rowNum};background:#F8FAFC;color:var(--gy500);padding:10px 12px;border-right:1px solid rgba(0,0,0,.08);border-top:2px dashed var(--gy300);display:flex;align-items:flex-start;gap:6px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--gy500);">📥 Backlog</div>
+        <div style="font-size:10px;opacity:.7;margin-top:2px;">Nog niet gepland</div>
+      </div>
+    </div>`;
+    colIdx = 2;
+    colDefs.forEach(c => {
+      const backlogItems = items.filter(i =>
+        i.track_id === c.track.id &&
+        (c.sub ? i.subcategory_id === c.sub.id : !i.subcategory_id) &&
+        !i.phase_id
+      ).sort((a,b) => (a.position||0) - (b.position||0));
+      const color = c.sub ? c.sub.color : c.track.color;
+      const cellHtml = renderSbCell(backlogItems, c.track.id, c.sub?c.sub.id:null, null, color)
+        .replace('background:white;', 'background:#F8FAFC;')
+        .replace('border-top:1px solid var(--gy200)', 'border-top:2px dashed var(--gy300)');
+      html += `<div style="grid-column:${colIdx};grid-row:${rowNum};">${cellHtml}</div>`;
+      colIdx++;
+    });
+  }
+
   html += '</div>';
   el.innerHTML = html;
 }
 
 function renderSbCell(cellItems, trackId, subcatId, phaseId, color) {
-  const statusBg = {pending:'background:#FEF3C7;color:#92400E;', active:'background:#DBEAFE;color:#1E40AF;', done:'background:#DCFCE7;color:#14532D;'};
-  const statusLabels = {pending:'⏳ Te doen', active:'▶ Actief', done:'✓ Klaar'};
+  const statusIcon = {
+    pending: '<span style="font-size:11px;color:var(--gy500);font-weight:700;line-height:1;">○</span>',
+    active:  '<span style="font-size:11px;color:#1E40AF;font-weight:700;line-height:1;">▶</span>',
+    done:    '<span style="font-size:11px;color:#14532D;font-weight:700;line-height:1;">✓</span>'
+  };
   const tid = trackId || ''; const sid = subcatId || ''; const pid = phaseId || '';
   let html = `<div style="background:white;border-right:1px solid var(--gy300);border-top:1px solid var(--gy200);padding:8px;min-height:100px;vertical-align:top;"
-    ondragover="event.preventDefault()"
-    ondrop="sbDropAtEnd(event,'${tid}','${sid}','${pid}')">`;
+    ondragover="sbCellDragOver(event,'${tid}','${sid}','${pid}')"
+    ondragleave="sbCellDragLeave(event)"
+    ondrop="sbCellDrop(event,'${tid}','${sid}','${pid}')">`;
   cellItems.filter(it => sbItemVisible(it)).forEach(it => {
+    const st = it.status || 'pending';
     html += `<div draggable="true" data-item-id="${it.id}"
       style="border-left:3px solid ${color};border-radius:0 7px 7px 0;padding:8px 10px;margin-bottom:6px;cursor:grab;background:#fafafa;border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);position:relative;user-select:none;transition:opacity .15s;"
       ondragstart="sbCardDragStart(event,'${it.id}')"
       ondragend="sbCardDragEnd(event,'${it.id}')"
-      ondragover="event.preventDefault();event.stopPropagation();this.style.borderTop='3px solid var(--g700)';this.style.marginTop='4px'"
-      ondragleave="this.style.borderTop='1px solid var(--gy200)';this.style.marginTop=''"
-      ondrop="event.stopPropagation();sbDropBefore(event,'${it.id}','${tid}','${sid}','${pid}')"
       onclick="if(!sbDragging)openModal('modal-item','${it.id}','edit')">
-      <button onclick="event.stopPropagation();copyItem('${it.id}')" title="Kopiëren" style="position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--gy400);padding:2px;border-radius:4px;line-height:1;" onmouseover="this.style.color='var(--g700)';this.style.background='var(--g50)'" onmouseout="this.style.color='var(--gy400)';this.style.background='none'">⧉</button>
-      ${it.key_activity ? '<span style="font-size:9px;font-weight:700;background:#FEF3C7;color:#92400E;padding:1px 5px;border-radius:8px;margin-bottom:3px;display:inline-block;">⭐ KEY</span><br>' : ''}
+      <button onclick="event.stopPropagation();copyItem('${it.id}')" title="Kopiëren" draggable="false" style="position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--gy400);padding:2px;border-radius:4px;line-height:1;" onmouseover="this.style.color='var(--g700)';this.style.background='var(--g50)'" onmouseout="this.style.color='var(--gy400)';this.style.background='none'">⧉</button>
       <div style="font-size:12px;font-weight:700;color:var(--gy900);margin-bottom:3px;line-height:1.3;padding-right:18px;">${it.title}</div>
       ${it.context_scope ? `<div style="font-size:11px;color:var(--gy500);line-height:1.4;margin-bottom:4px;">${it.context_scope}</div>` : ''}
-      <span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;${statusBg[it.status]||statusBg.pending}">${statusLabels[it.status]||statusLabels.pending}</span>
+      <div style="display:flex;align-items:center;gap:5px;">${statusIcon[st]||statusIcon.pending}${it.key_activity ? '<span style="font-size:11px;opacity:.55;" title="Key activity">⭐</span>' : ''}</div>
     </div>`;
   });
   const args = [trackId, subcatId, phaseId].map(x => x ? `'${x}'` : 'null').join(',');
-  html += `<button style="width:100%;background:var(--g50);border:1px dashed var(--g300,#74C69D);color:var(--g700);border-radius:6px;padding:5px;font-size:11px;cursor:pointer;font-weight:600;" onclick="openAddItemPrefill(${args})">＋</button>`;
+  html += `<button draggable="false" style="width:100%;background:var(--g50);border:1px dashed var(--g300,#74C69D);color:var(--g700);border-radius:6px;padding:5px;font-size:11px;cursor:pointer;font-weight:600;" onclick="openAddItemPrefill(${args})">＋</button>`;
   html += `</div>`;
   return html;
 }
@@ -1724,7 +1795,7 @@ function renderTimeline() {
     const trackItems = items.filter(i => i.track_id === tr.id && !i.subcategory_id);
     html += `<div style="display:flex;border-bottom:1px solid var(--gy300);min-height:36px;background:var(--gy100);align-items:center;">
       <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;font-weight:700;color:var(--gy900);border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:var(--gy100);">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${tr.color};flex-shrink:0;"></span>${tr.icon||''} ${tr.name}
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${tr.color};flex-shrink:0;"></span>${renderIcon(tr.icon)}${tr.name}
       </div>
       <div style="flex:1;padding:4px 8px;font-size:11px;color:var(--gy500);font-style:italic;display:flex;align-items:center;">${!subs.length && !trackItems.length ? '' : ''}</div>
     </div>`;
@@ -1745,7 +1816,7 @@ function renderTimeline() {
       subs.forEach(sub => {
         const subItems = items.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id);
         html += renderLane(
-          `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};flex-shrink:0;"></span><span style="padding-left:6px;">${sub.icon ? sub.icon+' ' : ''}${sub.name}</span>`,
+          `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};flex-shrink:0;"></span><span style="padding-left:6px;">${renderIcon(sub.icon)}${sub.name}</span>`,
           subItems,
           'white',
           'padding-left:26px;',
@@ -1800,6 +1871,15 @@ function textColor(hex) {
   const g = parseInt(c.substr(2,2),16);
   const b = parseInt(c.substr(4,2),16);
   return (0.299*r + 0.587*g + 0.114*b) / 255 > 0.5 ? '#111827' : '#ffffff';
+}
+function isTextIcon(s) { return !!s && /^[\x20-\x7E]+$/.test(s); }
+function renderIcon(icon, bgOverride) {
+  if (!icon) return '';
+  if (isTextIcon(icon)) {
+    const bg = bgOverride || 'var(--g800)';
+    return `<span style="font-size:9px;font-weight:800;background:${bg};color:white;padding:1px 5px;border-radius:4px;letter-spacing:-.3px;vertical-align:middle;display:inline-block;line-height:1.5;">${icon}</span> `;
+  }
+  return icon + ' ';
 }
 
 const ICON_CATS = [
