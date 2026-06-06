@@ -2450,7 +2450,12 @@ function renderTimeline() {
       if (tlFilterSubcats.size && it.subcategory_id && !tlFilterSubcats.has(it.subcategory_id)) return false;
       return true;
     });
-    const scheduled = visItems.filter(it => it.start_date || it.date);
+    const scheduled = visItems.filter(it => {
+      if (!it.start_date && !it.date) return false;
+      const s = new Date(it.start_date || it.date);
+      const e = it.end_date ? new Date(it.end_date) : s;
+      return e >= minDate && s <= maxDate; // skip entirely out-of-range bars
+    });
     const visMilestones = (laneMilestones || []).filter(ms => { const d = new Date(ms.date); return ms.date && d >= minDate && d <= maxDate; });
     // ── stacking algorithm (bars + milestones combined) ────────────────────
     const BAR_H = 28, BAR_GAP = 4, TOP_PAD = 8;
@@ -2501,6 +2506,7 @@ function renderTimeline() {
         onmouseover="this.style.filter='brightness(1.1)'"
         onmouseout="this.style.filter=''">
         <div onmousedown="tlBarMouseDown(event,'${it.id}','left');event.stopPropagation();" style="position:absolute;left:0;top:0;bottom:0;width:8px;cursor:w-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:5px 0 0 5px;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
+        ${isActive ? `<span style="flex-shrink:0;margin-right:4px;font-size:9px;opacity:.9;">▶</span>` : ''}
         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${content}</span>
         <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
       </div>`;
@@ -2667,6 +2673,7 @@ function renderTimeline() {
             title="${safeTitle}"
             onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">
             <div onmousedown="tlBarMouseDown(event,'${it.id}','left');event.stopPropagation();" style="position:absolute;left:0;top:0;bottom:0;width:8px;cursor:w-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:5px 0 0 5px;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
+            ${isActive ? `<span style="flex-shrink:0;margin-right:4px;font-size:9px;opacity:.9;">▶</span>` : ''}
             <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.key_activity?'⭐ ':''}${it.title}</span>
             <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
           </div>`;
