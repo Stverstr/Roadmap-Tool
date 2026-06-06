@@ -437,7 +437,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       </div>
       <div class="field"><label class="label">Status</label>
         <select class="select" id="mi-status">
-          <option value="pending">⏳ Te doen</option>
+          <option value="pending">○ Te doen</option>
           <option value="active">▶ Actief</option>
           <option value="done">✓ Klaar</option>
         </select>
@@ -1617,8 +1617,10 @@ function renderStoryboard() {
     rowNum++;
   });
 
-  // Backlog row — items with no phase assigned (only when phases exist)
-  if (phases.length) {
+  // Backlog row — items with no phase assigned
+  // Only show when there are real phases AND we're showing real phase rows (not the "all filtered" fallback)
+  const showingRealPhaseRows = rowPhases.some(ph => ph !== null);
+  if (phases.length && showingRealPhaseRows) {
     html += `<div style="grid-column:1;grid-row:${rowNum};background:#F8FAFC;color:var(--gy500);padding:10px 12px;border-right:1px solid rgba(0,0,0,.08);border-top:2px dashed var(--gy300);display:flex;align-items:flex-start;gap:6px;">
       <div>
         <div style="font-size:12px;font-weight:700;color:var(--gy500);">📥 Backlog</div>
@@ -1872,7 +1874,7 @@ function textColor(hex) {
   const b = parseInt(c.substr(4,2),16);
   return (0.299*r + 0.587*g + 0.114*b) / 255 > 0.5 ? '#111827' : '#ffffff';
 }
-function isTextIcon(s) { return !!s && /^[\x20-\x7E]+$/.test(s); }
+function isTextIcon(s) { return !!s && /^[\x20-\x7E]+$/.test(s); } // global — also used by icon picker
 function renderIcon(icon, bgOverride) {
   if (!icon) return '';
   if (isTextIcon(icon)) {
@@ -1922,7 +1924,7 @@ function renderIpCats() {
   ).join('');
 }
 
-function isTextIcon(s) { return /^[\x20-\x7E]+$/.test(s); }
+// isTextIcon defined above (global) — also guards null/undefined
 function renderIpItem(em, clickFn) {
   if (isTextIcon(em)) {
     return `<div class="ip-em" onclick="${clickFn}" style="font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--g800);color:white;border-radius:6px;padding:2px 1px;letter-spacing:-.3px;">${em}</div>`;
