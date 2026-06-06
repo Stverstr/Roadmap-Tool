@@ -1882,7 +1882,16 @@ function renderTimeline() {
   });
   const availableYears = [...yearSet].sort();
 
-  // ── 6. Filter bar ─────────────────────────────────────────────────────────
+  // ── 6. Unscheduled items (needed for filter bar + sidebar) ───────────────
+  const unscheduled = items.filter(it => {
+    if (it.start_date) return false;
+    if (tlFilterStreams.size && !tlFilterStreams.has(it.track_id)) return false;
+    if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
+    if (tlFilterKeyOnly && !it.key_activity) return false;
+    return true;
+  });
+
+  // ── 7. Filter bar ─────────────────────────────────────────────────────────
   const zoomLabels = { year: 'Jaar', quarter: 'Kwartaal', month: 'Maand', week: 'Week' };
   const zoomBtns = ['year','quarter','month','week'].map(z => {
     const act = tlZoom === z;
@@ -2006,15 +2015,6 @@ function renderTimeline() {
       return `<div style="position:absolute;top:0;bottom:0;left:${pct}%;width:${100/cols.length}%;border-right:1px solid var(--gy200);pointer-events:none;box-sizing:border-box;"></div>`;
     }).join('');
   }
-
-  // ── 9. Unscheduled items (computed for sidebar) ───────────────────────────
-  const unscheduled = items.filter(it => {
-    if (it.start_date) return false;
-    if (tlFilterStreams.size && !tlFilterStreams.has(it.track_id)) return false;
-    if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
-    if (tlFilterKeyOnly && !it.key_activity) return false;
-    return true;
-  });
 
   // ── 10. renderLane helper ─────────────────────────────────────────────────
   function renderLane(label, laneItems, bgColor, labelStyle, barColor, clickFn, contentFn, droppable) {
