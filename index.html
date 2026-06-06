@@ -299,6 +299,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <span style="font-size:15px;font-weight:700;color:var(--gy900)">📋 Storyboard</span>
         <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item toevoegen</button>
       </div>
+      <div id="sb-legend" class="card" style="padding:12px 18px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;"></div>
       <div class="sb-wrap">
         <div id="sb-grid" style="overflow-x:auto;"></div>
       </div>
@@ -1232,6 +1233,30 @@ async function deleteItem() {
   toast('Verwijderd');
 }
 
+async function copyItem(itemId) {
+  const src = items.find(x => x.id === itemId);
+  if (!src) return;
+  const cellItems = items.filter(i => i.track_id === src.track_id && i.subcategory_id === src.subcategory_id && i.phase_id === src.phase_id);
+  const copy = {
+    project_id: currentProjectId,
+    title: src.title + ' (kopie)',
+    context_scope: src.context_scope || null,
+    deliverables: src.deliverables || null,
+    key_activity: src.key_activity || false,
+    track_id: src.track_id,
+    subcategory_id: src.subcategory_id,
+    phase_id: src.phase_id,
+    start_date: src.start_date || null,
+    end_date: src.end_date || null,
+    status: src.status || 'pending',
+    position: cellItems.length
+  };
+  const {data: nd} = await sb.from('roadmap_items').insert(copy).select().single();
+  if (nd) items.push(nd);
+  renderStoryboard(); renderTimeline();
+  toast('Gekopieerd ✓');
+}
+
 // ═══════════════════════════════════════════
 //  MEETINGS
 // ═══════════════════════════════════════════
@@ -1305,6 +1330,98 @@ async function deleteMilestone() {
 //  STORYBOARD RENDER
 // ═══════════════════════════════════════════
 // ═══════════════════════════════════════════
+//  STORYBOARD FILTERS
+// ═══════════════════════════════════════════
+let sbFilterTracks = new Set();
+let sbFilterSubcats = new Set();
+let sbFilterStatuses = new Set();
+let sbFilterKeyOnly = false;
+
+function sbItemVisible(it) {
+  if (sbFilterKeyOnly && !it.key_activity) return false;
+  if (sbFilterStatuses.size && !sbFilterStatuses.has(it.status || 'pending')) return false;
+  if (sbFilterTracks.size && !sbFilterTracks.has(it.track_id)) return false;
+  if (sbFilterSubcats.size && !sbFilterSubcats.has(it.subcategory_id)) return false;
+  return true;
+}
+
+function sbToggleFilter(type, value) {
+  if (type === 'key') {
+    sbFilterKeyOnly = !sbFilterKeyOnly;
+  } else if (type === 'track') {
+    sbFilterTracks.has(value) ? sbFilterTracks.delete(value) : sbFilterTracks.add(value);
+  } else if (type === 'subcat') {
+    sbFilterSubcats.has(value) ? sbFilterSubcats.delete(value) : sbFilterSubcats.add(value);
+  } else if (type === 'status') {
+    sbFilterStatuses.has(value) ? sbFilterStatuses.delete(value) : sbFilterStatuses.add(value);
+  }
+  renderSbLegend();
+  renderStoryboard();
+}
+
+function sbClearFilters() {
+  sbFilterTracks.clear(); sbFilterSubcats.clear(); sbFilterStatuses.clear(); sbFilterKeyOnly = false;
+  renderSbLegend();
+  renderStoryboard();
+}
+
+function renderSbLegend() {
+  const el = document.getElementById('sb-legend');
+  if (!el) return;
+  const anyActive = sbFilterTracks.size || sbFilterSubcats.size || sbFilterStatuses.size || sbFilterKeyOnly;
+  const chip = (label, active, onclick, bg, fg) =>
+    `<span onclick="${onclick}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid ${active ? (bg||'var(--g700)') : 'transparent'};background:${active ? (bg ? bg+'22' : 'var(--g50)') : 'var(--gy100)'};color:${fg||'var(--gy700)'};transition:all .15s;user-select:none;">${label}</span>`;
+
+  let html = '';
+
+  // Tracks
+  if (tracks.length) {
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;">Sporen</span>`;
+    tracks.forEach(tr => {
+      const active = sbFilterTracks.has(tr.id);
+      html += chip(
+        `<span style="width:8px;height:8px;border-radius:50%;background:${tr.color};flex-shrink:0;display:inline-block;"></span>${tr.icon ? tr.icon+' ' : ''}${tr.name}`,
+        active, `sbToggleFilter('track','${tr.id}')`, tr.color, textColor(tr.color) === '#ffffff' ? tr.color : '#111827'
+      );
+    });
+    html += `</div>`;
+  }
+
+  // Subcategories
+  if (subcategories.length) {
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;">Categorieën</span>`;
+    subcategories.forEach(sc => {
+      const active = sbFilterSubcats.has(sc.id);
+      html += chip(
+        `<span style="width:8px;height:8px;border-radius:50%;background:${sc.color};flex-shrink:0;display:inline-block;"></span>${sc.icon ? sc.icon+' ' : ''}${sc.name}`,
+        active, `sbToggleFilter('subcat','${sc.id}')`, sc.color, '#111827'
+      );
+    });
+    html += `</div>`;
+  }
+
+  // Status
+  html += `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;">Status</span>`;
+  [['pending','⏳ Te doen','#92400E','#FEF3C7'],['active','▶ Actief','#1E40AF','#DBEAFE'],['done','✓ Klaar','#14532D','#DCFCE7']].forEach(([val,label,fg,bg]) => {
+    const active = sbFilterStatuses.has(val);
+    html += chip(label, active, `sbToggleFilter('status','${val}')`, bg, fg);
+  });
+  html += `</div>`;
+
+  // Key activity
+  html += `<div style="display:flex;gap:6px;align-items:center;">`;
+  html += chip('⭐ Key activity', sbFilterKeyOnly, `sbToggleFilter('key')`, '#FEF3C7', '#92400E');
+  html += `</div>`;
+
+  // Clear
+  if (anyActive) {
+    html += `<div style="display:flex;align-items:center;"><span onclick="sbClearFilters()" style="font-size:12px;color:var(--red);cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;background:#FEE2E2;">✕ Filters wissen</span></div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
 //  DRAG & DROP (storyboard)
 // ═══════════════════════════════════════════
 let sbDragItemId = null;
@@ -1363,6 +1480,7 @@ async function sbApplyDrop(itemId, trackId, subcatId, phaseId, insertIdx, dest) 
 }
 
 function renderStoryboard() {
+  renderSbLegend();
   const el = document.getElementById('sb-grid');
 
   if (!tracks.length && !phases.length) {
@@ -1450,7 +1568,7 @@ function renderSbCell(cellItems, trackId, subcatId, phaseId, color) {
   let html = `<div style="background:white;border-right:1px solid var(--gy300);border-top:1px solid var(--gy200);padding:8px;min-height:100px;vertical-align:top;"
     ondragover="event.preventDefault()"
     ondrop="sbDropAtEnd(event,'${tid}','${sid}','${pid}')">`;
-  cellItems.forEach(it => {
+  cellItems.filter(it => sbItemVisible(it)).forEach(it => {
     html += `<div draggable="true" data-item-id="${it.id}"
       style="border-left:3px solid ${color};border-radius:0 7px 7px 0;padding:8px 10px;margin-bottom:6px;cursor:grab;background:#fafafa;border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);position:relative;user-select:none;transition:opacity .15s;"
       ondragstart="sbCardDragStart(event,'${it.id}')"
@@ -1459,8 +1577,9 @@ function renderSbCell(cellItems, trackId, subcatId, phaseId, color) {
       ondragleave="this.style.borderTop='1px solid var(--gy200)';this.style.marginTop=''"
       ondrop="event.stopPropagation();sbDropBefore(event,'${it.id}','${tid}','${sid}','${pid}')"
       onclick="if(!sbDragging)openModal('modal-item','${it.id}','edit')">
+      <button onclick="event.stopPropagation();copyItem('${it.id}')" title="Kopiëren" style="position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--gy400);padding:2px;border-radius:4px;line-height:1;" onmouseover="this.style.color='var(--g700)';this.style.background='var(--g50)'" onmouseout="this.style.color='var(--gy400)';this.style.background='none'">⧉</button>
       ${it.key_activity ? '<span style="font-size:9px;font-weight:700;background:#FEF3C7;color:#92400E;padding:1px 5px;border-radius:8px;margin-bottom:3px;display:inline-block;">⭐ KEY</span><br>' : ''}
-      <div style="font-size:12px;font-weight:700;color:var(--gy900);margin-bottom:3px;line-height:1.3;">${it.title}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--gy900);margin-bottom:3px;line-height:1.3;padding-right:18px;">${it.title}</div>
       ${it.context_scope ? `<div style="font-size:11px;color:var(--gy500);line-height:1.4;margin-bottom:4px;">${it.context_scope}</div>` : ''}
       <span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;${statusBg[it.status]||statusBg.pending}">${statusLabels[it.status]||statusLabels.pending}</span>
     </div>`;
