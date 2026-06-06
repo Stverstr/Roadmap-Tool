@@ -123,7 +123,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .status-done{background:#DCFCE7;color:#14532D;}
 
 /* ── TIMELINE ── */
-.tl-wrap{overflow-x:hidden;position:relative;}
+.tl-wrap{overflow-x:clip;position:relative;}
 .tl-container{min-width:0;}
 .tl-header-row{display:flex;border-bottom:2px solid var(--gy300);background:white;position:sticky;top:108px;z-index:50;}
 .tl-lane-label-head{width:200px;flex-shrink:0;padding:8px 12px;font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;border-right:1px solid var(--gy300);}
@@ -1772,13 +1772,16 @@ async function tlLaneDrop(e) {
   }
   const item = items.find(i => i.id === tlDragItemId);
   if (!item) { tlDragItemId = null; return; }
-  const updates = { start_date: snapDate };
-  if (!item.end_date) updates.end_date = snapDate;
+  // Default duration: 3 months from snap date
+  const startD = new Date(snapDate);
+  const endD = new Date(startD.getFullYear(), startD.getMonth() + 3, 0); // last day of month+3
+  const endDate = endD.toISOString().split('T')[0];
+  const updates = { start_date: snapDate, end_date: item.end_date || endDate };
   await sb.from('roadmap_items').update(updates).eq('id', tlDragItemId);
   Object.assign(item, updates);
   tlDragItemId = null;
   renderTimeline();
-  showToast('📅 Datum ingesteld: ' + snapDate);
+  showToast('📅 Datum ingesteld: ' + snapDate + ' → ' + (item.end_date || endDate));
 }
 
 // ═══════════════════════════════════════════
