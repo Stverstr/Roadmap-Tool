@@ -410,7 +410,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
           Key activity
         </label>
       </div>
-      <div class="field"><label class="label">Context / Scope</label><textarea class="textarea" id="mi-context" placeholder="Korte situatieschets en afbakening…" style="min-height:60px;"></textarea></div>
+      <div class="field"><label class="label" style="display:flex;justify-content:space-between;">Context / Scope <span id="mi-context-count" style="font-weight:400;color:var(--gy500);">0/30</span></label><textarea class="textarea" id="mi-context" placeholder="Korte situatieschets en afbakening…" style="min-height:60px;" maxlength="30" oninput="document.getElementById('mi-context-count').textContent=this.value.length+'/30'"></textarea></div>
       <div class="field"><label class="label">Verwachte deliverables</label><textarea class="textarea" id="mi-deliverables" placeholder="Wat moet er concreet opgeleverd worden?"></textarea></div>
       <div class="field">
         <label class="label">Spoor & Subcategorie</label>
@@ -669,7 +669,7 @@ async function loadProjectData() {
     sb.from('tracks').select('*').eq('project_id', pid).order('position'),
     sb.from('subcategories').select('*').eq('project_id', pid).order('position'),
     sb.from('phases').select('*').eq('project_id', pid).order('position'),
-    sb.from('roadmap_items').select('*').eq('project_id', pid),
+    sb.from('roadmap_items').select('*').eq('project_id', pid).order('position'),
     sb.from('meetings').select('*').eq('project_id', pid).order('date'),
     sb.from('milestones').select('*').eq('project_id', pid).order('date'),
   ]);
@@ -935,7 +935,7 @@ function renderIpGridInline(catIdx) {
   ipActiveCat = catIdx;
   renderIpCatsInline();
   document.getElementById('ip-grid').innerHTML = ICON_CATS[catIdx].icons.map(em =>
-    `<div class="ip-em" onclick="selectInlineIcon('${em}')">${em}</div>`
+    renderIpItem(em, `selectInlineIcon('${em.replace(/'/g,"\\'")}')`)
   ).join('');
 }
 function selectInlineIcon(emoji) {
@@ -1170,6 +1170,7 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     document.getElementById('mi-name').value = it.title;
     document.getElementById('mi-name-count').textContent = it.title.length + '/30';
     document.getElementById('mi-context').value = it.context_scope || '';
+    document.getElementById('mi-context-count').textContent = (it.context_scope||'').length + '/30';
     document.getElementById('mi-deliverables').value = it.deliverables || '';
     document.getElementById('mi-key').checked = !!it.key_activity;
     document.getElementById('mi-status').value = it.status || 'pending';
@@ -1181,6 +1182,7 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     document.getElementById('mi-name').value = '';
     document.getElementById('mi-name-count').textContent = '0/30';
     document.getElementById('mi-context').value = '';
+    document.getElementById('mi-context-count').textContent = '0/30';
     document.getElementById('mi-deliverables').value = '';
     document.getElementById('mi-key').checked = false;
     document.getElementById('mi-status').value = 'pending';
@@ -1302,6 +1304,64 @@ async function deleteMilestone() {
 // ═══════════════════════════════════════════
 //  STORYBOARD RENDER
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  DRAG & DROP (storyboard)
+// ═══════════════════════════════════════════
+let sbDragItemId = null;
+let sbDragging = false;
+
+function sbCardDragStart(e, itemId) {
+  sbDragItemId = itemId;
+  sbDragging = true;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', itemId);
+  e.stopPropagation();
+  setTimeout(() => {
+    const el = document.querySelector(`[data-item-id="${itemId}"]`);
+    if (el) el.style.opacity = '0.35';
+  }, 0);
+}
+
+function sbCardDragEnd(e, itemId) {
+  const el = document.querySelector(`[data-item-id="${itemId}"]`);
+  if (el) { el.style.opacity = '1'; el.style.borderTop = '1px solid var(--gy200)'; el.style.marginTop = ''; }
+  setTimeout(() => { sbDragging = false; }, 50);
+}
+
+async function sbDropBefore(e, targetItemId, trackId, subcatId, phaseId) {
+  if (!sbDragItemId || sbDragItemId === targetItemId) return;
+  const tid = trackId || null; const sid = subcatId || null; const pid = phaseId || null;
+  const dest = items.filter(i => i.track_id === tid && i.subcategory_id === sid && i.phase_id === pid && i.id !== sbDragItemId)
+    .sort((a,b) => (a.position||0) - (b.position||0));
+  const idx = dest.findIndex(i => i.id === targetItemId);
+  await sbApplyDrop(sbDragItemId, tid, sid, pid, idx >= 0 ? idx : dest.length, dest);
+}
+
+async function sbDropAtEnd(e, trackId, subcatId, phaseId) {
+  if (!sbDragItemId) return;
+  const tid = trackId || null; const sid = subcatId || null; const pid = phaseId || null;
+  const dest = items.filter(i => i.track_id === tid && i.subcategory_id === sid && i.phase_id === pid && i.id !== sbDragItemId)
+    .sort((a,b) => (a.position||0) - (b.position||0));
+  await sbApplyDrop(sbDragItemId, tid, sid, pid, dest.length, dest);
+}
+
+async function sbApplyDrop(itemId, trackId, subcatId, phaseId, insertIdx, dest) {
+  const dragged = items.find(x => x.id === itemId);
+  if (!dragged) return;
+  const newList = [...dest];
+  newList.splice(insertIdx, 0, dragged);
+  await Promise.all(newList.map((it, idx) => {
+    const upd = {position: idx};
+    if (it.id === itemId) { upd.track_id = trackId; upd.subcategory_id = subcatId; upd.phase_id = phaseId; }
+    Object.assign(it, upd);
+    return sb.from('roadmap_items').update(upd).eq('id', it.id);
+  }));
+  sbDragItemId = null;
+  renderStoryboard();
+  renderTimeline();
+  toast('Verplaatst ✓');
+}
+
 function renderStoryboard() {
   const el = document.getElementById('sb-grid');
 
@@ -1386,12 +1446,22 @@ function renderStoryboard() {
 function renderSbCell(cellItems, trackId, subcatId, phaseId, color) {
   const statusBg = {pending:'background:#FEF3C7;color:#92400E;', active:'background:#DBEAFE;color:#1E40AF;', done:'background:#DCFCE7;color:#14532D;'};
   const statusLabels = {pending:'⏳ Te doen', active:'▶ Actief', done:'✓ Klaar'};
-  let html = `<div style="background:white;border-right:1px solid var(--gy300);border-top:1px solid var(--gy200);padding:8px;min-height:100px;vertical-align:top;">`;
+  const tid = trackId || ''; const sid = subcatId || ''; const pid = phaseId || '';
+  let html = `<div style="background:white;border-right:1px solid var(--gy300);border-top:1px solid var(--gy200);padding:8px;min-height:100px;vertical-align:top;"
+    ondragover="event.preventDefault()"
+    ondrop="sbDropAtEnd(event,'${tid}','${sid}','${pid}')">`;
   cellItems.forEach(it => {
-    html += `<div style="border-left:3px solid ${color};border-radius:0 7px 7px 0;padding:8px 10px;margin-bottom:6px;cursor:pointer;background:#fafafa;border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);position:relative;" onclick="openModal('modal-item','${it.id}','edit')">
+    html += `<div draggable="true" data-item-id="${it.id}"
+      style="border-left:3px solid ${color};border-radius:0 7px 7px 0;padding:8px 10px;margin-bottom:6px;cursor:grab;background:#fafafa;border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);position:relative;user-select:none;transition:opacity .15s;"
+      ondragstart="sbCardDragStart(event,'${it.id}')"
+      ondragend="sbCardDragEnd(event,'${it.id}')"
+      ondragover="event.preventDefault();event.stopPropagation();this.style.borderTop='3px solid var(--g700)';this.style.marginTop='4px'"
+      ondragleave="this.style.borderTop='1px solid var(--gy200)';this.style.marginTop=''"
+      ondrop="event.stopPropagation();sbDropBefore(event,'${it.id}','${tid}','${sid}','${pid}')"
+      onclick="if(!sbDragging)openModal('modal-item','${it.id}','edit')">
       ${it.key_activity ? '<span style="font-size:9px;font-weight:700;background:#FEF3C7;color:#92400E;padding:1px 5px;border-radius:8px;margin-bottom:3px;display:inline-block;">⭐ KEY</span><br>' : ''}
       <div style="font-size:12px;font-weight:700;color:var(--gy900);margin-bottom:3px;line-height:1.3;">${it.title}</div>
-      ${it.context_scope ? `<div style="font-size:11px;color:var(--gy500);line-height:1.4;margin-bottom:4px;">${it.context_scope.substring(0,90)}${it.context_scope.length>90?'…':''}</div>` : ''}
+      ${it.context_scope ? `<div style="font-size:11px;color:var(--gy500);line-height:1.4;margin-bottom:4px;">${it.context_scope}</div>` : ''}
       <span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;${statusBg[it.status]||statusBg.pending}">${statusLabels[it.status]||statusLabels.pending}</span>
     </div>`;
   });
@@ -1639,11 +1709,19 @@ function renderIpCats() {
   ).join('');
 }
 
+function isTextIcon(s) { return /^[\x20-\x7E]+$/.test(s); }
+function renderIpItem(em, clickFn) {
+  if (isTextIcon(em)) {
+    return `<div class="ip-em" onclick="${clickFn}" style="font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--g800);color:white;border-radius:6px;padding:2px 1px;letter-spacing:-.3px;">${em}</div>`;
+  }
+  return `<div class="ip-em" onclick="${clickFn}">${em}</div>`;
+}
+
 function renderIpGrid(catIdx) {
   ipActiveCat = catIdx;
   renderIpCats();
   document.getElementById('ip-grid').innerHTML = ICON_CATS[catIdx].icons.map(em =>
-    `<div class="ip-em" onclick="selectIcon('${em}')">${em}</div>`
+    renderIpItem(em, `selectIcon('${em.replace(/'/g,"\\'")}')`)
   ).join('');
 }
 
