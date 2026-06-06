@@ -2505,42 +2505,42 @@ function renderTimeline() {
       return true;
     });
     if (visibleMeetings.length > 0) {
-      // stacking voor meetings
       const ME_BAR_H = 28, ME_BAR_GAP = 4, ME_TOP_PAD = 8;
       const meSorted = [...visibleMeetings].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-      const meRowEnds = [];
-      const meBarRows = new Map();
+      const ME_W = 2; // pseudo-width for stacking (point marker)
+      // recalculate stacking with point-marker width
+      const meRowEnds2 = [];
+      const meBarRows2 = new Map();
       meSorted.forEach(me => {
         const startPct = dateToPercent(me.date);
-        const endPct = me.end_date ? dateToPercent(me.end_date) : startPct;
         if (startPct === null) return;
-        const w = Math.max(1.5, (endPct || startPct) - startPct);
-        const effectiveEnd = startPct + w + 0.3;
+        const effectiveEnd = startPct + ME_W + 0.3;
         let rowIdx = 0;
-        while (rowIdx < meRowEnds.length && meRowEnds[rowIdx] > startPct) rowIdx++;
-        meRowEnds[rowIdx] = effectiveEnd;
-        meBarRows.set(me.id, { startPct, w, rowIdx });
+        while (rowIdx < meRowEnds2.length && meRowEnds2[rowIdx] > startPct) rowIdx++;
+        meRowEnds2[rowIdx] = effectiveEnd;
+        meBarRows2.set(me.id, { startPct, rowIdx });
       });
-      const meNumRows = Math.max(1, meRowEnds.length);
+      const meNumRows = Math.max(1, meRowEnds2.length);
       const meLaneH = ME_TOP_PAD + meNumRows * (ME_BAR_H + ME_BAR_GAP) + ME_TOP_PAD;
       html += `<div style="display:flex;border-bottom:1px solid var(--gy200);background:#EFF6FF;align-items:stretch;">
-        <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:#EFF6FF;font-weight:700;color:#1E40AF;">📅 Meetings</div>
-        <div style="flex:1;position:relative;min-height:${meLaneH}px;">${phaseBandsHtml}${colGridLines()}`;
+        <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:#EFF6FF;font-weight:700;color:#1E40AF;">▶ Meetings</div>
+        <div data-tl-grid="1" style="flex:1;position:relative;min-height:${meLaneH}px;">${phaseBandsHtml}${colGridLines()}`;
       meSorted.forEach(me => {
-        const bm = meBarRows.get(me.id);
+        const bm = meBarRows2.get(me.id);
         if (!bm) return;
-        const { startPct, w, rowIdx } = bm;
+        const { startPct, rowIdx } = bm;
         const top = ME_TOP_PAD + rowIdx * (ME_BAR_H + ME_BAR_GAP);
         const mtype = meetingTypes.find(t => t.id === me.type_id);
         const mColor = mtype ? mtype.color : '#1E40AF';
         const mIcon = mtype ? (mtype.icon || '▶') : '▶';
-        html += `<div data-tl-bar="${me.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:${ME_BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:white;background:${mColor};z-index:2;cursor:grab;overflow:hidden;white-space:nowrap;gap:4px;user-select:none;"
+        const safeTitle = (me.title||'').replace(/"/g,'&quot;');
+        html += `<div data-tl-bar="${me.id}" style="position:absolute;left:${startPct}%;top:${top}px;height:${ME_BAR_H}px;transform:translateX(-50%);z-index:4;cursor:grab;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;gap:2px;"
           onmousedown="tlBarMouseDown(event,'${me.id}','move')"
           onclick="if(!tlBarDragged){openModal('modal-meeting','${me.id}','edit')}else{tlBarDragged=false;}"
-          onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''"
-          title="${me.title ? me.title + (mtype?' — '+mtype.name:'') : (mtype?mtype.name:'Meeting')}">
-          <span style="flex-shrink:0;font-size:10px;">${mIcon}</span>
-          ${me.title ? `<span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;">${me.title}</span>` : ''}
+          onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'"
+          title="${safeTitle ? safeTitle + (mtype?' — '+mtype.name:'') : (mtype?mtype.name:'Meeting')}">
+          <span style="font-size:16px;line-height:1;color:${mColor};filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));">${mIcon}</span>
+          ${me.title ? `<span style="font-size:9px;font-weight:700;color:${mColor};white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);max-width:80px;overflow:hidden;text-overflow:ellipsis;">${me.title}</span>` : ''}
         </div>`;
       });
       const meSdCell = hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;"></div>` : '';
