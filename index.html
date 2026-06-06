@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Roadmap Studio</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 :root {
   --g900:#1B4332;--g800:#2D6A4F;--g700:#40916C;--g600:#52B788;
@@ -337,6 +338,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <span style="font-size:15px;font-weight:700;color:var(--gy900)">📅 Tijdslijn</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn btn-s btn-sm" id="tl-filter-toggle" onclick="tlToggleFilter()" title="Filters tonen/verbergen" style="background:var(--g100);">🔍 Filter</button>
+          <button class="btn btn-s btn-sm" onclick="exportToPptx()" title="Exporteer naar PowerPoint">📊 Export PPT</button>
           <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item</button>
           <button style="background:none;border:none;color:#1E40AF;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'" onclick="openModal('modal-meeting','','new')" id="btn-add-meeting">＋ Meeting</button>
           <button style="background:none;border:none;color:#5B21B6;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'" onclick="openModal('modal-milestone','','new')" id="btn-add-milestone">＋ Milestone</button>
@@ -2864,6 +2866,482 @@ function toast(msg) {
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════
+//  POWERPOINT EXPORT
+// ═══════════════════════════════════════════
+async function exportToPptx() {
+  const p = projects.find(x => x.id === currentProjectId);
+  if (!p) { toast('Geen project geselecteerd'); return; }
+  if (typeof PptxGenJS === 'undefined') { toast('Export library nog aan het laden…'); return; }
+  toast('⏳ Export voorbereiden…');
+
+  try {
+    const pptx = new PptxGenJS();
+    pptx.layout = 'LAYOUT_WIDE'; // 13.3" × 7.5"
+    pptx.title = p.name;
+    pptx.author = 'Roadmap Studio';
+
+    // ─── Color helpers ─────────────────────────────────────
+    const hx = c => c ? c.replace('#', '') : '6B7280';
+    const C = {
+      dark: '1B4332', med: '2D6A4F', light: '40916C', pale: 'D8F3DC',
+      white: 'FFFFFF', gray: '6B7280', text: '111827', lgray: 'E5E7EB', offwhite: 'F9FAFB'
+    };
+
+    // ─── Active filter description ──────────────────────────
+    const filterLines = [];
+    if (tlFilterStreams.size) filterLines.push('Streams: ' + tracks.filter(t => tlFilterStreams.has(t.id)).map(t => t.name).join(', '));
+    if (tlFilterSubcats.size) filterLines.push('Subcategorieën: ' + subcategories.filter(s => tlFilterSubcats.has(s.id)).map(s => s.name).join(', '));
+    if (tlFilterPhases.size) filterLines.push('Fasen: ' + phases.filter(ph => tlFilterPhases.has(ph.id)).map(ph => ph.name).join(', '));
+    if (tlFilterStatuses.size) {
+      const lbl = { pending: 'Te doen', active: 'Actief', done: 'Klaar' };
+      filterLines.push('Status: ' + [...tlFilterStatuses].map(s => lbl[s] || s).join(', '));
+    }
+    if (tlFilterKeyOnly) filterLines.push('Enkel Key Activities');
+    if (tlFilterMeetingTypes.size) filterLines.push('Meeting types: ' + meetingTypes.filter(m => tlFilterMeetingTypes.has(m.id)).map(m => m.name).join(', '));
+    if (tlFilterMilestoneTypes.size) filterLines.push('Milestone types: ' + milestoneTypes.filter(m => tlFilterMilestoneTypes.has(m.id)).map(m => m.name).join(', '));
+    if (tlFilterYears.size) filterLines.push('Jaren: ' + [...tlFilterYears].sort().join(', '));
+    if (tlFromDate || tlToDate) filterLines.push('Periode: ' + (tlFromDate || '…') + ' → ' + (tlToDate || '…'));
+    const noFilter = filterLines.length === 0;
+
+    // ─── Item visibility check (mirrors TL filters) ─────────
+    function itemVis(it) {
+      if (tlFilterStreams.size && !tlFilterStreams.has(it.track_id)) return false;
+      if (tlFilterSubcats.size && it.subcategory_id && !tlFilterSubcats.has(it.subcategory_id)) return false;
+      if (tlFilterPhases.size && !tlFilterPhases.has(it.phase_id)) return false;
+      if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
+      if (tlFilterKeyOnly && !it.key_activity) return false;
+      return true;
+    }
+
+    // ─── Date range (reuse TL computed range) ───────────────
+    let minDate = tlMinDate, maxDate = tlMaxDate;
+    if (!minDate || !maxDate) {
+      let dMin = p.start_date ? new Date(p.start_date) : new Date();
+      let dMax = p.end_date ? new Date(p.end_date) : new Date(dMin.getFullYear(), dMin.getMonth() + 6, 1);
+      [...items, ...meetings, ...milestones].forEach(x => {
+        const d1 = x.start_date || x.date, d2 = x.end_date;
+        if (d1) { const d = new Date(d1); if (d < dMin) dMin = d; if (d > dMax) dMax = d; }
+        if (d2) { const d = new Date(d2); if (d > dMax) dMax = d; }
+      });
+      minDate = new Date(dMin.getFullYear(), dMin.getMonth(), 1);
+      maxDate = new Date(dMax.getFullYear(), dMax.getMonth() + 1, 0);
+      if (tlFromDate) minDate = new Date(new Date(tlFromDate).getFullYear(), new Date(tlFromDate).getMonth(), 1);
+      if (tlToDate)   maxDate = new Date(new Date(tlToDate).getFullYear(), new Date(tlToDate).getMonth() + 1, 0);
+      if (tlFilterYears.size && !tlFromDate && !tlToDate) {
+        const sy = [...tlFilterYears].sort((a,b) => a-b);
+        if (tlYearMode === 'fiscal') { minDate = new Date(sy[0], 3, 1); maxDate = new Date(sy[sy.length-1]+1, 2, 31); }
+        else { minDate = new Date(sy[0], 0, 1); maxDate = new Date(sy[sy.length-1], 11, 31); }
+      }
+    }
+    const totalMs = maxDate - minDate;
+    function d2pct(ds) {
+      if (!ds) return null;
+      const d = ds instanceof Date ? ds : new Date(ds);
+      return Math.max(0, Math.min(1, (d - minDate) / totalMs));
+    }
+
+    // ─── Period cols (same logic as renderTimeline) ──────────
+    const gcols = [];
+    if (tlZoom === 'week') {
+      let cur = new Date(minDate);
+      const dow = cur.getDay();
+      cur.setDate(cur.getDate() - (dow === 0 ? 6 : dow - 1));
+      while (cur <= maxDate) {
+        gcols.push({ date: new Date(cur), label: 'W' + getWeekNumber(cur) });
+        cur = new Date(cur.getTime() + 7 * 86400000);
+      }
+    } else if (tlZoom === 'month') {
+      let cur = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+      while (cur <= maxDate) {
+        const d = new Date(cur);
+        gcols.push({ date: d, label: d.toLocaleDateString('nl-BE', { month: 'short' }) + " '" + String(d.getFullYear()).slice(-2) });
+        cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+      }
+    } else if (tlZoom === 'quarter') {
+      let cur = new Date(minDate.getFullYear(), Math.floor(minDate.getMonth() / 3) * 3, 1);
+      while (cur <= maxDate) {
+        const d = new Date(cur);
+        gcols.push({ date: d, label: 'Q' + (Math.floor(d.getMonth()/3)+1) + ' ' + d.getFullYear() });
+        cur = new Date(cur.getFullYear(), cur.getMonth() + 3, 1);
+      }
+    } else {
+      let cur = new Date(minDate.getFullYear(), 0, 1);
+      while (cur <= maxDate) {
+        const d = new Date(cur);
+        gcols.push({ date: d, label: String(d.getFullYear()) });
+        cur = new Date(cur.getFullYear() + 1, 0, 1);
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // SLIDE 1 — TITLE
+    // ════════════════════════════════════════════
+    {
+      const s = pptx.addSlide();
+      s.background = { color: C.dark };
+      // Accent bar left
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: 0.18, h: 7.5, fill: { color: C.light }, line: { color: C.light } });
+      // Brand label
+      s.addText('ROADMAP STUDIO', { x: 0.5, y: 0.35, w: 10, h: 0.32, fontSize: 10, bold: true, color: C.light, fontFace: 'Calibri', charSpacing: 4, margin: 0 });
+      // Project name
+      s.addText(p.name, { x: 0.5, y: 1.3, w: 12.3, h: 2.3, fontSize: 46, bold: true, color: C.white, fontFace: 'Calibri', align: 'left' });
+      // Description
+      if (p.description) {
+        s.addText(p.description, { x: 0.5, y: 3.75, w: 12.3, h: 1.1, fontSize: 17, color: C.pale, fontFace: 'Calibri' });
+      }
+      // Date range
+      const drStr = [p.start_date, p.end_date].filter(Boolean).join(' → ');
+      if (drStr) {
+        s.addText(drStr, { x: 0.5, y: 5.1, w: 8, h: 0.4, fontSize: 14, color: C.light, fontFace: 'Calibri' });
+      }
+      // Filter notice
+      if (!noFilter) {
+        s.addText('Filters actief bij export — zie legende slide', { x: 0.5, y: 6.75, w: 12.3, h: 0.3, fontSize: 10, color: '74C69D', fontFace: 'Calibri' });
+      }
+      // Export date
+      s.addText('Export: ' + new Date().toLocaleDateString('nl-BE'), { x: 9.5, y: 6.75, w: 3.5, h: 0.3, fontSize: 10, color: C.light, align: 'right', fontFace: 'Calibri' });
+    }
+
+    // ════════════════════════════════════════════
+    // SLIDE 2 — STORYBOARD
+    // ════════════════════════════════════════════
+    {
+      const s = pptx.addSlide();
+      s.background = { color: C.white };
+      // Header bar
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: 13.3, h: 0.62, fill: { color: C.dark }, line: { color: C.dark } });
+      s.addText('STORYBOARD', { x: 0.4, y: 0, w: 9, h: 0.62, fontSize: 14, bold: true, color: C.white, fontFace: 'Calibri', valign: 'middle', charSpacing: 3, margin: 0 });
+      s.addText(p.name, { x: 7, y: 0, w: 6, h: 0.62, fontSize: 11, color: C.pale, fontFace: 'Calibri', valign: 'middle', align: 'right', margin: 0 });
+
+      // Build column defs (same as renderStoryboard)
+      let colDefs = [];
+      tracks.forEach(tr => {
+        const subs = subcategories.filter(sc => sc.track_id === tr.id);
+        if (!subs.length) colDefs.push({ track: tr, sub: null });
+        else subs.forEach(sub => colDefs.push({ track: tr, sub }));
+      });
+      if (tlFilterStreams.size) colDefs = colDefs.filter(c => tlFilterStreams.has(c.track.id));
+      if (tlFilterSubcats.size) colDefs = colDefs.filter(c => c.sub && tlFilterSubcats.has(c.sub.id));
+
+      let rowPhases = phases.length ? phases : [null];
+      if (tlFilterPhases.size) rowPhases = rowPhases.filter(ph => ph && tlFilterPhases.has(ph.id));
+      if (!rowPhases.length) rowPhases = [null];
+
+      if (!colDefs.length) {
+        s.addText('Geen zichtbare data op basis van actieve filters.', { x: 0.5, y: 2, w: 12, h: 1, fontSize: 14, color: C.gray });
+      } else {
+        const MAX_ITEMS = 5;
+        const siIcon = { pending: '○', active: '▶', done: '✓' };
+        const LABEL_COL_W = 1.35;
+        const TOTAL_W = 12.5;
+        const nCols = colDefs.length;
+        const DATA_COL_W = Math.max(1.0, (TOTAL_W - LABEL_COL_W) / nCols);
+        const colW = [LABEL_COL_W, ...colDefs.map(() => DATA_COL_W)];
+        const nRows = 1 + rowPhases.length;
+        const ROW_H = Math.min(1.45, 6.3 / nRows);
+
+        const tableData = [];
+        // Header row
+        const hRow = [{ text: 'Fase', options: { bold: true, fill: { color: C.dark }, color: C.white, fontSize: 9, align: 'center', valign: 'middle' } }];
+        colDefs.forEach(c => {
+          const bg = hx(c.sub ? c.sub.color : c.track.color);
+          const lbl = c.sub ? c.track.name + '\n' + c.sub.name : c.track.name;
+          hRow.push({ text: lbl, options: { bold: true, fill: { color: bg }, color: C.white, fontSize: 9, align: 'center', valign: 'middle' } });
+        });
+        tableData.push(hRow);
+
+        // Phase rows
+        rowPhases.forEach(ph => {
+          const phBg = ph ? hx(ph.color || '#2D6A4F') : C.med;
+          const row = [{ text: ph ? ph.name : 'Items', options: { bold: true, fill: { color: phBg }, color: C.white, fontSize: 9, valign: 'top', align: 'center' } }];
+          colDefs.forEach(c => {
+            const cellItems = items.filter(i =>
+              i.track_id === c.track.id &&
+              (c.sub ? i.subcategory_id === c.sub.id : !i.subcategory_id) &&
+              (ph ? i.phase_id === ph.id : true) &&
+              itemVis(i)
+            ).sort((a, b) => (a.position || 0) - (b.position || 0));
+            const shown = cellItems.slice(0, MAX_ITEMS);
+            const more = cellItems.length - shown.length;
+            if (!shown.length) {
+              row.push({ text: '', options: { fontSize: 8, valign: 'top', fill: { color: C.offwhite } } });
+            } else {
+              const textArr = [];
+              shown.forEach((it, idx) => {
+                textArr.push({ text: siIcon[it.status || 'pending'] + ' ' + (it.key_activity ? '★ ' : '') + it.title, options: { breakLine: idx < shown.length - 1 || more > 0, fontSize: 8, bold: !!it.key_activity, color: it.status === 'done' ? '9CA3AF' : C.text } });
+              });
+              if (more > 0) textArr.push({ text: '+ ' + more + ' meer…', options: { fontSize: 7, color: C.gray, italic: true } });
+              row.push({ text: textArr, options: { fontSize: 8, valign: 'top', fill: { color: C.white } } });
+            }
+          });
+          tableData.push(row);
+        });
+
+        s.addTable(tableData, {
+          x: 0.4, y: 0.75, w: TOTAL_W,
+          colW, rowH: ROW_H,
+          border: { pt: 0.5, color: C.lgray },
+          autoPage: false
+        });
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // SLIDE 3 — ROADMAP (Gantt)
+    // ════════════════════════════════════════════
+    {
+      const s = pptx.addSlide();
+      s.background = { color: C.white };
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: 13.3, h: 0.62, fill: { color: C.dark }, line: { color: C.dark } });
+      s.addText('ROADMAP', { x: 0.4, y: 0, w: 9, h: 0.62, fontSize: 14, bold: true, color: C.white, fontFace: 'Calibri', valign: 'middle', charSpacing: 3, margin: 0 });
+      s.addText(p.name, { x: 7, y: 0, w: 6, h: 0.62, fontSize: 11, color: C.pale, fontFace: 'Calibri', valign: 'middle', align: 'right', margin: 0 });
+
+      // Layout constants
+      const LX = 0.28;        // left margin
+      const LW = 1.72;        // label column width
+      const TX = LX + LW;     // timeline X start = 2.0"
+      const TW = 13.0 - TX;   // timeline width = 11.0"
+      const HDR_Y = 0.68;
+      const HDR_H = 0.36;
+      const LANE_Y0 = HDR_Y + HDR_H;  // = 1.04"
+      const BAR_H = 0.21;
+      const LANE_H = 0.31;
+      const TRK_H = 0.24;
+      const MAX_Y = 7.15;
+
+      // Columns (cap at 28)
+      const MAX_COLS = 28;
+      let visCols = gcols;
+      if (gcols.length > MAX_COLS) {
+        const step = Math.ceil(gcols.length / MAX_COLS);
+        visCols = gcols.filter((_, i) => i % step === 0);
+      }
+      const colW2 = TW / Math.max(visCols.length, 1);
+
+      // Column header background
+      s.addShape(pptx.shapes.RECTANGLE, { x: TX, y: HDR_Y, w: TW, h: HDR_H, fill: { color: 'F3F4F6' }, line: { color: C.lgray } });
+
+      // Column headers + alternating shading + grid lines
+      visCols.forEach((col, i) => {
+        const cx = TX + i * colW2;
+        if (i % 2 === 1) {
+          s.addShape(pptx.shapes.RECTANGLE, { x: cx, y: LANE_Y0, w: colW2, h: MAX_Y - LANE_Y0, fill: { color: 'F9FAFB' }, line: { color: 'F9FAFB' } });
+        }
+        if (i > 0) {
+          s.addShape(pptx.shapes.LINE, { x: cx, y: HDR_Y, w: 0, h: MAX_Y - HDR_Y, line: { color: C.lgray, width: 0.5 } });
+        }
+        s.addText(col.label, { x: cx, y: HDR_Y, w: colW2, h: HDR_H, fontSize: 7, align: 'center', color: '374151', fontFace: 'Calibri', valign: 'middle', margin: 0 });
+      });
+      // Right border of timeline
+      s.addShape(pptx.shapes.LINE, { x: TX + TW, y: HDR_Y, w: 0, h: MAX_Y - HDR_Y, line: { color: C.lgray, width: 0.5 } });
+
+      // Today line
+      const todayP = d2pct(new Date().toISOString().split('T')[0]);
+      if (todayP !== null) {
+        const todayX = TX + todayP * TW;
+        s.addShape(pptx.shapes.LINE, { x: todayX, y: LANE_Y0, w: 0, h: MAX_Y - LANE_Y0, line: { color: 'EF4444', width: 1.5, dashType: 'dash' } });
+        s.addText('Nu', { x: todayX - 0.22, y: HDR_Y + 0.02, w: 0.44, h: HDR_H - 0.04, fontSize: 7, color: 'EF4444', bold: true, align: 'center', margin: 0 });
+      }
+
+      let curY = LANE_Y0;
+
+      // Draw tracks
+      const filtTracks = tracks.filter(tr => !tlFilterStreams.size || tlFilterStreams.has(tr.id));
+      filtTracks.forEach(tr => {
+        if (curY + TRK_H > MAX_Y) return;
+
+        // Track header row
+        s.addShape(pptx.shapes.RECTANGLE, { x: LX, y: curY, w: 13.0 - LX, h: TRK_H, fill: { color: 'F3F4F6' }, line: { color: C.lgray } });
+        s.addShape(pptx.shapes.OVAL, { x: LX + 0.1, y: curY + (TRK_H - 0.14) / 2, w: 0.14, h: 0.14, fill: { color: hx(tr.color) }, line: { color: hx(tr.color) } });
+        s.addText(tr.name, { x: LX + 0.3, y: curY, w: LW - 0.25, h: TRK_H, fontSize: 9, bold: true, color: C.text, fontFace: 'Calibri', valign: 'middle', margin: 0 });
+        curY += TRK_H;
+
+        const subs = subcategories.filter(sc => sc.track_id === tr.id);
+        const laneDefs = subs.length > 0
+          ? subs.filter(sc => !tlFilterSubcats.size || tlFilterSubcats.has(sc.id))
+          : [null];
+
+        laneDefs.forEach(sub => {
+          if (curY + LANE_H > MAX_Y) return;
+          const bColor = hx(sub ? (sub.color || tr.color) : tr.color);
+
+          // Lane label
+          if (sub) {
+            s.addShape(pptx.shapes.OVAL, { x: LX + 0.22, y: curY + (LANE_H - 0.10) / 2, w: 0.10, h: 0.10, fill: { color: bColor }, line: { color: bColor } });
+            s.addText(sub.name, { x: LX + 0.36, y: curY, w: LW - 0.33, h: LANE_H, fontSize: 8, color: '374151', fontFace: 'Calibri', valign: 'middle', margin: 0 });
+          }
+          // Bottom border
+          s.addShape(pptx.shapes.LINE, { x: LX, y: curY + LANE_H, w: 13.0 - LX, h: 0, line: { color: C.lgray, width: 0.5 } });
+
+          // Filtered + in-range items for this lane
+          const laneItems = items.filter(it => {
+            if (it.track_id !== tr.id) return false;
+            if (sub ? it.subcategory_id !== sub.id : it.subcategory_id) return false;
+            if (!itemVis(it)) return false;
+            if (!it.start_date) return false;
+            const s2 = new Date(it.start_date);
+            const e2 = it.end_date ? new Date(it.end_date) : s2;
+            return e2 >= minDate && s2 <= maxDate;
+          });
+
+          laneItems.forEach(it => {
+            const sp = d2pct(it.start_date);
+            const ep = d2pct(it.end_date || it.start_date);
+            if (sp === null) return;
+            const bx = TX + sp * TW;
+            const bw = Math.max(0.1, ((ep !== null ? ep : sp + 0.04) - sp) * TW);
+            const isDone = it.status === 'done';
+            const by = curY + (LANE_H - BAR_H) / 2;
+            s.addShape(pptx.shapes.RECTANGLE, {
+              x: bx, y: by, w: bw, h: BAR_H,
+              fill: { color: bColor, transparency: isDone ? 40 : 0 },
+              line: { color: bColor, width: 0.5 }
+            });
+            if (bw > 0.18) {
+              const lbl = (it.key_activity ? '★ ' : '') + it.title;
+              s.addText(lbl, { x: bx + 0.04, y: by, w: Math.max(0.08, bw - 0.07), h: BAR_H, fontSize: 6, color: C.white, fontFace: 'Calibri', valign: 'middle', margin: 0 });
+            }
+          });
+
+          curY += LANE_H;
+        });
+      });
+
+      // Milestones lane (if any in range)
+      if (p.enable_milestones !== false) {
+        const visMsAll = milestones.filter(ms => {
+          if (tlFilterMilestoneTypes.size && !tlFilterMilestoneTypes.has(ms.type_id)) return false;
+          if (!ms.date) return false;
+          const d = new Date(ms.date);
+          return d >= minDate && d <= maxDate;
+        });
+        if (visMsAll.length > 0 && curY + LANE_H <= MAX_Y) {
+          s.addText('Mijlpalen', { x: LX, y: curY, w: LW, h: LANE_H, fontSize: 8, bold: true, color: '7C3AED', valign: 'middle', margin: 0 });
+          s.addShape(pptx.shapes.LINE, { x: LX, y: curY + LANE_H, w: 13.0 - LX, h: 0, line: { color: C.lgray, width: 0.5 } });
+          visMsAll.forEach(ms => {
+            const pct = d2pct(ms.date);
+            if (pct === null) return;
+            const mx = TX + pct * TW;
+            const mtype = milestoneTypes.find(t => t.id === ms.type_id);
+            const mcolor = hx(mtype ? mtype.color : '#7C3AED');
+            const micon = mtype ? (mtype.icon || '◆') : '◆';
+            s.addText(micon, { x: mx - 0.13, y: curY + (LANE_H - 0.22) / 2, w: 0.26, h: 0.22, fontSize: 11, color: mcolor, align: 'center', margin: 0 });
+            if (ms.title) {
+              s.addText(ms.title, { x: Math.max(TX, mx - 0.45), y: curY + LANE_H - 0.14, w: 0.9, h: 0.14, fontSize: 6, color: mcolor, align: 'center', margin: 0 });
+            }
+          });
+        }
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // SLIDE 4 — LEGEND & FILTERS
+    // ════════════════════════════════════════════
+    {
+      const s = pptx.addSlide();
+      s.background = { color: C.white };
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: 13.3, h: 0.62, fill: { color: C.dark }, line: { color: C.dark } });
+      s.addText('LEGENDE & FILTERS', { x: 0.4, y: 0, w: 9, h: 0.62, fontSize: 14, bold: true, color: C.white, fontFace: 'Calibri', valign: 'middle', charSpacing: 3, margin: 0 });
+      s.addText(p.name, { x: 7, y: 0, w: 6, h: 0.62, fontSize: 11, color: C.pale, fontFace: 'Calibri', valign: 'middle', align: 'right', margin: 0 });
+
+      let y = 0.78;
+
+      // Active filters section
+      s.addText('Actieve filters bij export', { x: 0.4, y, w: 12.5, h: 0.3, fontSize: 12, bold: true, color: C.dark, fontFace: 'Calibri' });
+      y += 0.32;
+      if (noFilter) {
+        s.addText('Geen filters actief — alle elementen worden getoond.', { x: 0.5, y, w: 12.3, h: 0.28, fontSize: 10, color: C.gray, fontFace: 'Calibri', italic: true });
+        y += 0.32;
+      } else {
+        filterLines.forEach(line => {
+          s.addText('• ' + line, { x: 0.55, y, w: 12.2, h: 0.26, fontSize: 10, color: '374151', fontFace: 'Calibri' });
+          y += 0.26;
+        });
+      }
+      y += 0.1;
+      s.addShape(pptx.shapes.LINE, { x: 0.4, y, w: 12.5, h: 0, line: { color: C.lgray, width: 1 } });
+      y += 0.18;
+
+      // Two-column layout
+      const C1X = 0.4, C1W = 5.8, C2X = 7.0, C2W = 5.8;
+      let y1 = y, y2 = y;
+
+      // Left column: Streams + subcategories
+      if (tracks.length) {
+        s.addText('Streams', { x: C1X, y: y1, w: C1W, h: 0.28, fontSize: 11, bold: true, color: C.dark, fontFace: 'Calibri' });
+        y1 += 0.3;
+        tracks.forEach(tr => {
+          s.addShape(pptx.shapes.OVAL, { x: C1X + 0.02, y: y1 + 0.05, w: 0.15, h: 0.15, fill: { color: hx(tr.color) }, line: { color: hx(tr.color) } });
+          s.addText(tr.name, { x: C1X + 0.23, y: y1, w: C1W - 0.26, h: 0.24, fontSize: 10, color: C.text, fontFace: 'Calibri', valign: 'middle' });
+          y1 += 0.25;
+          subcategories.filter(sc => sc.track_id === tr.id).forEach(sub => {
+            s.addShape(pptx.shapes.OVAL, { x: C1X + 0.22, y: y1 + 0.06, w: 0.12, h: 0.12, fill: { color: hx(sub.color) }, line: { color: hx(sub.color) } });
+            s.addText(sub.name, { x: C1X + 0.4, y: y1, w: C1W - 0.43, h: 0.22, fontSize: 9, color: C.gray, fontFace: 'Calibri', valign: 'middle' });
+            y1 += 0.22;
+          });
+        });
+      }
+
+      // Right column: Status + Phases
+      s.addText('Status', { x: C2X, y: y2, w: C2W, h: 0.28, fontSize: 11, bold: true, color: C.dark, fontFace: 'Calibri' });
+      y2 += 0.3;
+      [['○  Te doen', '6B7280', false], ['▶  Actief', '1E40AF', true], ['✓  Klaar', '14532D', false]].forEach(([lbl, col, bld]) => {
+        s.addText(lbl, { x: C2X, y: y2, w: C2W, h: 0.25, fontSize: 10, color: col, fontFace: 'Calibri', bold: bld });
+        y2 += 0.25;
+      });
+      y2 += 0.1;
+
+      if (phases.length) {
+        s.addText('Fasen', { x: C2X, y: y2, w: C2W, h: 0.28, fontSize: 11, bold: true, color: C.dark, fontFace: 'Calibri' });
+        y2 += 0.3;
+        phases.forEach(ph => {
+          s.addShape(pptx.shapes.RECTANGLE, { x: C2X, y: y2 + 0.04, w: 0.2, h: 0.18, fill: { color: hx(ph.color || '#2D6A4F') }, line: { color: hx(ph.color || '#2D6A4F') } });
+          const phDates = [ph.start_date, ph.end_date].filter(Boolean).join(' → ');
+          s.addText(ph.name + (phDates ? '  (' + phDates + ')' : ''), { x: C2X + 0.27, y: y2, w: C2W - 0.3, h: 0.26, fontSize: 10, color: C.text, fontFace: 'Calibri', valign: 'middle' });
+          y2 += 0.27;
+        });
+      }
+
+      // Bottom: milestone + meeting types
+      const botY = Math.max(y1, y2) + 0.12;
+      if (botY < 6.5 && (milestoneTypes.length || meetingTypes.length)) {
+        s.addShape(pptx.shapes.LINE, { x: 0.4, y: botY, w: 12.5, h: 0, line: { color: C.lgray, width: 1 } });
+        let by1 = botY + 0.16, by2 = botY + 0.16;
+        if (milestoneTypes.length) {
+          s.addText('Milestone types', { x: C1X, y: by1, w: C1W, h: 0.26, fontSize: 11, bold: true, color: C.dark, fontFace: 'Calibri' });
+          by1 += 0.28;
+          milestoneTypes.forEach(mt => {
+            s.addText(mt.icon || '◆', { x: C1X, y: by1, w: 0.26, h: 0.24, fontSize: 12, color: hx(mt.color || '#7C3AED'), align: 'center', margin: 0 });
+            s.addText(mt.name, { x: C1X + 0.3, y: by1, w: C1W - 0.32, h: 0.24, fontSize: 10, color: C.text, valign: 'middle' });
+            by1 += 0.26;
+          });
+        }
+        if (meetingTypes.length) {
+          s.addText('Meeting types', { x: C2X, y: by2, w: C2W, h: 0.26, fontSize: 11, bold: true, color: C.dark, fontFace: 'Calibri' });
+          by2 += 0.28;
+          meetingTypes.forEach(mt => {
+            s.addText(mt.icon || '▶', { x: C2X, y: by2, w: 0.26, h: 0.24, fontSize: 12, color: hx(mt.color || '#1E40AF'), align: 'center', margin: 0 });
+            s.addText(mt.name, { x: C2X + 0.3, y: by2, w: C2W - 0.32, h: 0.24, fontSize: 10, color: C.text, valign: 'middle' });
+            by2 += 0.26;
+          });
+        }
+      }
+
+      // Footer
+      s.addText('Roadmap Studio  ·  Export: ' + new Date().toLocaleDateString('nl-BE'), { x: 0.4, y: 7.15, w: 12.5, h: 0.24, fontSize: 9, color: C.gray, align: 'center', fontFace: 'Calibri' });
+    }
+
+    // ─── Write file ─────────────────────────────────────────
+    const fileName = p.name.replace(/[/\\?%*:|"<>]/g, '-') + ' - Roadmap Export.pptx';
+    await pptx.writeFile({ fileName });
+    toast('✅ PowerPoint geëxporteerd!');
+  } catch (err) {
+    console.error('PPTX export error:', err);
+    toast('❌ Export mislukt: ' + err.message);
+  }
 }
 </script>
 </body>
