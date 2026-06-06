@@ -2191,14 +2191,15 @@ function renderTimeline() {
     cur.setDate(cur.getDate() - (dow === 0 ? 6 : dow - 1));
     while (cur <= maxDate) {
       const d = new Date(cur);
-      cols.push({ date: d, label: `W${getWeekNumber(d)} '${String(d.getFullYear()).slice(-2)}` });
+      const wn = getWeekNumber(d);
+      cols.push({ date: d, label: `W${wn} '${String(d.getFullYear()).slice(-2)}`, sublabel: `W${wn}` });
       cur = new Date(cur.getTime() + 7 * 86400000);
     }
   } else if (tlZoom === 'month') {
     let cur = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
     while (cur <= maxDate) {
       const d = new Date(cur);
-      cols.push({ date: d, label: d.toLocaleDateString('nl-BE', { month: 'short', year: 'numeric' }) });
+      cols.push({ date: d, label: d.toLocaleDateString('nl-BE', { month: 'short', year: 'numeric' }), sublabel: d.toLocaleDateString('nl-BE', { month: 'short' }) });
       cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
     }
   } else if (tlZoom === 'quarter') {
@@ -2206,16 +2207,34 @@ function renderTimeline() {
     while (cur <= maxDate) {
       const d = new Date(cur);
       const q = Math.floor(d.getMonth() / 3) + 1;
-      cols.push({ date: d, label: `Q${q} ${d.getFullYear()}` });
+      cols.push({ date: d, label: `Q${q} ${d.getFullYear()}`, sublabel: `Q${q}` });
       cur = new Date(cur.getFullYear(), cur.getMonth() + 3, 1);
     }
   } else { // year
     let cur = new Date(minDate.getFullYear(), 0, 1);
     while (cur <= maxDate) {
       const d = new Date(cur);
-      cols.push({ date: d, label: String(d.getFullYear()) });
+      cols.push({ date: d, label: String(d.getFullYear()), sublabel: String(d.getFullYear()) });
       cur = new Date(cur.getFullYear() + 1, 0, 1);
     }
+  }
+
+  // ── Build top-row groups (year for Q/month; month for week) ───────────────
+  const topGroups = [];
+  if (tlZoom === 'week') {
+    cols.forEach(c => {
+      const key = c.date.getFullYear() * 100 + c.date.getMonth();
+      const last = topGroups[topGroups.length - 1];
+      if (last && last.key === key) { last.count++; }
+      else { topGroups.push({ key, label: c.date.toLocaleDateString('nl-BE', { month: 'long' }) + ` '${String(c.date.getFullYear()).slice(-2)}`, count: 1 }); }
+    });
+  } else if (tlZoom !== 'year') {
+    cols.forEach(c => {
+      const y = c.date.getFullYear();
+      const last = topGroups[topGroups.length - 1];
+      if (last && last.key === y) { last.count++; }
+      else { topGroups.push({ key: y, label: String(y), count: 1 }); }
+    });
   }
 
   // ── 4. Date → percent helper ──────────────────────────────────────────────
@@ -2352,10 +2371,17 @@ function renderTimeline() {
     <div style="padding:6px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
       ${tlRow2Groups.join(tlVdiv)}
     </div>
+    ${topGroups.length ? `<div style="display:flex;border-bottom:1px solid var(--gy200);">
+      <div style="width:${LABEL_W}px;flex-shrink:0;border-right:1px solid var(--gy300);background:#F3F4F6;"></div>
+      <div style="flex:1;display:flex;">
+        ${topGroups.map(g => `<div style="flex:${g.count};text-align:center;padding:2px 4px;font-size:10px;font-weight:700;color:var(--gy500);border-right:1px solid var(--gy300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;background:#F3F4F6;" title="${g.label}">${g.label}</div>`).join('')}
+      </div>
+      ${hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#F3F4F6;"></div>` : ''}
+    </div>` : ''}
     <div style="display:flex;border-bottom:1px solid var(--gy300);">
       <div style="width:${LABEL_W}px;flex-shrink:0;border-right:1px solid var(--gy300);"></div>
-      <div style="flex:1;display:flex;">${cols.map(c => `<div style="flex:1;text-align:center;padding:6px 2px;font-size:11px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.label}">${c.label}</div>`).join('')}</div>
-      ${hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FEF3C7;padding:7px 8px;font-size:10px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:.3px;">📋 Nog te plannen</div>` : ''}
+      <div style="flex:1;display:flex;">${cols.map(c => `<div style="flex:1;text-align:center;padding:3px 2px;font-size:10px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.label}">${c.sublabel}</div>`).join('')}</div>
+      ${hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FEF3C7;padding:5px 8px;font-size:10px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:.3px;">📋 Nog te plannen</div>` : ''}
     </div>`;
   }
 
