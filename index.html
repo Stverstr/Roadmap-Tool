@@ -1456,7 +1456,6 @@ let tlToDate = '';
 let tlMinDate = null;
 let tlMaxDate = null;
 let tlDragItemId = null;
-let tlCrossLaneDragId = null;
 let tlFilterSubcats = new Set();
 let tlBarDrag = null;
 let tlBarDragged = false;
@@ -1754,23 +1753,67 @@ function tlBarMouseDown(e, id, mode) {
   if (!grid) return;
   tlBarDrag = {
     id, mode, gridEl: grid,
-    startX: e.clientX,
+    startX: e.clientX, startY: e.clientY,
     origStartDate: it.start_date || it.date,
     origEndDate: it.end_date || it.start_date || it.date,
     projectedStart: null, projectedEnd: null,
+    crossLane: false, crossLaneTarget: null, lastHighlightedGrid: null,
   };
   document.body.style.cursor = mode === 'move' ? 'grabbing' : (mode === 'left' ? 'w-resize' : 'e-resize');
   document.body.style.userSelect = 'none';
 }
 function tlBarMouseMove(e) {
   if (!tlBarDrag || !tlMinDate || !tlMaxDate) return;
-  const { id, mode, gridEl, startX, origStartDate, origEndDate } = tlBarDrag;
+  const { id, mode, gridEl, startX, startY, origStartDate, origEndDate } = tlBarDrag;
+  const deltaX = e.clientX - startX;
+  const deltaY = e.clientY - startY;
+  if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) tlBarDragged = true;
+
+  // Cross-lane mode: vertical drag > 28px while in move mode
+  if (mode === 'move' && Math.abs(deltaY) > 28) {
+    tlBarDrag.crossLane = true;
+    document.body.style.cursor = 'ns-resize';
+    const grids = [...document.querySelectorAll('[data-tl-grid][data-track-id]')];
+    const targetGrid = grids.find(g => { const r = g.getBoundingClientRect(); return e.clientY >= r.top && e.clientY <= r.bottom; }) || null;
+    if (tlBarDrag.lastHighlightedGrid !== targetGrid) {
+      if (tlBarDrag.lastHighlightedGrid) tlBarDrag.lastHighlightedGrid.style.background = '';
+      if (targetGrid) targetGrid.style.background = 'rgba(64,145,108,.13)';
+      tlBarDrag.lastHighlightedGrid = targetGrid;
+    }
+    tlBarDrag.crossLaneTarget = targetGrid ? { trackId: targetGrid.dataset.trackId || null, subcatId: targetGrid.dataset.subcatId || null } : null;
+    // Also update horizontal position so the bar moves with the cursor
+    const gridRect = gridEl.getBoundingClientRect();
+    const totalMs2 = tlMaxDate.getTime() - tlMinDate.getTime();
+    if (totalMs2) {
+      const pxPerMs2 = gridRect.width / totalMs2;
+      const dMs = deltaX / pxPerMs2;
+      const origStart2 = new Date(origStartDate), origEnd2 = new Date(origEndDate);
+      const ns = new Date(origStart2.getTime() + dMs), ne = new Date(origEnd2.getTime() + dMs);
+      const bar2 = document.querySelector(`[data-tl-bar="${id}"]`);
+      if (bar2) {
+        const sp2 = Math.max(0, (ns.getTime()-tlMinDate.getTime())/totalMs2*100);
+        const ep2 = Math.min(100, (ne.getTime()-tlMinDate.getTime())/totalMs2*100);
+        bar2.style.left = sp2 + '%'; bar2.style.width = Math.max(0.5, ep2-sp2) + '%';
+        tlBarDrag.projectedStart = ns.toISOString().split('T')[0];
+        tlBarDrag.projectedEnd = ne.toISOString().split('T')[0];
+      }
+    }
+    return;
+  }
+
+  // Normal horizontal movement
+  if (tlBarDrag.crossLane && Math.abs(deltaY) <= 28) {
+    // User moved back horizontally — exit cross-lane mode
+    tlBarDrag.crossLane = false;
+    if (tlBarDrag.lastHighlightedGrid) { tlBarDrag.lastHighlightedGrid.style.background = ''; tlBarDrag.lastHighlightedGrid = null; }
+    document.body.style.cursor = mode === 'move' ? 'grabbing' : (mode === 'left' ? 'w-resize' : 'e-resize');
+  }
+
   const gridRect = gridEl.getBoundingClientRect();
   const totalMs = tlMaxDate.getTime() - tlMinDate.getTime();
   if (!totalMs) return;
   const pxPerMs = gridRect.width / totalMs;
-  const deltaMs = (e.clientX - startX) / pxPerMs;
-  if (Math.abs(e.clientX - startX) > 3) tlBarDragged = true;
+  const deltaMs = deltaX / pxPerMs;
   const origStart = new Date(origStartDate);
   const origEnd = new Date(origEndDate);
   let newStart = new Date(origStart), newEnd = new Date(origEnd);
@@ -1797,30 +1840,33 @@ async function tlBarMouseUp(e) {
   if (!tlBarDrag) return;
   document.body.style.cursor = '';
   document.body.style.userSelect = '';
-  const { id, projectedStart, projectedEnd } = tlBarDrag;
+  const { id, projectedStart, projectedEnd, crossLane, crossLaneTarget, lastHighlightedGrid } = tlBarDrag;
   const wasDragged = tlBarDragged;
+  tlBarDragged = false;
   tlBarDrag = null;
-  if (!wasDragged || !projectedStart) return;
+  if (lastHighlightedGrid) lastHighlightedGrid.style.background = '';
+  if (!wasDragged) return;
   const it = items.find(i => i.id === id);
-  if (it) {
-    const updates = { start_date: projectedStart, end_date: projectedEnd };
+  if (!it) return;
+  const updates = {};
+  if (crossLane && crossLaneTarget) {
+    updates.track_id = crossLaneTarget.trackId;
+    updates.subcategory_id = crossLaneTarget.subcatId || null;
+  }
+  if (projectedStart) {
+    updates.start_date = projectedStart;
+    updates.end_date = projectedEnd;
+  }
+  if (Object.keys(updates).length) {
     await sb.from('roadmap_items').update(updates).eq('id', id);
     Object.assign(it, updates);
     renderTimeline();
-    showToast('📅 Datum bijgewerkt: ' + projectedStart + ' → ' + projectedEnd);
+    showToast(crossLane && crossLaneTarget ? '↕️ Rij gewijzigd' : '📅 Datum bijgewerkt: ' + projectedStart + ' → ' + projectedEnd);
   }
 }
 
 function tlCardDragStart(e, id) {
   tlDragItemId = id;
-  tlCrossLaneDragId = null;
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', id);
-  setTimeout(() => document.querySelectorAll('[data-tl-grid]').forEach(g => g.classList.add('tl-dragging')), 0);
-}
-function tlBarLaneDragStart(e, id) {
-  tlDragItemId = id;
-  tlCrossLaneDragId = id;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', id);
   setTimeout(() => document.querySelectorAll('[data-tl-grid]').forEach(g => g.classList.add('tl-dragging')), 0);
@@ -1841,51 +1887,46 @@ async function tlLaneDrop(e) {
   e.preventDefault();
   e.currentTarget.style.background = '';
   document.querySelectorAll('[data-tl-grid]').forEach(g => g.classList.remove('tl-dragging'));
-  if (!tlDragItemId || !tlMinDate || !tlMaxDate) { tlDragItemId = null; tlCrossLaneDragId = null; return; }
+  if (!tlDragItemId || !tlMinDate || !tlMaxDate) { tlDragItemId = null; return; }
   const item = items.find(i => i.id === tlDragItemId);
-  if (!item) { tlDragItemId = null; tlCrossLaneDragId = null; return; }
+  if (!item) { tlDragItemId = null; return; }
 
-  const wasCrossLane = !!tlCrossLaneDragId;
   const updates = {};
 
-  // Lane change: update track/subcat from drop target's data attributes
-  const targetTrackId = e.currentTarget.dataset.trackId || null;
-  const targetSubcatId = e.currentTarget.dataset.subcatId || null;
-  if (targetTrackId !== undefined && targetTrackId !== null) {
-    updates.track_id = targetTrackId;
-    updates.subcategory_id = targetSubcatId || null;
+  // Always update lane from drop target's data attributes
+  const targetTrackId = e.currentTarget.dataset.trackId;
+  if (targetTrackId !== undefined) {
+    updates.track_id = targetTrackId || null;
+    updates.subcategory_id = e.currentTarget.dataset.subcatId || null;
   }
 
-  if (!wasCrossLane) {
-    // Sidebar drop: calculate new start date from x-position
-    const rect = e.currentTarget.getBoundingClientRect();
-    const xFraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const dropMs = tlMinDate.getTime() + xFraction * (tlMaxDate.getTime() - tlMinDate.getTime());
-    const dropDate = new Date(dropMs);
-    let snapDate;
-    if (tlZoom === 'week') {
-      const dow = dropDate.getDay(); dropDate.setDate(dropDate.getDate() - (dow === 0 ? 6 : dow - 1));
-      snapDate = dropDate.toISOString().split('T')[0];
-    } else if (tlZoom === 'month') {
-      snapDate = `${dropDate.getFullYear()}-${String(dropDate.getMonth()+1).padStart(2,'0')}-01`;
-    } else if (tlZoom === 'quarter') {
-      const qStart = Math.floor(dropDate.getMonth() / 3) * 3;
-      snapDate = `${dropDate.getFullYear()}-${String(qStart+1).padStart(2,'0')}-01`;
-    } else {
-      snapDate = `${dropDate.getFullYear()}-01-01`;
-    }
-    const startD = new Date(snapDate);
-    const endD = new Date(startD.getFullYear(), startD.getMonth() + 3, 0);
-    updates.start_date = snapDate;
-    updates.end_date = item.end_date || endD.toISOString().split('T')[0];
+  // Calculate start date from x-position
+  const rect = e.currentTarget.getBoundingClientRect();
+  const xFraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const dropMs = tlMinDate.getTime() + xFraction * (tlMaxDate.getTime() - tlMinDate.getTime());
+  const dropDate = new Date(dropMs);
+  let snapDate;
+  if (tlZoom === 'week') {
+    const dow = dropDate.getDay(); dropDate.setDate(dropDate.getDate() - (dow === 0 ? 6 : dow - 1));
+    snapDate = dropDate.toISOString().split('T')[0];
+  } else if (tlZoom === 'month') {
+    snapDate = `${dropDate.getFullYear()}-${String(dropDate.getMonth()+1).padStart(2,'0')}-01`;
+  } else if (tlZoom === 'quarter') {
+    const qStart = Math.floor(dropDate.getMonth() / 3) * 3;
+    snapDate = `${dropDate.getFullYear()}-${String(qStart+1).padStart(2,'0')}-01`;
+  } else {
+    snapDate = `${dropDate.getFullYear()}-01-01`;
   }
+  const startD = new Date(snapDate);
+  const endD = new Date(startD.getFullYear(), startD.getMonth() + 3, 0);
+  updates.start_date = snapDate;
+  updates.end_date = item.end_date || endD.toISOString().split('T')[0];
 
   await sb.from('roadmap_items').update(updates).eq('id', tlDragItemId);
   Object.assign(item, updates);
-  const msg = wasCrossLane ? '↕️ Rij gewijzigd' : `📅 Datum ingesteld: ${updates.start_date} → ${updates.end_date}`;
-  tlDragItemId = null; tlCrossLaneDragId = null;
+  tlDragItemId = null;
   renderTimeline();
-  showToast(msg);
+  showToast(`📅 Datum ingesteld: ${updates.start_date} → ${updates.end_date}`);
 }
 
 // ═══════════════════════════════════════════
@@ -2169,7 +2210,6 @@ function renderTimeline() {
         onmouseover="this.style.filter='brightness(1.1)'"
         onmouseout="this.style.filter=''">
         <div onmousedown="tlBarMouseDown(event,'${it.id}','left');event.stopPropagation();" style="position:absolute;left:0;top:0;bottom:0;width:8px;cursor:w-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:5px 0 0 5px;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
-        <span draggable="true" ondragstart="tlBarLaneDragStart(event,'${it.id}');event.stopPropagation();" onmousedown="event.stopPropagation();" style="flex-shrink:0;cursor:move;opacity:0;padding:0 2px;font-size:10px;line-height:1;" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='0'" title="Sleep naar andere rij">⠿</span>
         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${content}</span>
         <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
       </div>`;
@@ -2256,6 +2296,47 @@ function renderTimeline() {
 
   if (!tracks.length) {
     html += `<div class="empty" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-title">Geen streams</div><div class="empty-sub">Voeg streams toe via Setup om de tijdslijn te zien.</div></div>`;
+  }
+
+  // ── 15. Backlog row (items without track_id) ───────────────────────────────
+  const backlogScheduled = items.filter(it => !it.track_id && it.start_date);
+  const backlogUnscheduled = items.filter(it => {
+    if (it.track_id || it.start_date) return false;
+    if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
+    if (tlFilterKeyOnly && !it.key_activity) return false;
+    return true;
+  });
+  if (backlogScheduled.length || backlogUnscheduled.length) {
+    const blBarColor = '#6B7280';
+    html += `<div style="display:flex;border-top:2px dashed var(--gy300);background:#F8FAFC;align-items:stretch;">
+      <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;font-weight:700;color:var(--gy500);border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;">
+        📥 Backlog
+      </div>
+      <div data-tl-grid="1" data-track-id="" data-subcat-id="" style="flex:1;position:relative;min-height:48px;"
+        ondragover="tlLaneDragOver(event)" ondragleave="tlLaneDragLeave(event)" ondrop="tlLaneDrop(event)">
+        ${phaseBandsHtml}${colGridLines()}
+        ${backlogScheduled.map(it => {
+          const startPct = dateToPercent(it.start_date);
+          const endPct = dateToPercent(it.end_date || it.start_date);
+          if (startPct === null) return '';
+          const w = Math.max(0.5, (endPct || startPct) - startPct);
+          const isDone = it.status === 'done', isActive = it.status === 'active';
+          const safeTitle = it.title.replace(/"/g,'&quot;');
+          return `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:28px;top:10px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:white;background:${blBarColor};z-index:2;transition:filter .15s;opacity:${isDone?.75:1};${isDone?'text-decoration:line-through;':''}${isActive?'font-weight:800;':'font-weight:600;'}cursor:grab;user-select:none;overflow:hidden;white-space:nowrap;"
+            onmousedown="tlBarMouseDown(event,'${it.id}','move')"
+            onclick="if(!tlBarDragged){openModal('modal-item','${it.id}','edit')}else{tlBarDragged=false;}"
+            title="${safeTitle}"
+            onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">
+            <div onmousedown="tlBarMouseDown(event,'${it.id}','left');event.stopPropagation();" style="position:absolute;left:0;top:0;bottom:0;width:8px;cursor:w-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:5px 0 0 5px;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.key_activity?'⭐ ':''}${it.title}</span>
+            <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;padding:3px 4px;display:flex;flex-direction:column;gap:2px;">
+        ${backlogUnscheduled.map(sit => `<div draggable="true" ondragstart="tlCardDragStart(event,'${sit.id}')" onclick="openModal('modal-item','${sit.id}','edit')" style="border-left:3px solid ${blBarColor};border-radius:0 4px 4px 0;padding:3px 5px;background:white;border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);cursor:pointer;font-size:10px;font-weight:600;color:var(--gy900);line-height:1.3;">${sit.key_activity?'⭐ ':''}${sit.title}</div>`).join('')}
+      </div>` : ''}
+    </div>`;
   }
 
   html += `</div>`; // close inner timeline column
@@ -2412,7 +2493,7 @@ document.addEventListener('mousemove', tlBarMouseMove);
 document.addEventListener('mouseup', tlBarMouseUp);
 document.addEventListener('dragend', () => {
   document.querySelectorAll('[data-tl-grid]').forEach(g => g.classList.remove('tl-dragging'));
-  if (!tlDragItemId) { tlCrossLaneDragId = null; }
+  tlDragItemId = null;
 });
 
 let toastTimer;
