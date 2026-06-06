@@ -2501,7 +2501,8 @@ function renderRmKolommen(){
       ondrop="smCardDrop(event,'${it.id}',${curFase},'${curKol}')"
       style="background:white;border:1px solid #e5e7eb;border-left:3px solid ${colCfg.hdrBg};border-radius:7px;padding:8px 10px;margin-bottom:5px;cursor:grab;position:relative;transition:border-top .1s,opacity .15s"
       onclick="openRmEdit('${it.id}')">
-      <div style="${titleStyle};font-size:12px;line-height:1.35;padding-right:20px">${esc(it.titel)}</div>
+      ${it.health_status&&RM_HEALTH_ICON[it.health_status]?`<span style="position:absolute;top:6px;right:22px;font-size:14px;line-height:1;">${RM_HEALTH_ICON[it.health_status]}</span>`:''}
+      <div style="${titleStyle};font-size:12px;line-height:1.35;padding-right:${it.health_status?'38':'20'}px">${esc(it.titel)}</div>
       ${it.beschrijving?`<div style="font-size:10px;color:#9ca3af;margin-top:3px;line-height:1.3">${esc(it.beschrijving)}</div>`:''}
       <button onclick="event.stopPropagation();openRmEdit('${it.id}')" style="position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;font-size:11px;color:#d1d5db;padding:1px 3px" title="Bewerken">✏️</button>
     </div>`;
@@ -2990,6 +2991,16 @@ function openRmEdit(id,defaults={}){
       </div>
     </div>
 
+    <div class="em-field"><label class="em-label">Gezondheidsstatus</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        ${[['','—','Geen status'],['sunny','☀️','Goed op koers'],['partly_cloudy','⛅','Kleine aandachtspunten'],['cloudy','☁️','Problemen in zicht'],['stormy','⛈️','Kritieke problemen']].map(([val,icon,title])=>`
+          <button type="button" data-hs="${val}" onclick="setRmHealth('${val}')" title="${title}"
+            style="font-size:${val?'22':'16'}px;width:44px;height:40px;border-radius:8px;border:2px solid ${it.health_status===val?'#2D6A4F':'#e5e7eb'};background:${it.health_status===val?'#D8F3DC':'#f9fafb'};cursor:pointer;transform:${it.health_status===val?'scale(1.15)':'scale(1)'};transition:all .15s;">${icon}</button>
+        `).join('')}
+      </div>
+      <input type="hidden" id="rme-health" value="${it.health_status||''}">
+    </div>
+
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:4px 0">
 
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px">
@@ -3100,6 +3111,18 @@ function rmToggleBacklog(){
   if(wrap){wrap.style.opacity=inBl?'.4':'1';wrap.style.pointerEvents=inBl?'none':'';}
 }
 
+function setRmHealth(val){
+  document.getElementById('rme-health').value=val;
+  document.querySelectorAll('[data-hs]').forEach(btn=>{
+    const active=btn.dataset.hs===val;
+    btn.style.borderColor=active?'#2D6A4F':'#e5e7eb';
+    btn.style.background=active?'#D8F3DC':'#f9fafb';
+    btn.style.transform=active?'scale(1.15)':'scale(1)';
+  });
+}
+
+const RM_HEALTH_ICON={sunny:'☀️',partly_cloudy:'⛅',cloudy:'☁️',stormy:'⛈️'};
+
 function saveRmEdit(){
   const titel=(document.getElementById('rme-titel')?.value||'').trim();
   if(!titel){alert('Geef een titel op.');return;}
@@ -3124,6 +3147,7 @@ function saveRmEdit(){
     typeActiviteit:document.getElementById('rme-type')?.value||null,
     keyActivity:document.querySelector('input[name="rme-key"]:checked')?.value==='1'||false,
     klimaat:document.querySelector('input[name="rme-klimaat"]:checked')?.value==='1'||false,
+    health_status:document.getElementById('rme-health')?.value||null,
   };
   const idx=RM_ITEMS.findIndex(x=>x.id===_rmEditId);
   if(idx>=0)RM_ITEMS[idx]=updated;else RM_ITEMS.push(updated);
@@ -3722,8 +3746,13 @@ async function rmExportPptx(){
           s.addShape(pptx.ShapeType.roundRect,{x:cx+CARD_PAD,y:iy,w:COL_W-CARD_PAD*2,h:CARD_H,rectRadius:.04,fill:{color:WHITE},line:{color:'D1D5DB',pt:.4}});
           // Status dot
           s.addShape(pptx.ShapeType.ellipse,{x:cx+CARD_PAD+.06,y:iy+.11,w:.1,h:.1,fill:{color:stcol},line:{color:stcol,pt:0}});
+          // Health status icon (top-right corner)
+          const hsIcon={'sunny':'☀️','partly_cloudy':'⛅','cloudy':'☁️','stormy':'⛈️'}[it.health_status];
+          if(hsIcon){
+            s.addText(hsIcon,{x:cx+COL_W-CARD_PAD*2-.12,y:iy+.04,w:.18,h:.18,fontSize:9,fontFace:'Segoe UI Emoji',align:'right'});
+          }
           // Title text
-          s.addText(it.titel,{x:cx+CARD_PAD+.18,y:iy+.04,w:COL_W-CARD_PAD*2-.2,h:.26,fontSize:6.5,bold:true,color:'111827',fontFace:'Calibri',wrap:true});
+          s.addText(it.titel,{x:cx+CARD_PAD+.18,y:iy+.04,w:COL_W-CARD_PAD*2-.2-(hsIcon?.2:0),h:.26,fontSize:6.5,bold:true,color:'111827',fontFace:'Calibri',wrap:true});
           // Date range
           if(it.datumVan){
             const dtxt=(it.datumVan||'')+(it.datumTot&&it.datumTot!==it.datumVan?' → '+it.datumTot:'');
