@@ -335,9 +335,9 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div class="card" style="padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
         <span style="font-size:15px;font-weight:700;color:var(--gy900)">📅 Tijdslijn</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item</button>
           <button class="btn btn-sm" style="background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE;" onclick="openModal('modal-meeting','','new')" id="btn-add-meeting">＋ Meeting</button>
           <button class="btn btn-sm" style="background:#F5F3FF;color:#5B21B6;border:1px solid #DDD6FE;" onclick="openModal('modal-milestone','','new')" id="btn-add-milestone">＋ Milestone</button>
-          <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item</button>
         </div>
       </div>
       <div id="tl-filter-bar" style="position:sticky;top:108px;z-index:60;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:0;border-radius:10px 10px 0 0;overflow:hidden;"></div>
@@ -785,10 +785,9 @@ function fillSetupForm() {
 }
 
 function updateMeetingMilestoneButtons() {
-  const p = projects.find(x => x.id === currentProjectId);
-  if (!p) return;
-  document.getElementById('btn-add-meeting').style.display = p.enable_meetings !== false ? 'inline-flex' : 'none';
-  document.getElementById('btn-add-milestone').style.display = p.enable_milestones !== false ? 'inline-flex' : 'none';
+  // Buttons always visible; toggles in Setup control lane visibility only
+  document.getElementById('btn-add-meeting').style.display = 'inline-flex';
+  document.getElementById('btn-add-milestone').style.display = 'inline-flex';
 }
 
 let autoSaveTimeout = null;
@@ -2397,17 +2396,38 @@ function renderTimeline() {
       return true;
     });
     const scheduled = visItems.filter(it => it.start_date || it.date);
-    const trkAttr = laneTrackId ? ` data-track-id="${laneTrackId}" data-subcat-id="${laneSubcatId||''}"` : '';
-    let cells = `<div data-tl-grid="1"${trkAttr} style="flex:1;position:relative;min-height:48px;"
-      ${droppable ? `ondragover="tlLaneDragOver(event)" ondragleave="tlLaneDragLeave(event)" ondrop="tlLaneDrop(event)"` : ''}>
-      ${phaseBandsHtml}
-      ${colGridLines()}`;
-    scheduled.forEach((it) => {
+    // ── stacking algorithm ──────────────────────────────────────────────────
+    const BAR_H = 28, BAR_GAP = 4, TOP_PAD = 8;
+    const sorted = [...scheduled].sort((a, b) => {
+      const as = a.start_date || a.date || '', bs = b.start_date || b.date || '';
+      return as < bs ? -1 : as > bs ? 1 : 0;
+    });
+    const rowEnds = []; // rowEnds[i] = end-% of last bar placed in sub-row i
+    const barRows = new Map(); // item.id → { startPct, endPct, w, rowIdx }
+    sorted.forEach(it => {
       const startPct = dateToPercent(it.start_date || it.date);
       const endPct   = dateToPercent(it.end_date || it.start_date || it.date);
       if (startPct === null) return;
       const w = Math.max(0.5, (endPct || startPct) - startPct);
-      const top = 10;
+      const effectiveEnd = startPct + w + 0.3; // tiny gap between bars
+      let rowIdx = 0;
+      while (rowIdx < rowEnds.length && rowEnds[rowIdx] > startPct) rowIdx++;
+      rowEnds[rowIdx] = effectiveEnd;
+      barRows.set(it.id, { startPct, endPct, w, rowIdx });
+    });
+    const numRows = Math.max(1, rowEnds.length);
+    const laneH = TOP_PAD + numRows * (BAR_H + BAR_GAP) + TOP_PAD;
+    // ───────────────────────────────────────────────────────────────────────
+    const trkAttr = laneTrackId ? ` data-track-id="${laneTrackId}" data-subcat-id="${laneSubcatId||''}"` : '';
+    let cells = `<div data-tl-grid="1"${trkAttr} style="flex:1;position:relative;min-height:${laneH}px;"
+      ${droppable ? `ondragover="tlLaneDragOver(event)" ondragleave="tlLaneDragLeave(event)" ondrop="tlLaneDrop(event)"` : ''}>
+      ${phaseBandsHtml}
+      ${colGridLines()}`;
+    sorted.forEach((it) => {
+      const bm = barRows.get(it.id);
+      if (!bm) return;
+      const { startPct, w, rowIdx } = bm;
+      const top = TOP_PAD + rowIdx * (BAR_H + BAR_GAP);
       const content = contentFn ? contentFn(it) : (it.title || it.name);
       const isDone = it.status === 'done';
       const isActive = it.status === 'active';
@@ -2416,7 +2436,7 @@ function renderTimeline() {
       const fw = isActive ? 'font-weight:800;' : 'font-weight:600;';
       const onclickStr = clickFn(it);
       const safeTitle = (it.title||it.name||'').replace(/"/g,'&quot;');
-      cells += `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:28px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:white;background:${barColor};z-index:2;transition:filter .15s;opacity:${opacity};${textDeco}${fw}cursor:grab;user-select:none;overflow:hidden;white-space:nowrap;"
+      cells += `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:${BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:white;background:${barColor};z-index:2;transition:filter .15s;opacity:${opacity};${textDeco}${fw}cursor:grab;user-select:none;overflow:hidden;white-space:nowrap;"
         onmousedown="tlBarMouseDown(event,'${it.id}','move')"
         onclick="if(!tlBarDragged){${onclickStr}}else{tlBarDragged=false;}"
         title="${safeTitle}"
@@ -2443,17 +2463,36 @@ function renderTimeline() {
       return pct !== null;
     });
     if (visibleMeetings.length > 0) {
-      html += `<div style="display:flex;border-bottom:1px solid var(--gy200);min-height:48px;background:#EFF6FF;align-items:stretch;">
-        <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:#EFF6FF;font-weight:700;color:#1E40AF;">📅 Meetings</div>
-        <div style="flex:1;position:relative;min-height:48px;">${phaseBandsHtml}${colGridLines()}`;
-      visibleMeetings.forEach(me => {
+      // stacking voor meetings
+      const ME_BAR_H = 28, ME_BAR_GAP = 4, ME_TOP_PAD = 8;
+      const meSorted = [...visibleMeetings].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+      const meRowEnds = [];
+      const meBarRows = new Map();
+      meSorted.forEach(me => {
         const startPct = dateToPercent(me.date);
         const endPct = me.end_date ? dateToPercent(me.end_date) : startPct;
+        if (startPct === null) return;
+        const w = Math.max(1.5, (endPct || startPct) - startPct);
+        const effectiveEnd = startPct + w + 0.3;
+        let rowIdx = 0;
+        while (rowIdx < meRowEnds.length && meRowEnds[rowIdx] > startPct) rowIdx++;
+        meRowEnds[rowIdx] = effectiveEnd;
+        meBarRows.set(me.id, { startPct, w, rowIdx });
+      });
+      const meNumRows = Math.max(1, meRowEnds.length);
+      const meLaneH = ME_TOP_PAD + meNumRows * (ME_BAR_H + ME_BAR_GAP) + ME_TOP_PAD;
+      html += `<div style="display:flex;border-bottom:1px solid var(--gy200);background:#EFF6FF;align-items:stretch;">
+        <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:#EFF6FF;font-weight:700;color:#1E40AF;">📅 Meetings</div>
+        <div style="flex:1;position:relative;min-height:${meLaneH}px;">${phaseBandsHtml}${colGridLines()}`;
+      meSorted.forEach(me => {
+        const bm = meBarRows.get(me.id);
+        if (!bm) return;
+        const { startPct, w, rowIdx } = bm;
+        const top = ME_TOP_PAD + rowIdx * (ME_BAR_H + ME_BAR_GAP);
         const mtype = meetingTypes.find(t => t.id === me.type_id);
         const mColor = mtype ? mtype.color : '#1E40AF';
         const mIcon = mtype ? (mtype.icon || '📅') : '📅';
-        const w = Math.max(1.5, (endPct || startPct) - startPct);
-        html += `<div style="position:absolute;left:${startPct}%;width:${w}%;height:28px;top:10px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:white;background:${mColor};z-index:2;cursor:pointer;overflow:hidden;white-space:nowrap;gap:4px;"
+        html += `<div style="position:absolute;left:${startPct}%;width:${w}%;height:${ME_BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:white;background:${mColor};z-index:2;cursor:pointer;overflow:hidden;white-space:nowrap;gap:4px;"
           onclick="openModal('modal-meeting','${me.id}','edit')" title="${me.title}${mtype?' ('+mtype.name+')':''}">
           <span style="flex-shrink:0;">${mIcon}</span>
           <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;">${me.title}</span>
