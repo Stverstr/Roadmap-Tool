@@ -1444,6 +1444,7 @@ let sbDragging = false;
 // ── Timeline state ────────────────────────────────────────────────────────
 let tlZoom = 'month';
 let tlFilterStreams = new Set();
+let tlFilterPhases  = new Set();
 let tlFilterStatuses = new Set();
 let tlFilterKeyOnly = false;
 let tlYearMode = 'calendar';
@@ -1731,7 +1732,8 @@ function setTlFilterKeyOnly(v) { tlFilterKeyOnly = v; renderTimeline(); }
 function setTlFromDate(v) { tlFromDate = v; tlYear = null; renderTimeline(); }
 function setTlToDate(v) { tlToDate = v; tlYear = null; renderTimeline(); }
 function tlClearDateFilter() { tlFromDate = ''; tlToDate = ''; tlYear = null; renderTimeline(); }
-function tlClearFilters() { tlFilterStreams = new Set(); tlFilterStatuses = new Set(); tlFilterKeyOnly = false; renderTimeline(); }
+function toggleTlFilterPhase(id) { tlFilterPhases.has(id) ? tlFilterPhases.delete(id) : tlFilterPhases.add(id); renderTimeline(); }
+function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterKeyOnly = false; renderTimeline(); }
 
 function tlCardDragStart(e, id) {
   tlDragItemId = id;
@@ -1916,8 +1918,14 @@ function renderTimeline() {
 
   const keyChip = `<button onclick="setTlFilterKeyOnly(${!tlFilterKeyOnly})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterKeyOnly?'#D97706':'var(--gy300)'};background:${tlFilterKeyOnly?'#FFFBEB':'white'};color:${tlFilterKeyOnly?'#D97706':'var(--gy700)'};cursor:pointer;white-space:nowrap;">⭐ Key only</button>`;
 
+  const phaseChips = phases.map(ph => {
+    const act = tlFilterPhases.has(ph.id);
+    const fg = act ? (textColor(ph.color || '#2D6A4F') === '#ffffff' ? 'white' : '#111827') : 'var(--gy700)';
+    return `<button onclick="toggleTlFilterPhase('${ph.id}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?(ph.color||'#2D6A4F'):'var(--gy300)'};background:${act?(ph.color||'#2D6A4F'):'white'};color:${fg};cursor:pointer;white-space:nowrap;">${renderIcon(ph.icon,act?(ph.color||'#2D6A4F'):null)}${ph.name}</button>`;
+  }).join('');
+
   const hasDateFilter = tlFromDate || tlToDate || tlYear !== null;
-  const hasItemFilter = tlFilterStreams.size || tlFilterStatuses.size || tlFilterKeyOnly;
+  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterKeyOnly;
 
   let html = `<div style="display:flex;align-items:flex-start;"><div style="flex:1;min-width:0;">
   <div style="position:sticky;top:108px;z-index:50;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);">
@@ -1935,6 +1943,8 @@ function renderTimeline() {
       </div>
       <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
       ${streamChips}
+      ${phaseChips.length ? `<div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>${phaseChips}` : ''}
+      <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
       ${statusChips}
       ${keyChip}
       ${hasItemFilter ? `<button onclick="tlClearFilters()" style="padding:3px 9px;font-size:11px;border-radius:12px;border:1px solid var(--gy300);background:white;cursor:pointer;color:var(--gy500);">✕ Wis</button>` : ''}
@@ -1945,14 +1955,38 @@ function renderTimeline() {
     </div>
   </div>`;
 
-  // ── 7. Phase background bands ─────────────────────────────────────────────
-  const phaseBandsHtml = phases.map(ph => {
+  // ── 7. Phase row + background bands ──────────────────────────────────────
+  const visPhases = tlFilterPhases.size ? phases.filter(ph => tlFilterPhases.has(ph.id)) : phases;
+
+  // Subtle background tint per lane
+  const phaseBandsHtml = visPhases.map(ph => {
     const left = dateToPercent(ph.start_date);
     const right = ph.end_date ? dateToPercent(ph.end_date) : null;
     if (left === null) return '';
     const width = right !== null ? (right - left) : (100 - left);
-    return `<div style="position:absolute;left:${left}%;width:${width}%;top:0;bottom:0;background:${ph.color||'#2D6A4F'};opacity:.06;pointer-events:none;"></div>`;
+    return `<div style="position:absolute;left:${left}%;width:${width}%;top:0;bottom:0;background:${ph.color||'#2D6A4F'};opacity:.07;pointer-events:none;"></div>`;
   }).join('');
+
+  // Visible phase header row
+  if (visPhases.some(ph => ph.start_date)) {
+    html += `<div style="display:flex;border-bottom:1px solid var(--gy300);min-height:32px;background:var(--gy50,#F9FAFB);align-items:stretch;">
+      <div style="width:${LABEL_W}px;flex-shrink:0;padding:6px 12px;font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;border-right:1px solid var(--gy300);display:flex;align-items:center;">Fasen</div>
+      <div style="flex:1;position:relative;min-height:32px;">
+        ${colGridLines()}
+        ${visPhases.map(ph => {
+          const left = dateToPercent(ph.start_date);
+          const right = ph.end_date ? dateToPercent(ph.end_date) : null;
+          if (left === null) return '';
+          const width = Math.max(2, right !== null ? (right - left) : (100 - left));
+          const bg = ph.color || '#2D6A4F';
+          const fg = textColor(bg);
+          return `<div style="position:absolute;left:${left}%;width:${width}%;top:4px;bottom:4px;background:${bg};border-radius:4px;display:flex;align-items:center;padding:0 8px;overflow:hidden;cursor:default;" title="${ph.name}">
+            <span style="font-size:10px;font-weight:700;color:${fg};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${renderIcon(ph.icon, bg)}${ph.name}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
 
   // ── 8. Column grid lines ──────────────────────────────────────────────────
   function colGridLines() {
@@ -1975,6 +2009,7 @@ function renderTimeline() {
   // ── 10. renderLane helper ─────────────────────────────────────────────────
   function renderLane(label, laneItems, bgColor, labelStyle, barColor, clickFn, contentFn, droppable) {
     const visItems = laneItems.filter(it => {
+      if (tlFilterPhases.size && !tlFilterPhases.has(it.phase_id)) return false;
       if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
       if (tlFilterKeyOnly && !it.key_activity) return false;
       return true;
