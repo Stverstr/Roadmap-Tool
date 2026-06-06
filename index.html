@@ -1541,16 +1541,18 @@ let sbFilterTracks  = new Set();
 let sbFilterSubcats = new Set();
 let sbFilterPhases  = new Set();
 let sbFilterStatuses = new Set();
+let sbFilterHealthStatuses = new Set();
 let sbFilterKeyOnly = false;
 
 function sbItemVisible(it) {
   if (sbFilterKeyOnly && !it.key_activity) return false;
   if (sbFilterStatuses.size && !sbFilterStatuses.has(it.status || 'pending')) return false;
+  if (sbFilterHealthStatuses.size && !sbFilterHealthStatuses.has(it.health_status || '')) return false;
   return true;
 }
 
 function sbToggleFilter(type, value) {
-  const map = {track: sbFilterTracks, subcat: sbFilterSubcats, phase: sbFilterPhases, status: sbFilterStatuses};
+  const map = {track: sbFilterTracks, subcat: sbFilterSubcats, phase: sbFilterPhases, status: sbFilterStatuses, health: sbFilterHealthStatuses};
   if (type === 'key') { sbFilterKeyOnly = !sbFilterKeyOnly; }
   else { const s = map[type]; s.has(value) ? s.delete(value) : s.add(value); }
   renderSbLegend();
@@ -1594,14 +1596,14 @@ function tlToggleFilter() {
 
 function sbClearFilters() {
   sbFilterTracks.clear(); sbFilterSubcats.clear(); sbFilterPhases.clear();
-  sbFilterStatuses.clear(); sbFilterKeyOnly = false;
+  sbFilterStatuses.clear(); sbFilterHealthStatuses.clear(); sbFilterKeyOnly = false;
   renderSbLegend(); renderStoryboard();
 }
 
 function renderSbLegend() {
   const el = document.getElementById('sb-legend');
   if (!el || !sbLegendOpen) return;
-  const anyActive = sbFilterTracks.size || sbFilterSubcats.size || sbFilterPhases.size || sbFilterStatuses.size || sbFilterKeyOnly;
+  const anyActive = sbFilterTracks.size || sbFilterSubcats.size || sbFilterPhases.size || sbFilterStatuses.size || sbFilterHealthStatuses.size || sbFilterKeyOnly;
 
   const chip = (label, active, onclick, bg, fg) => {
     const border = active ? `2px solid ${bg||'var(--g700)'}` : '2px solid transparent';
@@ -1635,6 +1637,7 @@ function renderSbLegend() {
     }).join('')}</div>`);
   }
   row2.push(`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${lbl('Status')}${[['pending','○ Te doen','#374151','#F3F4F6'],['active','▶ Actief','#1E40AF','#DBEAFE'],['done','✓ Klaar','#14532D','#DCFCE7']].map(([val,l,fg,bg]) => chip(l, sbFilterStatuses.has(val), `sbToggleFilter('status','${val}')`, bg, fg)).join('')}</div>`);
+  row2.push(`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${lbl('Gezondheid')}${[['sunny','☀️','#92400E','#FEF3C7'],['partly_cloudy','⛅','#1E40AF','#DBEAFE'],['cloudy','☁️','#374151','#F3F4F6'],['stormy','⛈️','#991B1B','#FEE2E2']].map(([val,l,fg,bg]) => chip(l, sbFilterHealthStatuses.has(val), `sbToggleFilter('health','${val}')`, bg, fg)).join('')}</div>`);
   row2.push(`<div style="display:flex;align-items:center;">${chip('⭐ Key', sbFilterKeyOnly, `sbToggleFilter('key')`, '#FEF9C3', '#713F12')}</div>`);
   if (anyActive) {
     row2.push(`<span onclick="sbClearFilters()" style="font-size:12px;color:#DC2626;cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;background:#FEE2E2;white-space:nowrap;">✕ Wissen</span>`);
@@ -1659,6 +1662,7 @@ let tlZoom = 'month';
 let tlFilterStreams = new Set();
 let tlFilterPhases  = new Set();
 let tlFilterStatuses = new Set();
+let tlFilterHealthStatuses = new Set();
 let tlFilterKeyOnly = false;
 let tlYearMode = 'calendar';
 let tlFilterYears = new Set();
@@ -1954,12 +1958,13 @@ function toggleTlFilterYear(y) { tlFilterYears.has(y) ? tlFilterYears.delete(y) 
 function setTlYearMode(m) { tlYearMode = m; tlFilterYears = new Set(); renderTimeline(); }
 function toggleTlFilterStream(id) { tlFilterStreams.has(id) ? tlFilterStreams.delete(id) : tlFilterStreams.add(id); renderTimeline(); }
 function toggleTlFilterStatus(s) { tlFilterStatuses.has(s) ? tlFilterStatuses.delete(s) : tlFilterStatuses.add(s); renderTimeline(); }
+function toggleTlFilterHealth(v) { tlFilterHealthStatuses.has(v) ? tlFilterHealthStatuses.delete(v) : tlFilterHealthStatuses.add(v); renderTimeline(); }
 function setTlFilterKeyOnly(v) { tlFilterKeyOnly = v; renderTimeline(); }
 function setTlFromDate(v) { tlFromDate = v; tlFilterYears = new Set(); renderTimeline(); }
 function setTlToDate(v) { tlToDate = v; tlFilterYears = new Set(); renderTimeline(); }
 function tlClearDateFilter() { tlFromDate = ''; tlToDate = ''; tlFilterYears = new Set(); renderTimeline(); }
 function toggleTlFilterPhase(id) { tlFilterPhases.has(id) ? tlFilterPhases.delete(id) : tlFilterPhases.add(id); renderTimeline(); }
-function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); renderTimeline(); }
+function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterHealthStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); renderTimeline(); }
 function toggleTlFilterSubcat(id) { tlFilterSubcats.has(id) ? tlFilterSubcats.delete(id) : tlFilterSubcats.add(id); renderTimeline(); }
 function toggleTlFilterMeetingType(id) { tlFilterMeetingTypes.has(id) ? tlFilterMeetingTypes.delete(id) : tlFilterMeetingTypes.add(id); renderTimeline(); }
 function toggleTlFilterMilestoneType(id) { tlFilterMilestoneTypes.has(id) ? tlFilterMilestoneTypes.delete(id) : tlFilterMilestoneTypes.add(id); renderTimeline(); }
@@ -2291,6 +2296,7 @@ function renderTimeline() {
     if (it.start_date) return false;
     if (tlFilterStreams.size && !tlFilterStreams.has(it.track_id)) return false;
     if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
+    if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
     if (tlFilterKeyOnly && !it.key_activity) return false;
     return true;
   });
@@ -2363,7 +2369,7 @@ function renderTimeline() {
   }).join('') : '';
 
   const hasDateFilter = tlFromDate || tlToDate || tlFilterYears.size;
-  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterKeyOnly || tlFilterSubcats.size || tlFilterMeetingTypes.size || tlFilterMilestoneTypes.size;
+  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterHealthStatuses.size || tlFilterKeyOnly || tlFilterSubcats.size || tlFilterMeetingTypes.size || tlFilterMilestoneTypes.size;
 
   const hasSidebar = unscheduled.length > 0;
   const SIDEBAR_W = 168;
@@ -2378,6 +2384,9 @@ function renderTimeline() {
     if (subcatChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Subcategorieën')}${subcatChips}</div>`);
     if (phaseChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Fasen')}${phaseChips}</div>`);
     tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}</div>`);
+    const healthDefs = [['sunny','☀️','#92400E','#FEF3C7'],['partly_cloudy','⛅','#1E40AF','#DBEAFE'],['cloudy','☁️','#374151','#F3F4F6'],['stormy','⛈️','#991B1B','#FEE2E2']];
+    const healthChips = healthDefs.map(([v,l,color,bg]) => { const act = tlFilterHealthStatuses.has(v); return `<button onclick="toggleTlFilterHealth('${v}')" style="padding:3px 9px;font-size:13px;font-weight:600;border-radius:12px;border:1.5px solid ${act?color:'var(--gy300)'};background:${act?bg:'white'};color:${act?color:'var(--gy700)'};cursor:pointer;white-space:nowrap;">${l}</button>`; }).join('');
+    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Gezondheid')}${healthChips}</div>`);
     if (meetTypeChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Meetings','#1E40AF')}${meetTypeChips}</div>`);
     if (msTypeChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Mijlpalen','#5B21B6')}${msTypeChips}</div>`);
 
@@ -2466,6 +2475,7 @@ function renderTimeline() {
     const visItems = laneItems.filter(it => {
       if (tlFilterPhases.size && !tlFilterPhases.has(it.phase_id)) return false;
       if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
+      if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
       if (tlFilterKeyOnly && !it.key_activity) return false;
       if (tlFilterSubcats.size && it.subcategory_id && !tlFilterSubcats.has(it.subcategory_id)) return false;
       return true;
@@ -2669,6 +2679,7 @@ function renderTimeline() {
   const backlogUnscheduled = items.filter(it => {
     if (it.track_id || it.start_date) return false;
     if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
+    if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
     if (tlFilterKeyOnly && !it.key_activity) return false;
     return true;
   });
@@ -2718,18 +2729,20 @@ function renderTimeline() {
 //  TAB SWITCHING
 // ═══════════════════════════════════════════
 function syncFiltersToTimeline() {
-  tlFilterStreams  = new Set(sbFilterTracks);
-  tlFilterSubcats  = new Set(sbFilterSubcats);
-  tlFilterPhases   = new Set(sbFilterPhases);
-  tlFilterStatuses = new Set(sbFilterStatuses);
-  tlFilterKeyOnly  = sbFilterKeyOnly;
+  tlFilterStreams        = new Set(sbFilterTracks);
+  tlFilterSubcats        = new Set(sbFilterSubcats);
+  tlFilterPhases         = new Set(sbFilterPhases);
+  tlFilterStatuses       = new Set(sbFilterStatuses);
+  tlFilterHealthStatuses = new Set(sbFilterHealthStatuses);
+  tlFilterKeyOnly        = sbFilterKeyOnly;
 }
 function syncFiltersToStoryboard() {
-  sbFilterTracks   = new Set(tlFilterStreams);
-  sbFilterSubcats  = new Set(tlFilterSubcats);
-  sbFilterPhases   = new Set(tlFilterPhases);
-  sbFilterStatuses = new Set(tlFilterStatuses);
-  sbFilterKeyOnly  = tlFilterKeyOnly;
+  sbFilterTracks         = new Set(tlFilterStreams);
+  sbFilterSubcats        = new Set(tlFilterSubcats);
+  sbFilterPhases         = new Set(tlFilterPhases);
+  sbFilterStatuses       = new Set(tlFilterStatuses);
+  sbFilterHealthStatuses = new Set(tlFilterHealthStatuses);
+  sbFilterKeyOnly        = tlFilterKeyOnly;
 }
 function switchTab(name) {
   const prev = [...document.querySelectorAll('.ntab.active')].map(b => b.id.replace('tab-','').replace('-btn',''))[0];
@@ -2930,6 +2943,10 @@ async function exportToPptx() {
       const lbl = { pending: 'Te doen', active: 'Actief', done: 'Klaar' };
       filterLines.push('Status: ' + [...tlFilterStatuses].map(s => lbl[s] || s).join(', '));
     }
+    if (tlFilterHealthStatuses.size) {
+      const hlbl = { sunny: '☀️ Goed op koers', partly_cloudy: '⛅ Aandachtspunten', cloudy: '☁️ Problemen in zicht', stormy: '⛈️ Kritiek' };
+      filterLines.push('Gezondheid: ' + [...tlFilterHealthStatuses].map(s => hlbl[s] || s).join(', '));
+    }
     if (tlFilterKeyOnly) filterLines.push('Enkel Key Activities');
     if (tlFilterMeetingTypes.size) filterLines.push('Meeting types: ' + meetingTypes.filter(m => tlFilterMeetingTypes.has(m.id)).map(m => m.name).join(', '));
     if (tlFilterMilestoneTypes.size) filterLines.push('Milestone types: ' + milestoneTypes.filter(m => tlFilterMilestoneTypes.has(m.id)).map(m => m.name).join(', '));
@@ -2943,6 +2960,7 @@ async function exportToPptx() {
       if (tlFilterSubcats.size && it.subcategory_id && !tlFilterSubcats.has(it.subcategory_id)) return false;
       if (tlFilterPhases.size && !tlFilterPhases.has(it.phase_id)) return false;
       if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
+      if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
       if (tlFilterKeyOnly && !it.key_activity) return false;
       return true;
     }
@@ -3152,10 +3170,15 @@ async function exportToPptx() {
               s.addShape(pptx.shapes.RECTANGLE, { x: cardX, y: cardY, w: CBORDER, h: CARD_H, fill: { color: stC }, line: { color: stC } });
               // Status icon
               s.addText(stIcons[st], { x: cardX + CBORDER + 0.02, y: cardY, w: 0.13, h: CARD_H, fontSize: 7, color: stC, valign: 'middle', bold: true, margin: 0 });
+              // Health icon (top-right corner)
+              if (it.health_status && HEALTH_ICON[it.health_status]) {
+                s.addText(HEALTH_ICON[it.health_status], { x: cardX + cardW - 0.18, y: cardY, w: 0.16, h: CARD_H, fontSize: 8, valign: 'middle', align: 'center', margin: 0 });
+              }
               // Title
+              const titleW = cardW - CBORDER - 0.18 - (it.health_status ? 0.17 : 0);
               s.addText((it.key_activity ? '★ ' : '') + it.title, {
                 x: cardX + CBORDER + 0.16, y: cardY,
-                w: cardW - CBORDER - 0.18, h: CARD_H,
+                w: titleW, h: CARD_H,
                 fontSize: 7, color: isDone ? '9CA3AF' : C.text, fontFace: 'Calibri',
                 valign: 'middle', bold: st === 'active', margin: 0
               });
@@ -3327,7 +3350,8 @@ async function exportToPptx() {
               s.addText(icon, { x: bx + 0.02, y: by, w: iconW, h: BH, fontSize: 6, color: C.white, fontFace: 'Calibri', valign: 'middle', align: 'center', bold: isActive, margin: 0 });
             }
             if (bw > 0.28) {
-              const lbl = (it.key_activity ? '★ ' : '') + it.title;
+              const healthEmoji = it.health_status && HEALTH_ICON[it.health_status] ? HEALTH_ICON[it.health_status] + ' ' : '';
+              const lbl = healthEmoji + (it.key_activity ? '★ ' : '') + it.title;
               s.addText(lbl, { x: bx + 0.16, y: by, w: Math.max(0.08, bw - 0.19), h: BH, fontSize: 6, color: C.white, fontFace: 'Calibri', valign: 'middle', margin: 0 });
             }
           });
@@ -3451,11 +3475,19 @@ async function exportToPptx() {
         });
       }
 
-      // Right column: Status + Phases
-      s.addText('Status', { x: C2X, y: y2, w: C2W, h: 0.28, fontSize: 11, bold: true, color: C.dark, fontFace: 'Calibri' });
+      // Right column: Status + Gezondheid + Phases
+      s.addText('Status activiteiten', { x: C2X, y: y2, w: C2W, h: 0.28, fontSize: 11, bold: true, color: C.dark, fontFace: 'Calibri' });
       y2 += 0.3;
       [['○  Te doen', '6B7280', false], ['▶  Actief', '1E40AF', true], ['✓  Klaar', '14532D', false]].forEach(([lbl, col, bld]) => {
         s.addText(lbl, { x: C2X, y: y2, w: C2W, h: 0.25, fontSize: 10, color: col, fontFace: 'Calibri', bold: bld });
+        y2 += 0.25;
+      });
+      y2 += 0.1;
+
+      s.addText('Gezondheidsstatus', { x: C2X, y: y2, w: C2W, h: 0.28, fontSize: 11, bold: true, color: C.dark, fontFace: 'Calibri' });
+      y2 += 0.3;
+      [['☀️  Goed op koers', '92400E'],['⛅  Kleine aandachtspunten', '1E40AF'],['☁️  Problemen in zicht', '374151'],['⛈️  Kritieke problemen', '991B1B']].forEach(([lbl, col]) => {
+        s.addText(lbl, { x: C2X, y: y2, w: C2W, h: 0.25, fontSize: 10, color: col, fontFace: 'Calibri' });
         y2 += 0.25;
       });
       y2 += 0.1;
