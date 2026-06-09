@@ -374,6 +374,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
           <div id="tl-container" class="tl-container"></div>
         </div>
       </div>
+      <div id="tl-backlog" style="margin-top:12px;"></div>
     </div>
   </div>
 </div>
@@ -2412,6 +2413,15 @@ async function tlLaneDrop(e) {
   updates.start_date = snapDate;
   updates.end_date = item.end_date || endD.toISOString().split('T')[0];
 
+  // Assign phase_id based on drop date
+  const matchingPhase = phases.find(ph => {
+    if (!ph.start_date) return false;
+    const ps = new Date(ph.start_date);
+    const pe = ph.end_date ? new Date(ph.end_date) : new Date(ps.getFullYear() + 1, 0, 1);
+    return startD >= ps && startD <= pe;
+  });
+  if (matchingPhase) updates.phase_id = matchingPhase.id;
+
   await sb.from('roadmap_items').update(updates).eq('id', tlDragItemId);
   Object.assign(item, updates);
   tlDragItemId = null;
@@ -2615,7 +2625,7 @@ function renderTimeline() {
   const hasDateFilter = tlFromDate || tlToDate || tlFilterYears.size;
   const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterHealthStatuses.size || tlFilterKeyOnly || tlFilterSubcats.size || tlFilterMeetingTypes.size || tlFilterMilestoneTypes.size;
 
-  const hasSidebar = unscheduled.length > 0;
+  const hasSidebar = false; // sidebar vervangen door backlog-sectie onderaan
   const SIDEBAR_W = 168;
 
   // ── Filter bar → goes into #tl-filter-bar (sticky, outside the card) ──────
@@ -2967,6 +2977,113 @@ function renderTimeline() {
 
   html += `</div>`; // close outer flex wrapper
   el.innerHTML = html;
+
+  renderBacklog();
+}
+
+function renderBacklog() {
+  const el = document.getElementById('tl-backlog');
+  if (!el) return;
+
+  // All items without start_date, apply active filters
+  const backlogItems = items.filter(it => {
+    if (it.start_date) return false;
+    if (tlFilterStreams.size && it.track_id && !tlFilterStreams.has(it.track_id)) return false;
+    if (tlFilterSubcats.size && it.subcategory_id && !tlFilterSubcats.has(it.subcategory_id)) return false;
+    if (tlFilterPhases.size && it.phase_id && !tlFilterPhases.has(it.phase_id)) return false;
+    if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
+    if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
+    if (tlFilterKeyOnly && !it.key_activity) return false;
+    return true;
+  });
+
+  if (!backlogItems.length) { el.innerHTML = ''; return; }
+
+  // Group by track (ungrouped items at top)
+  const byTrack = new Map();
+  byTrack.set(null, []);
+  tracks.forEach(tr => byTrack.set(tr.id, []));
+  backlogItems.forEach(it => {
+    const key = it.track_id || null;
+    if (!byTrack.has(key)) byTrack.set(key, []);
+    byTrack.get(key).push(it);
+  });
+
+  let html = `<div style="border:1px solid var(--gy200);border-radius:10px;background:#F8FAFC;overflow:hidden;">
+    <div style="padding:8px 14px;background:white;border-bottom:2px solid var(--gy200);display:flex;align-items:center;gap:8px;">
+      <span style="font-size:14px;font-weight:700;color:var(--gy700);">📥 Backlog</span>
+      <span style="font-size:11px;color:var(--gy500);font-weight:500;">${backlogItems.length} item${backlogItems.length !== 1 ? 's' : ''} nog te plannen — sleep naar de tijdslijn om in te plannen</span>
+    </div>
+    <div style="padding:10px 14px;display:flex;flex-direction:column;gap:10px;">`;
+
+  // Ungrouped first
+  const ungrouped = byTrack.get(null) || [];
+  if (ungrouped.length) {
+    html += renderBacklogGroup('Geen stream', '#6B7280', ungrouped);
+  }
+
+  // Per track
+  tracks.forEach(tr => {
+    const trItems = byTrack.get(tr.id) || [];
+    if (!trItems.length) return;
+
+    // Sub-group by subcategory
+    const bySub = new Map();
+    bySub.set(null, []);
+    subcategories.filter(s => s.track_id === tr.id).forEach(s => bySub.set(s.id, []));
+    trItems.forEach(it => {
+      const key = it.subcategory_id || null;
+      if (!bySub.has(key)) bySub.set(key, []);
+      bySub.get(key).push(it);
+    });
+
+    const hasSubcats = subcategories.some(s => s.track_id === tr.id);
+    if (!hasSubcats) {
+      html += renderBacklogGroup(tr.name, tr.color, trItems);
+    } else {
+      html += `<div style="border-left:3px solid ${tr.color};border-radius:0 6px 6px 0;padding:4px 0 4px 10px;">
+        <div style="font-size:11px;font-weight:700;color:${tr.color};text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">${tr.name}</div>`;
+      // Items without subcat
+      const noSub = bySub.get(null) || [];
+      if (noSub.length) html += renderBacklogGroup(null, tr.color, noSub);
+      // Items per subcat
+      subcategories.filter(s => s.track_id === tr.id).forEach(sub => {
+        const subItems = bySub.get(sub.id) || [];
+        if (!subItems.length) return;
+        html += renderBacklogGroup(sub.name, sub.color || tr.color, subItems);
+      });
+      html += `</div>`;
+    }
+  });
+
+  html += `</div></div>`;
+  el.innerHTML = html;
+}
+
+function renderBacklogGroup(label, color, groupItems) {
+  const cards = groupItems.map(it => {
+    const statusColor = it.status === 'done' ? '#14532D' : it.status === 'active' ? '#1E40AF' : '#6B7280';
+    const statusBg   = it.status === 'done' ? '#F0FDF4' : it.status === 'active' ? '#EFF6FF' : '#F3F4F6';
+    const phaseName  = phases.find(ph => ph.id === it.phase_id)?.name || '';
+    const safeTitle  = (it.title || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    return `<div draggable="true"
+      ondragstart="tlCardDragStart(event,'${it.id}')"
+      onclick="openModal('modal-item','${it.id}','edit')"
+      style="border:1px solid var(--gy200);border-left:3px solid ${color};border-radius:5px;padding:6px 9px;background:white;cursor:grab;min-width:130px;max-width:200px;flex:0 0 auto;transition:box-shadow .15s;"
+      onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,.12)';this.style.cursor='grab';"
+      onmouseout="this.style.boxShadow=''">
+      <div style="font-size:12px;font-weight:600;color:var(--gy900);line-height:1.4;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${safeTitle}">
+        ${it.key_activity ? '⭐ ' : ''}${it.title}
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:8px;background:${statusBg};color:${statusColor};">${it.status === 'done' ? '✓ Klaar' : it.status === 'active' ? '▶ Actief' : '○ Te doen'}</span>
+        ${phaseName ? `<span style="font-size:10px;color:var(--gy500);">${phaseName}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const labelHtml = label ? `<div style="font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">${label}</div>` : '';
+  return `<div>${labelHtml}<div style="display:flex;flex-wrap:wrap;gap:6px;">${cards}</div></div>`;
 }
 
 // ═══════════════════════════════════════════
