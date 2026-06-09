@@ -3553,7 +3553,7 @@ async function exportToPptx() {
               }
               // Title
               const titleW = cardW - CBORDER - 0.18 - (it.health_status ? 0.17 : 0);
-              s.addText((it.key_activity ? '★ ' : '') + it.title, {
+              s.addText((it.key_activity && !tlFilterKeyOnly ? '★ ' : '') + it.title, {
                 x: cardX + CBORDER + 0.16, y: cardY,
                 w: titleW, h: CARD_H,
                 fontSize: 9, color: isDone ? '9CA3AF' : (isOther ? '374151' : C.text), fontFace: 'Calibri',
@@ -3731,7 +3731,7 @@ async function exportToPptx() {
             }
             if (bw > 0.28) {
               const healthEmoji = it.health_status && HEALTH_ICON[it.health_status] ? HEALTH_ICON[it.health_status] + ' ' : '';
-              const lbl = healthEmoji + (it.key_activity ? '★ ' : '') + it.title;
+              const lbl = healthEmoji + (it.key_activity && !tlFilterKeyOnly ? '★ ' : '') + it.title;
               s.addText(lbl, { x: bx + 0.16, y: by, w: Math.max(0.08, bw - 0.19), h: BH, fontSize: 9, color: barTextColor, fontFace: 'Calibri', valign: 'middle', margin: 0 });
             }
           });
