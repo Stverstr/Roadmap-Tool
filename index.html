@@ -3618,13 +3618,8 @@ async function exportToPptx() {
       // Right border of timeline
       s.addShape(pptx.shapes.LINE, { x: TX + TW, y: HDR_Y, w: 0, h: MAX_Y - HDR_Y, line: { color: C.lgray, width: 0.5 } });
 
-      // Today line
+      // Today line — drawn after tracks loop so we can use final curY
       const todayP = d2pct(new Date().toISOString().split('T')[0]);
-      if (todayP !== null) {
-        const todayX = TX + todayP * TW;
-        s.addShape(pptx.shapes.LINE, { x: todayX, y: LANE_Y0, w: 0, h: MAX_Y - LANE_Y0, line: { color: 'EF4444', width: 1.5, dashType: 'dash' } });
-        s.addText('Nu', { x: todayX - 0.22, y: LANE_Y0, w: 0.44, h: TRK_H, fontSize: 8, color: 'EF4444', bold: true, align: 'center', valign: 'middle', margin: 0 });
-      }
 
       // Stacking helper: assigns each item/milestone to a sub-row so nothing overlaps
       function stackLane(laneItems, laneMilestones) {
@@ -3804,6 +3799,13 @@ async function exportToPptx() {
             });
           }
         }
+      }
+
+      // ── Today line (drawn here so curY is known) ─────────────────────────
+      if (todayP !== null) {
+        const todayX = TX + todayP * TW;
+        s.addShape(pptx.shapes.LINE, { x: todayX, y: LANE_Y0, w: 0, h: curY - LANE_Y0, line: { color: 'EF4444', width: 1.5, dashType: 'dash' } });
+        s.addText('Nu', { x: todayX - 0.22, y: LANE_Y0, w: 0.44, h: TRK_H, fontSize: 8, color: 'EF4444', bold: true, align: 'center', valign: 'middle', margin: 0 });
       }
 
       // ── Trim empty space: cover unused area below curY ───────────────────
