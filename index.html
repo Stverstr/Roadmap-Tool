@@ -3446,10 +3446,29 @@ async function exportToPptx() {
         const HDR_SUBCAT_H = hasSubcats ? 0.22 : 0;
         const HDR_TOTAL_H = HDR_STREAM_H + HDR_SUBCAT_H;
         const LANES_Y = HDR_Y + HDR_TOTAL_H;
-        const PHASE_AREA_H = 7.22 - LANES_Y;
-        const PHASE_ROW_H = PHASE_AREA_H / rowPhases.length;
-        const CARD_H = 0.28, CARD_GAP = 0.04, CELL_PAD = 0.06, CBORDER = 0.055;
-        const MAX_CARDS = Math.max(1, Math.floor((PHASE_ROW_H - CELL_PAD * 2) / (CARD_H + CARD_GAP)));
+        const MAX_SB_Y = 7.22;
+        const CARD_H = 0.32, CARD_GAP = 0.04, CELL_PAD = 0.06, CBORDER = 0.055;
+        const ABS_MAX_CARDS = 10;
+        const MIN_ROW_H = 0.36;
+
+        // Compute per-phase row heights from actual item counts
+        const rowItemCounts = rowPhases.map(ph =>
+          colDefs.reduce((mx, c) => Math.max(mx, items.filter(i =>
+            i.track_id === c.track.id &&
+            (c.sub ? i.subcategory_id === c.sub.id : !i.subcategory_id) &&
+            (ph ? i.phase_id === ph.id : true) &&
+            itemVis(i)
+          ).length), 0)
+        );
+        const naturalRowHeights = rowItemCounts.map(cnt => {
+          const shown = Math.min(cnt, ABS_MAX_CARDS);
+          return Math.max(CELL_PAD * 2 + Math.max(shown, 1) * (CARD_H + CARD_GAP) - CARD_GAP, MIN_ROW_H);
+        });
+        // Scale down if total exceeds available height
+        const totalNatH = naturalRowHeights.reduce((s, h) => s + h, 0);
+        const availH = MAX_SB_Y - LANES_Y;
+        const scaleF = totalNatH > availH ? availH / totalNatH : 1;
+        const rowHeights = naturalRowHeights.map(h => h * scaleF);
         const stColors = { pending: '9CA3AF', active: '3B82F6', done: '22C55E' };
         const stIcons  = { pending: '○', active: '▶', done: '✓' };
 
@@ -3481,8 +3500,12 @@ async function exportToPptx() {
         }
 
         // ── Phase rows with card-based cells ─────────────
+        let cumPhY = LANES_Y;
         rowPhases.forEach((ph, phIdx) => {
-          const phY = LANES_Y + phIdx * PHASE_ROW_H;
+          const PHASE_ROW_H = rowHeights[phIdx];
+          const MAX_CARDS = Math.min(ABS_MAX_CARDS, Math.max(1, Math.floor((PHASE_ROW_H - CELL_PAD * 2) / (CARD_H + CARD_GAP))));
+          const phY = cumPhY;
+          cumPhY += PHASE_ROW_H;
           const phBg = ph ? hx(ph.color || '#2D6A4F') : C.med;
 
           // Phase label
@@ -3490,9 +3513,7 @@ async function exportToPptx() {
           s.addText(ph ? ph.name : 'Items', { x: LMAR, y: phY, w: PHASE_COL_W, h: PHASE_ROW_H, fontSize: 10, bold: true, color: C.white, align: 'center', valign: 'middle', margin: 0 });
 
           // Row bottom border
-          if (phIdx < rowPhases.length - 1) {
-            s.addShape(pptx.shapes.LINE, { x: LMAR, y: phY + PHASE_ROW_H, w: PHASE_COL_W + colDefs.length * COL_W, h: 0, line: { color: C.lgray, width: 0.75 } });
-          }
+          s.addShape(pptx.shapes.LINE, { x: LMAR, y: phY + PHASE_ROW_H, w: PHASE_COL_W + colDefs.length * COL_W, h: 0, line: { color: C.lgray, width: 0.75 } });
 
           // Cells
           colDefs.forEach((c, colIdx) => {
@@ -3525,7 +3546,7 @@ async function exportToPptx() {
               // Status border (grey for other-roadmap)
               s.addShape(pptx.shapes.RECTANGLE, { x: cardX, y: cardY, w: CBORDER, h: CARD_H, fill: { color: borderFill }, line: { color: borderFill } });
               // Status icon
-              s.addText(isOther ? '🔗' : stIcons[st], { x: cardX + CBORDER + 0.02, y: cardY, w: 0.13, h: CARD_H, fontSize: 7, color: isOther ? '6B7280' : stC, valign: 'middle', bold: true, margin: 0 });
+              s.addText(isOther ? '🔗' : stIcons[st], { x: cardX + CBORDER + 0.02, y: cardY, w: 0.13, h: CARD_H, fontSize: 8, color: isOther ? '6B7280' : stC, valign: 'middle', bold: true, margin: 0 });
               // Health icon (top-right corner)
               if (it.health_status && HEALTH_ICON[it.health_status]) {
                 s.addText(HEALTH_ICON[it.health_status], { x: cardX + cardW - 0.18, y: cardY, w: 0.16, h: CARD_H, fontSize: 8, valign: 'middle', align: 'center', margin: 0 });
@@ -3535,7 +3556,7 @@ async function exportToPptx() {
               s.addText((it.key_activity ? '★ ' : '') + it.title, {
                 x: cardX + CBORDER + 0.16, y: cardY,
                 w: titleW, h: CARD_H,
-                fontSize: 7, color: isDone ? '9CA3AF' : (isOther ? '374151' : C.text), fontFace: 'Calibri',
+                fontSize: 9, color: isDone ? '9CA3AF' : (isOther ? '374151' : C.text), fontFace: 'Calibri',
                 valign: 'middle', bold: st === 'active', margin: 0
               });
             });
@@ -3592,7 +3613,7 @@ async function exportToPptx() {
         if (i > 0) {
           s.addShape(pptx.shapes.LINE, { x: cx, y: HDR_Y, w: 0, h: MAX_Y - HDR_Y, line: { color: C.lgray, width: 0.5 } });
         }
-        s.addText(col.label, { x: cx, y: HDR_Y, w: colW2, h: HDR_H, fontSize: 7, align: 'center', color: '374151', fontFace: 'Calibri', valign: 'middle', margin: 0 });
+        s.addText(col.label, { x: cx, y: HDR_Y, w: colW2, h: HDR_H, fontSize: 9, align: 'center', color: '374151', fontFace: 'Calibri', valign: 'middle', margin: 0 });
       });
       // Right border of timeline
       s.addShape(pptx.shapes.LINE, { x: TX + TW, y: HDR_Y, w: 0, h: MAX_Y - HDR_Y, line: { color: C.lgray, width: 0.5 } });
@@ -3607,7 +3628,7 @@ async function exportToPptx() {
 
       // Stacking helper: assigns each item/milestone to a sub-row so nothing overlaps
       function stackLane(laneItems, laneMilestones) {
-        const BH = 0.21, BG = 0.03, TP = 0.05, BP = 0.05, MSW = 0.02;
+        const BH = 0.25, BG = 0.03, TP = 0.05, BP = 0.05, MSW = 0.02;
         const forStack = [
           ...laneItems.map(it => ({ _id: 'i' + it.id, _type: 'bar', _s: it.start_date, _e: it.end_date || it.start_date })),
           ...(laneMilestones || []).map(ms => ({ _id: 'm' + ms.id, _type: 'ms', _s: ms.date, _e: ms.date }))
@@ -3706,12 +3727,12 @@ async function exportToPptx() {
             if (bw > 0.12) {
               const icon = isOther ? '🔗' : (stIcons[it.status] || '○');
               const iconW = 0.13;
-              s.addText(icon, { x: bx + 0.02, y: by, w: iconW, h: BH, fontSize: 6, color: barTextColor, fontFace: 'Calibri', valign: 'middle', align: 'center', bold: isActive, margin: 0 });
+              s.addText(icon, { x: bx + 0.02, y: by, w: iconW, h: BH, fontSize: 8, color: barTextColor, fontFace: 'Calibri', valign: 'middle', align: 'center', bold: isActive, margin: 0 });
             }
             if (bw > 0.28) {
               const healthEmoji = it.health_status && HEALTH_ICON[it.health_status] ? HEALTH_ICON[it.health_status] + ' ' : '';
               const lbl = healthEmoji + (it.key_activity ? '★ ' : '') + it.title;
-              s.addText(lbl, { x: bx + 0.16, y: by, w: Math.max(0.08, bw - 0.19), h: BH, fontSize: 6, color: barTextColor, fontFace: 'Calibri', valign: 'middle', margin: 0 });
+              s.addText(lbl, { x: bx + 0.16, y: by, w: Math.max(0.08, bw - 0.19), h: BH, fontSize: 9, color: barTextColor, fontFace: 'Calibri', valign: 'middle', margin: 0 });
             }
           });
 
@@ -3784,6 +3805,14 @@ async function exportToPptx() {
           }
         }
       }
+
+      // ── Trim empty space: cover unused area below curY ───────────────────
+      if (curY < MAX_Y) {
+        // White-out the timeline area (covers column shading + vertical lines)
+        s.addShape(pptx.shapes.RECTANGLE, { x: LX, y: curY, w: 13.0 - LX, h: MAX_Y - curY + 0.15, fill: { color: C.white }, line: { color: C.white } });
+      }
+      // Bottom border at actual last row
+      s.addShape(pptx.shapes.LINE, { x: LX, y: curY, w: 13.0 - LX, h: 0, line: { color: C.lgray, width: 0.75 } });
     }
 
     // ════════════════════════════════════════════
