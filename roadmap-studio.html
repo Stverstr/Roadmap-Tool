@@ -1534,13 +1534,13 @@ function renderStoryboard() {
   }
 
   const cols = phases.length || 1;
-  const labelW = 180;
-  const colW = Math.max(200, Math.floor((1200 - labelW) / cols));
+  const labelW = 160;
+  const minColW = 130; // minimum before horizontal scroll kicks in
+  // Use 1fr so columns fill all available width; only force scroll if truly too narrow
+  const gridCols = `${labelW}px ${Array(cols).fill(`minmax(${minColW}px,1fr)`).join(' ')}`;
+  const minW = labelW + cols * minColW;
 
-  // Build grid template
-  const gridCols = `${labelW}px ${phases.length ? phases.map(() => `${colW}px`).join(' ') : `${colW}px`}`;
-
-  let html = `<div style="display:grid;grid-template-columns:${gridCols};min-width:${labelW + cols * colW}px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
+  let html = `<div style="display:grid;grid-template-columns:${gridCols};width:100%;min-width:${minW}px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
 
   // Header row
   html += `<div style="background:var(--gy900);padding:10px 14px;border-right:1px solid rgba(255,255,255,.1);"></div>`;
@@ -1599,7 +1599,7 @@ function renderStoryboard() {
 function renderSbCell(cellItems, trackId, subcatId, phaseId, color) {
   const statusLabels = {pending:'⏳ Te doen', active:'▶ Actief', done:'✓ Klaar'};
   const statusBg = {pending:'background:#FEF3C7;color:#92400E;', active:'background:#DBEAFE;color:#1E40AF;', done:'background:#DCFCE7;color:#14532D;'};
-  let html = `<div style="background:white;border-right:1px solid var(--gy300);border-top:1px solid var(--gy200);padding:8px;min-height:100px;vertical-align:top;">`;
+  let html = `<div style="background:white;border-right:1px solid var(--gy300);border-top:1px solid var(--gy200);padding:6px;min-height:80px;vertical-align:top;">`;
   cellItems.forEach(it => {
     const hs = it.health_status ? HEALTH_ICON[it.health_status] : '';
     html += `<div style="border-left:3px solid ${color};border-radius:0 7px 7px 0;padding:8px 10px;margin-bottom:6px;cursor:pointer;background:#fafafa;border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);position:relative;" onclick="openModal('modal-item','${it.id}','edit')">
