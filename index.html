@@ -2208,7 +2208,34 @@ function setTlFilterKeyOnly(v) { tlFilterKeyOnly = v; renderTimeline(); }
 function setTlFromDate(v) { tlFromDate = v; tlFilterYears = new Set(); renderTimeline(); }
 function setTlToDate(v) { tlToDate = v; tlFilterYears = new Set(); renderTimeline(); }
 function tlClearDateFilter() { tlFromDate = ''; tlToDate = ''; tlFilterYears = new Set(); renderTimeline(); }
-function toggleTlFilterPhase(id) { tlFilterPhases.has(id) ? tlFilterPhases.delete(id) : tlFilterPhases.add(id); renderTimeline(); }
+function toggleTlFilterPhase(id) {
+  tlFilterPhases.has(id) ? tlFilterPhases.delete(id) : tlFilterPhases.add(id);
+  if (tlFilterPhases.size) {
+    // Collect all items belonging to selected phases
+    const phaseItems = items.filter(it => it.phase_id && tlFilterPhases.has(it.phase_id) && it.start_date);
+    // Also include phase own start/end dates as anchors
+    const selPhases = phases.filter(ph => tlFilterPhases.has(ph.id));
+    let minD = null, maxD = null;
+    phaseItems.forEach(it => {
+      const s = new Date(it.start_date);
+      const e = it.end_date ? new Date(it.end_date) : s;
+      if (!minD || s < minD) minD = s;
+      if (!maxD || e > maxD) maxD = e;
+    });
+    selPhases.forEach(ph => {
+      if (ph.start_date) { const d = new Date(ph.start_date); if (!minD || d < minD) minD = d; }
+      if (ph.end_date)   { const d = new Date(ph.end_date);   if (!maxD || d > maxD) maxD = d; }
+    });
+    if (minD && maxD) {
+      tlFromDate = minD.toISOString().split('T')[0];
+      tlToDate   = maxD.toISOString().split('T')[0];
+      tlFilterYears = new Set();
+    }
+  } else {
+    tlFromDate = ''; tlToDate = '';
+  }
+  renderTimeline();
+}
 function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterHealthStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); renderTimeline(); }
 function toggleTlFilterSubcat(id) { tlFilterSubcats.has(id) ? tlFilterSubcats.delete(id) : tlFilterSubcats.add(id); renderTimeline(); }
 function toggleTlFilterMeetingType(id) { tlFilterMeetingTypes.has(id) ? tlFilterMeetingTypes.delete(id) : tlFilterMeetingTypes.add(id); renderTimeline(); }
