@@ -1788,9 +1788,11 @@ let sbFilterPhases  = new Set();
 let sbFilterStatuses = new Set();
 let sbFilterHealthStatuses = new Set();
 let sbFilterKeyOnly = false;
+let sbFilterOtherRoadmap = false;
 
 function sbItemVisible(it) {
   if (sbFilterKeyOnly && !it.key_activity) return false;
+  if (sbFilterOtherRoadmap && !it.managed_in_other_roadmap) return false;
   if (sbFilterStatuses.size && !sbFilterStatuses.has(it.status || 'pending')) return false;
   if (sbFilterHealthStatuses.size && !sbFilterHealthStatuses.has(it.health_status || '')) return false;
   return true;
@@ -1799,6 +1801,7 @@ function sbItemVisible(it) {
 function sbToggleFilter(type, value) {
   const map = {track: sbFilterTracks, subcat: sbFilterSubcats, phase: sbFilterPhases, status: sbFilterStatuses, health: sbFilterHealthStatuses};
   if (type === 'key') { sbFilterKeyOnly = !sbFilterKeyOnly; }
+  else if (type === 'other') { sbFilterOtherRoadmap = !sbFilterOtherRoadmap; }
   else { const s = map[type]; s.has(value) ? s.delete(value) : s.add(value); }
   renderSbLegend();
   renderStoryboard();
@@ -1841,14 +1844,14 @@ function tlToggleFilter() {
 
 function sbClearFilters() {
   sbFilterTracks.clear(); sbFilterSubcats.clear(); sbFilterPhases.clear();
-  sbFilterStatuses.clear(); sbFilterHealthStatuses.clear(); sbFilterKeyOnly = false;
+  sbFilterStatuses.clear(); sbFilterHealthStatuses.clear(); sbFilterKeyOnly = false; sbFilterOtherRoadmap = false;
   renderSbLegend(); renderStoryboard();
 }
 
 function renderSbLegend() {
   const el = document.getElementById('sb-legend');
   if (!el || !sbLegendOpen) return;
-  const anyActive = sbFilterTracks.size || sbFilterSubcats.size || sbFilterPhases.size || sbFilterStatuses.size || sbFilterHealthStatuses.size || sbFilterKeyOnly;
+  const anyActive = sbFilterTracks.size || sbFilterSubcats.size || sbFilterPhases.size || sbFilterStatuses.size || sbFilterHealthStatuses.size || sbFilterKeyOnly || sbFilterOtherRoadmap;
 
   const chip = (label, active, onclick, bg, fg) => {
     const border = active ? `2px solid ${bg||'var(--g700)'}` : '2px solid transparent';
@@ -1884,6 +1887,7 @@ function renderSbLegend() {
   row2.push(`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${lbl('Status')}${[['pending','○ Te doen','#374151','#F3F4F6'],['active','▶ Actief','#1E40AF','#DBEAFE'],['done','✓ Klaar','#14532D','#DCFCE7']].map(([val,l,fg,bg]) => chip(l, sbFilterStatuses.has(val), `sbToggleFilter('status','${val}')`, bg, fg)).join('')}</div>`);
   row2.push(`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${lbl('Gezondheid')}${[['sunny','☀️','#92400E','#FEF3C7'],['partly_cloudy','⛅','#1E40AF','#DBEAFE'],['cloudy','☁️','#374151','#F3F4F6'],['stormy','⛈️','#991B1B','#FEE2E2']].map(([val,l,fg,bg]) => chip(l, sbFilterHealthStatuses.has(val), `sbToggleFilter('health','${val}')`, bg, fg)).join('')}</div>`);
   row2.push(`<div style="display:flex;align-items:center;">${chip('⭐ Key', sbFilterKeyOnly, `sbToggleFilter('key')`, '#FEF9C3', '#713F12')}</div>`);
+  row2.push(`<div style="display:flex;align-items:center;">${chip('🔗 Andere roadmap', sbFilterOtherRoadmap, `sbToggleFilter('other')`, '#E5E7EB', '#374151')}</div>`);
   if (anyActive) {
     row2.push(`<span onclick="sbClearFilters()" style="font-size:12px;color:#DC2626;cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;background:#FEE2E2;white-space:nowrap;">✕ Wissen</span>`);
   }
@@ -1909,6 +1913,7 @@ let tlFilterPhases  = new Set();
 let tlFilterStatuses = new Set();
 let tlFilterHealthStatuses = new Set();
 let tlFilterKeyOnly = false;
+let tlFilterOtherRoadmap = false;
 let tlYearMode = 'calendar';
 let tlFilterYears = new Set();
 let tlFromDate = '';
@@ -2164,18 +2169,21 @@ function renderSbCell(cellItems, trackId, subcatId, phaseId, color) {
     ondrop="sbCellDrop(event,'${tid}','${sid}','${pid}')">`;
   cellItems.filter(it => sbItemVisible(it)).forEach(it => {
     const st = it.status || 'pending';
+    const isOther = !!it.managed_in_other_roadmap;
+    const cardBg = isOther ? '#E5E7EB' : '#fafafa';
+    const leftBorderColor = isOther ? '#9CA3AF' : color;
     const titleDeco = st === 'done' ? 'text-decoration:line-through;color:var(--gy400);' : '';
     const titleFW = st === 'active' ? 'font-weight:800;' : 'font-weight:700;';
     html += `<div draggable="true" data-item-id="${it.id}"
-      style="border-left:3px solid ${color};border-radius:0 7px 7px 0;padding:8px 10px;margin-bottom:6px;cursor:grab;background:#fafafa;border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);position:relative;user-select:none;transition:opacity .15s;"
+      style="border-left:3px solid ${leftBorderColor};border-radius:0 7px 7px 0;padding:8px 10px;margin-bottom:6px;cursor:grab;background:${cardBg};border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);position:relative;user-select:none;transition:opacity .15s;"
       ondragstart="sbCardDragStart(event,'${it.id}')"
       ondragend="sbCardDragEnd(event,'${it.id}')"
       onclick="if(!sbDragging)openModal('modal-item','${it.id}','edit')">
       <button onclick="event.stopPropagation();copyItem('${it.id}')" title="Kopiëren" draggable="false" style="position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--gy400);padding:2px;border-radius:4px;line-height:1;" onmouseover="this.style.color='var(--g700)';this.style.background='var(--g50)'" onmouseout="this.style.color='var(--gy400)';this.style.background='none'">⧉</button>
       ${it.health_status ? `<span style="position:absolute;top:6px;right:22px;font-size:15px;line-height:1;" title="${it.health_status}">${HEALTH_ICON[it.health_status]||''}</span>` : ''}
-      <div style="font-size:12px;${titleFW}color:var(--gy900);margin-bottom:3px;line-height:1.3;padding-right:${it.health_status?'38px':'18px'};${titleDeco}">${it.title}</div>
+      <div style="font-size:12px;${titleFW}color:${isOther?'#374151':'var(--gy900)'};margin-bottom:3px;line-height:1.3;padding-right:${it.health_status?'38px':'18px'};${titleDeco}">${it.title}</div>
       ${it.context_scope ? `<div style="font-size:11px;color:var(--gy500);line-height:1.4;margin-bottom:4px;">${it.context_scope}</div>` : ''}
-      <div style="display:flex;align-items:center;gap:5px;">${statusIcon[st]||statusIcon.pending}${it.key_activity ? '<span style="font-size:11px;opacity:.55;" title="Key activity">⭐</span>' : ''}</div>
+      <div style="display:flex;align-items:center;gap:5px;">${statusIcon[st]||statusIcon.pending}${it.key_activity ? '<span style="font-size:11px;opacity:.55;" title="Key activity">⭐</span>' : ''}${isOther ? `<span style="font-size:10px;color:#6B7280;" title="${it.other_roadmap_name||'Andere roadmap'}">🔗</span>` : ''}</div>
     </div>`;
   });
   const args = [trackId, subcatId, phaseId].map(x => x ? `'${x}'` : 'null').join(',');
@@ -2205,6 +2213,7 @@ function toggleTlFilterStream(id) { tlFilterStreams.has(id) ? tlFilterStreams.de
 function toggleTlFilterStatus(s) { tlFilterStatuses.has(s) ? tlFilterStatuses.delete(s) : tlFilterStatuses.add(s); renderTimeline(); }
 function toggleTlFilterHealth(v) { tlFilterHealthStatuses.has(v) ? tlFilterHealthStatuses.delete(v) : tlFilterHealthStatuses.add(v); renderTimeline(); }
 function setTlFilterKeyOnly(v) { tlFilterKeyOnly = v; renderTimeline(); }
+function setTlFilterOtherRoadmap(v) { tlFilterOtherRoadmap = v; renderTimeline(); }
 function setTlFromDate(v) { tlFromDate = v; tlFilterYears = new Set(); renderTimeline(); }
 function setTlToDate(v) { tlToDate = v; tlFilterYears = new Set(); renderTimeline(); }
 function tlClearDateFilter() { tlFromDate = ''; tlToDate = ''; tlFilterYears = new Set(); renderTimeline(); }
@@ -2236,7 +2245,7 @@ function toggleTlFilterPhase(id) {
   }
   renderTimeline();
 }
-function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterHealthStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); renderTimeline(); }
+function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterHealthStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterOtherRoadmap = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); renderTimeline(); }
 function toggleTlFilterSubcat(id) { tlFilterSubcats.has(id) ? tlFilterSubcats.delete(id) : tlFilterSubcats.add(id); renderTimeline(); }
 function toggleTlFilterMeetingType(id) { tlFilterMeetingTypes.has(id) ? tlFilterMeetingTypes.delete(id) : tlFilterMeetingTypes.add(id); renderTimeline(); }
 function toggleTlFilterMilestoneType(id) { tlFilterMilestoneTypes.has(id) ? tlFilterMilestoneTypes.delete(id) : tlFilterMilestoneTypes.add(id); renderTimeline(); }
@@ -2618,6 +2627,7 @@ function renderTimeline() {
   }).join('');
 
   const keyChip = `<button onclick="setTlFilterKeyOnly(${!tlFilterKeyOnly})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterKeyOnly?'#D97706':'var(--gy300)'};background:${tlFilterKeyOnly?'#FFFBEB':'white'};color:${tlFilterKeyOnly?'#D97706':'var(--gy700)'};cursor:pointer;white-space:nowrap;">⭐ Key only</button>`;
+  const otherRoadmapChip = `<button onclick="setTlFilterOtherRoadmap(${!tlFilterOtherRoadmap})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterOtherRoadmap?'#6B7280':'var(--gy300)'};background:${tlFilterOtherRoadmap?'#F3F4F6':'white'};color:${tlFilterOtherRoadmap?'#374151':'var(--gy700)'};cursor:pointer;white-space:nowrap;">🔗 Andere roadmap</button>`;
 
   const phaseChips = phases.map(ph => {
     const act = tlFilterPhases.has(ph.id);
@@ -2650,7 +2660,7 @@ function renderTimeline() {
   }).join('') : '';
 
   const hasDateFilter = tlFromDate || tlToDate || tlFilterYears.size;
-  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterHealthStatuses.size || tlFilterKeyOnly || tlFilterSubcats.size || tlFilterMeetingTypes.size || tlFilterMilestoneTypes.size;
+  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterHealthStatuses.size || tlFilterKeyOnly || tlFilterOtherRoadmap || tlFilterSubcats.size || tlFilterMeetingTypes.size || tlFilterMilestoneTypes.size;
 
   const hasSidebar = false; // sidebar vervangen door backlog-sectie onderaan
   const SIDEBAR_W = 168;
@@ -2664,7 +2674,7 @@ function renderTimeline() {
     if (tracks.length) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Streams')}${streamChips}</div>`);
     if (subcatChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Subcategorieën')}${subcatChips}</div>`);
     if (phaseChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Fasen')}${phaseChips}</div>`);
-    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}</div>`);
+    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}${otherRoadmapChip}</div>`);
     const healthDefs = [['sunny','☀️','#92400E','#FEF3C7'],['partly_cloudy','⛅','#1E40AF','#DBEAFE'],['cloudy','☁️','#374151','#F3F4F6'],['stormy','⛈️','#991B1B','#FEE2E2']];
     const healthChips = healthDefs.map(([v,l,color,bg]) => { const act = tlFilterHealthStatuses.has(v); return `<button onclick="toggleTlFilterHealth('${v}')" style="padding:3px 9px;font-size:13px;font-weight:600;border-radius:12px;border:1.5px solid ${act?color:'var(--gy300)'};background:${act?bg:'white'};color:${act?color:'var(--gy700)'};cursor:pointer;white-space:nowrap;">${l}</button>`; }).join('');
     tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Gezondheid')}${healthChips}</div>`);
@@ -2758,6 +2768,7 @@ function renderTimeline() {
       if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
       if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
       if (tlFilterKeyOnly && !it.key_activity) return false;
+      if (tlFilterOtherRoadmap && !it.managed_in_other_roadmap) return false;
       if (tlFilterSubcats.size && it.subcategory_id && !tlFilterSubcats.has(it.subcategory_id)) return false;
       return true;
     });
@@ -2805,12 +2816,15 @@ function renderTimeline() {
       const content = contentFn ? contentFn(it) : (it.title || it.name);
       const isDone = it.status === 'done';
       const isActive = it.status === 'active';
+      const isOtherRoadmap = !!it.managed_in_other_roadmap;
+      const effectiveBarColor = isOtherRoadmap ? '#D1D5DB' : barColor;
+      const effectiveTextColor = isOtherRoadmap ? '#111827' : 'white';
       const opacity = isDone ? '.75' : '1';
       const textDeco = isDone ? 'text-decoration:line-through;' : '';
       const fw = isActive ? 'font-weight:800;' : 'font-weight:600;';
       const onclickStr = clickFn(it);
       const safeTitle = (it.title||it.name||'').replace(/"/g,'&quot;');
-      cells += `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:${BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:white;background:${barColor};z-index:2;transition:filter .15s;opacity:${opacity};${textDeco}${fw}cursor:grab;user-select:none;overflow:hidden;white-space:nowrap;"
+      cells += `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:${BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:${effectiveTextColor};background:${effectiveBarColor};z-index:2;transition:filter .15s;opacity:${opacity};${textDeco}${fw}cursor:grab;user-select:none;overflow:hidden;white-space:nowrap;"
         onmousedown="tlBarMouseDown(event,'${it.id}','move')"
         onclick="if(!tlBarDragged){${onclickStr}}else{tlBarDragged=false;}"
         title="${safeTitle}"
@@ -2818,6 +2832,7 @@ function renderTimeline() {
         onmouseout="this.style.filter=''">
         <div onmousedown="tlBarMouseDown(event,'${it.id}','left');event.stopPropagation();" style="position:absolute;left:0;top:0;bottom:0;width:8px;cursor:w-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:5px 0 0 5px;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
         ${isActive ? `<span style="flex-shrink:0;margin-right:4px;font-size:9px;opacity:.9;">▶</span>` : ''}
+        ${isOtherRoadmap ? `<span style="flex-shrink:0;margin-right:4px;font-size:11px;opacity:.7;" title="${it.other_roadmap_name||'Andere roadmap'}">🔗</span>` : ''}
         ${it.health_status ? `<span style="flex-shrink:0;margin-right:4px;font-size:13px;line-height:1;">${HEALTH_ICON[it.health_status]||''}</span>` : ''}
         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${content}</span>
         <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
@@ -3123,6 +3138,7 @@ function syncFiltersToTimeline() {
   tlFilterStatuses       = new Set(sbFilterStatuses);
   tlFilterHealthStatuses = new Set(sbFilterHealthStatuses);
   tlFilterKeyOnly        = sbFilterKeyOnly;
+  tlFilterOtherRoadmap   = sbFilterOtherRoadmap;
 }
 function syncFiltersToStoryboard() {
   sbFilterTracks         = new Set(tlFilterStreams);
@@ -3131,6 +3147,7 @@ function syncFiltersToStoryboard() {
   sbFilterStatuses       = new Set(tlFilterStatuses);
   sbFilterHealthStatuses = new Set(tlFilterHealthStatuses);
   sbFilterKeyOnly        = tlFilterKeyOnly;
+  sbFilterOtherRoadmap   = tlFilterOtherRoadmap;
 }
 function switchTab(name) {
   const prev = [...document.querySelectorAll('.ntab.active')].map(b => b.id.replace('tab-','').replace('-btn',''))[0];
@@ -3350,6 +3367,7 @@ async function exportToPptx() {
       if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
       if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
       if (tlFilterKeyOnly && !it.key_activity) return false;
+      if (tlFilterOtherRoadmap && !it.managed_in_other_roadmap) return false;
       return true;
     }
 
@@ -3552,12 +3570,15 @@ async function exportToPptx() {
               const st = it.status || 'pending';
               const stC = stColors[st];
               const isDone = st === 'done';
-              // Card background
-              s.addShape(pptx.shapes.RECTANGLE, { x: cardX, y: cardY, w: cardW, h: CARD_H, fill: { color: C.white }, line: { color: 'E5E7EB', width: 0.5 }, shadow: { type: 'outer', blur: 2, offset: 1, angle: 135, color: '000000', opacity: 0.08 } });
-              // Status border
-              s.addShape(pptx.shapes.RECTANGLE, { x: cardX, y: cardY, w: CBORDER, h: CARD_H, fill: { color: stC }, line: { color: stC } });
+              const isOther = !!it.managed_in_other_roadmap;
+              // Card background (grey for other-roadmap items)
+              const cardFill = isOther ? 'E5E7EB' : C.white;
+              const borderFill = isOther ? '9CA3AF' : stC;
+              s.addShape(pptx.shapes.RECTANGLE, { x: cardX, y: cardY, w: cardW, h: CARD_H, fill: { color: cardFill }, line: { color: 'E5E7EB', width: 0.5 }, shadow: { type: 'outer', blur: 2, offset: 1, angle: 135, color: '000000', opacity: 0.08 } });
+              // Status border (grey for other-roadmap)
+              s.addShape(pptx.shapes.RECTANGLE, { x: cardX, y: cardY, w: CBORDER, h: CARD_H, fill: { color: borderFill }, line: { color: borderFill } });
               // Status icon
-              s.addText(stIcons[st], { x: cardX + CBORDER + 0.02, y: cardY, w: 0.13, h: CARD_H, fontSize: 7, color: stC, valign: 'middle', bold: true, margin: 0 });
+              s.addText(isOther ? '🔗' : stIcons[st], { x: cardX + CBORDER + 0.02, y: cardY, w: 0.13, h: CARD_H, fontSize: 7, color: isOther ? '6B7280' : stC, valign: 'middle', bold: true, margin: 0 });
               // Health icon (top-right corner)
               if (it.health_status && HEALTH_ICON[it.health_status]) {
                 s.addText(HEALTH_ICON[it.health_status], { x: cardX + cardW - 0.18, y: cardY, w: 0.16, h: CARD_H, fontSize: 8, valign: 'middle', align: 'center', margin: 0 });
@@ -3567,7 +3588,7 @@ async function exportToPptx() {
               s.addText((it.key_activity ? '★ ' : '') + it.title, {
                 x: cardX + CBORDER + 0.16, y: cardY,
                 w: titleW, h: CARD_H,
-                fontSize: 7, color: isDone ? '9CA3AF' : C.text, fontFace: 'Calibri',
+                fontSize: 7, color: isDone ? '9CA3AF' : (isOther ? '374151' : C.text), fontFace: 'Calibri',
                 valign: 'middle', bold: st === 'active', margin: 0
               });
             });
@@ -3725,22 +3746,25 @@ async function exportToPptx() {
             const bw = Math.max(0.1, (pos.ep - pos.sp) * TW);
             const isDone = it.status === 'done';
             const isActive = it.status === 'active';
+            const isOther = !!it.managed_in_other_roadmap;
+            const barFill = isOther ? 'D1D5DB' : bColor;
+            const barTextColor = isOther ? '111827' : C.white;
             const by = curY + TP + pos.row * STEP;
             if (by + BH > curY + actualH) return;
             s.addShape(pptx.shapes.RECTANGLE, {
               x: bx, y: by, w: bw, h: BH,
-              fill: { color: bColor, transparency: isDone ? 40 : 0 },
-              line: { color: bColor, width: 0.5 }
+              fill: { color: barFill, transparency: isDone ? 40 : 0 },
+              line: { color: barFill, width: 0.5 }
             });
             if (bw > 0.12) {
-              const icon = stIcons[it.status] || '○';
+              const icon = isOther ? '🔗' : (stIcons[it.status] || '○');
               const iconW = 0.13;
-              s.addText(icon, { x: bx + 0.02, y: by, w: iconW, h: BH, fontSize: 6, color: C.white, fontFace: 'Calibri', valign: 'middle', align: 'center', bold: isActive, margin: 0 });
+              s.addText(icon, { x: bx + 0.02, y: by, w: iconW, h: BH, fontSize: 6, color: barTextColor, fontFace: 'Calibri', valign: 'middle', align: 'center', bold: isActive, margin: 0 });
             }
             if (bw > 0.28) {
               const healthEmoji = it.health_status && HEALTH_ICON[it.health_status] ? HEALTH_ICON[it.health_status] + ' ' : '';
               const lbl = healthEmoji + (it.key_activity ? '★ ' : '') + it.title;
-              s.addText(lbl, { x: bx + 0.16, y: by, w: Math.max(0.08, bw - 0.19), h: BH, fontSize: 6, color: C.white, fontFace: 'Calibri', valign: 'middle', margin: 0 });
+              s.addText(lbl, { x: bx + 0.16, y: by, w: Math.max(0.08, bw - 0.19), h: BH, fontSize: 6, color: barTextColor, fontFace: 'Calibri', valign: 'middle', margin: 0 });
             }
           });
 
