@@ -192,6 +192,29 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--g700);cursor:poin
 input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-radius:5px;padding:2px;cursor:pointer;background:white;}
 .sep{border:none;border-top:1px solid var(--gy200);margin:16px 0;}
 .loading{text-align:center;padding:30px;color:var(--gy500);font-size:13px;}
+/* ── ITEM DETAIL TABS ── */
+.item-tabs{display:flex;border-bottom:2px solid var(--gy200);background:var(--gy50,#f9fafb);padding:0 16px;gap:2px;flex-shrink:0;}
+.itab{padding:10px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--gy500);border-bottom:3px solid transparent;transition:all .15s;margin-bottom:-2px;}
+.itab:hover{color:var(--g700);}
+.itab.active{color:var(--g800);border-bottom-color:var(--g700);font-weight:700;}
+.itab-panel{display:none;}
+.itab-panel.active{display:block;}
+.sh-entry{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--gy100);}
+.sh-entry:last-child{border-bottom:none;}
+.sh-dot{width:8px;height:8px;border-radius:50%;background:var(--g600);flex-shrink:0;margin-top:5px;}
+.sh-meta{font-size:11px;color:var(--gy500);margin-bottom:3px;}
+.sh-desc{font-size:13px;color:var(--gy700);line-height:1.5;}
+.deps-group-label{font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.4px;padding:6px 2px 3px;display:flex;align-items:center;gap:5px;}
+.dep-option{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:5px;cursor:pointer;transition:background .1s;}
+.dep-option:hover{background:var(--gy100);}
+.dep-option label{font-size:13px;color:var(--gy700);cursor:pointer;flex:1;line-height:1.3;}
+.deps-scroll{max-height:190px;overflow-y:auto;border:1px solid var(--gy300);border-radius:7px;padding:4px 8px;background:white;}
+.iph-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gy100);}
+.iph-row:last-child{border-bottom:none;}
+.iph-name{flex:1;border:1px solid var(--gy300);border-radius:6px;padding:5px 8px;font-size:13px;font-family:inherit;color:var(--gy900);}
+.iph-name:focus{outline:none;border-color:var(--g600);}
+.iph-date{width:110px;border:1px solid var(--gy300);border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;color:var(--gy700);}
+.iph-date:focus{outline:none;border-color:var(--g600);}
 </style>
 </head>
 <body>
@@ -424,58 +447,113 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
 
 <!-- Roadmap item modal -->
 <div class="overlay" id="modal-item">
-  <div class="modal">
+  <div class="modal" style="width:min(700px,96vw)">
     <div class="modal-head"><span class="modal-title" id="mi-title">📝 Activiteit</span><button class="modal-close" onclick="closeModal('modal-item')">✕</button></div>
-    <div class="modal-body">
-      <div class="field">
-        <label class="label" style="display:flex;justify-content:space-between;">Activiteit <span id="mi-name-count" style="font-weight:400;color:var(--gy500);">0/30</span></label>
-        <input class="input" id="mi-name" placeholder="Naam van de activiteit…" maxlength="30" oninput="document.getElementById('mi-name-count').textContent=this.value.length+'/30'">
-      </div>
-      <div class="field">
-        <label class="label" style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="mi-key" style="width:15px;height:15px;accent-color:var(--g700);cursor:pointer;flex-shrink:0;">
-          ⭐ Key activity
-        </label>
-      </div>
-      <div class="field"><label class="label" style="display:flex;justify-content:space-between;">Context / Scope <span id="mi-context-count" style="font-weight:400;color:var(--gy500);">0/30</span></label><textarea class="textarea" id="mi-context" placeholder="Korte situatieschets en afbakening…" style="min-height:60px;" maxlength="30" oninput="document.getElementById('mi-context-count').textContent=this.value.length+'/30'"></textarea></div>
-      <div class="field"><label class="label">Verwachte deliverables</label><textarea class="textarea" id="mi-deliverables" placeholder="Wat moet er concreet opgeleverd worden?"></textarea></div>
-      <div class="field">
-        <label class="label">Stream & Subcategorie</label>
-        <select class="select" id="mi-track-sub"><option value="">— Kies stream —</option></select>
-      </div>
-      <div class="field"><label class="label">Fase</label><select class="select" id="mi-phase"><option value="">— Geen fase —</option></select></div>
-      <div class="input-row">
-        <div class="field"><label class="label">Startmaand</label>
-          <div style="display:flex;gap:6px;">
-            <select class="select" id="mi-start-m" style="flex:1;"><option value="">Maand</option></select>
-            <select class="select" id="mi-start-y" style="width:88px;"><option value="">Jaar</option></select>
+    <div class="item-tabs">
+      <button class="itab active" id="itab-btn-general" onclick="switchItemTab('general')">📋 Algemeen</button>
+      <button class="itab" id="itab-btn-status" onclick="switchItemTab('status')">🚦 Status</button>
+      <button class="itab" id="itab-btn-aanpak" onclick="switchItemTab('aanpak')">🎯 Aanpak</button>
+    </div>
+    <div class="modal-body" style="padding-top:16px;">
+
+      <!-- TAB 1: ALGEMEEN -->
+      <div id="itab-general" class="itab-panel active">
+        <div class="field">
+          <label class="label" style="display:flex;justify-content:space-between;">Activiteit <span id="mi-name-count" style="font-weight:400;color:var(--gy500);">0/30</span></label>
+          <input class="input" id="mi-name" placeholder="Naam van de activiteit…" maxlength="30" oninput="document.getElementById('mi-name-count').textContent=this.value.length+'/30'">
+        </div>
+        <div class="field">
+          <label class="label" style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="mi-key" style="width:15px;height:15px;accent-color:var(--g700);cursor:pointer;flex-shrink:0;">
+            ⭐ Key activity
+          </label>
+        </div>
+        <div class="field"><label class="label" style="display:flex;justify-content:space-between;">Context / Scope <span id="mi-context-count" style="font-weight:400;color:var(--gy500);">0/30</span></label><textarea class="textarea" id="mi-context" placeholder="Korte situatieschets en afbakening…" style="min-height:60px;" maxlength="30" oninput="document.getElementById('mi-context-count').textContent=this.value.length+'/30'"></textarea></div>
+        <div class="field"><label class="label">Verwachte deliverables</label><textarea class="textarea" id="mi-deliverables" placeholder="Wat moet er concreet opgeleverd worden?"></textarea></div>
+        <div class="field">
+          <label class="label">Stream & Subcategorie</label>
+          <select class="select" id="mi-track-sub"><option value="">— Kies stream —</option></select>
+        </div>
+        <div class="field"><label class="label">Fase</label><select class="select" id="mi-phase"><option value="">— Geen fase —</option></select></div>
+        <div class="input-row">
+          <div class="field"><label class="label">Startmaand</label>
+            <div style="display:flex;gap:6px;">
+              <select class="select" id="mi-start-m" style="flex:1;"><option value="">Maand</option></select>
+              <select class="select" id="mi-start-y" style="width:88px;"><option value="">Jaar</option></select>
+            </div>
+          </div>
+          <div class="field"><label class="label">Eindmaand</label>
+            <div style="display:flex;gap:6px;">
+              <select class="select" id="mi-end-m" style="flex:1;"><option value="">Maand</option></select>
+              <select class="select" id="mi-end-y" style="width:88px;"><option value="">Jaar</option></select>
+            </div>
           </div>
         </div>
-        <div class="field"><label class="label">Eindmaand</label>
-          <div style="display:flex;gap:6px;">
-            <select class="select" id="mi-end-m" style="flex:1;"><option value="">Maand</option></select>
-            <select class="select" id="mi-end-y" style="width:88px;"><option value="">Jaar</option></select>
+      </div>
+
+      <!-- TAB 2: STATUS -->
+      <div id="itab-status" class="itab-panel">
+        <div class="field"><label class="label">Status</label>
+          <select class="select" id="mi-status">
+            <option value="pending">○ Te doen</option>
+            <option value="active">▶ Actief</option>
+            <option value="done">✓ Klaar</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">Gezondheidsstatus</label>
+          <div style="display:flex;gap:8px;margin-top:4px;" id="mi-health-picker">
+            <button type="button" class="health-btn" data-val="" onclick="setHealthStatus('')" title="Geen status">—</button>
+            <button type="button" class="health-btn" data-val="sunny" onclick="setHealthStatus('sunny')" title="Goed op koers">☀️</button>
+            <button type="button" class="health-btn" data-val="partly_cloudy" onclick="setHealthStatus('partly_cloudy')" title="Kleine aandachtspunten">⛅</button>
+            <button type="button" class="health-btn" data-val="cloudy" onclick="setHealthStatus('cloudy')" title="Problemen in zicht">☁️</button>
+            <button type="button" class="health-btn" data-val="stormy" onclick="setHealthStatus('stormy')" title="Kritieke problemen">⛈️</button>
+          </div>
+          <input type="hidden" id="mi-health" value="">
+        </div>
+        <div class="field">
+          <label class="label">💬 Status opmerking</label>
+          <textarea class="textarea" id="mi-status-desc" placeholder="Wat is de huidige situatie? Blokkades, voortgang, wijzigingen…" style="min-height:90px;"></textarea>
+          <div style="font-size:11px;color:var(--gy500);margin-top:4px;">Elke opmerking wordt bij opslaan als historiek bewaard.</div>
+        </div>
+        <div id="mi-history-wrap" style="display:none;">
+          <div style="font-size:12px;font-weight:700;color:var(--gy700);margin:4px 0 8px;display:flex;align-items:center;gap:6px;">📜 Historiek <span id="mi-history-count" style="font-size:11px;color:var(--gy500);font-weight:400;"></span></div>
+          <div id="mi-history-list" style="border:1px solid var(--gy200);border-radius:8px;padding:8px 12px;background:var(--gy50,#f9fafb);max-height:260px;overflow-y:auto;"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: AANPAK -->
+      <div id="itab-aanpak" class="itab-panel">
+        <div class="field">
+          <label class="label">👤 Owner</label>
+          <input class="input" id="mi-owner" placeholder="Naam of team verantwoordelijk voor deze activiteit">
+        </div>
+        <hr class="sep">
+        <div class="toggle-row" style="gap:10px;">
+          <input type="checkbox" id="mi-other-roadmap" onchange="toggleOtherRoadmap()">
+          <span style="font-size:16px;">🔍</span>
+          <span class="toggle-label">Wordt beheerd in een andere roadmap</span>
+        </div>
+        <div id="mi-other-roadmap-wrap" style="display:none;padding-left:28px;margin-top:6px;">
+          <input class="input" id="mi-other-roadmap-name" placeholder="Naam van de andere roadmap…">
+        </div>
+        <hr class="sep">
+        <div class="field">
+          <label class="label">🔗 Dependencies <span style="font-weight:400;color:var(--gy500);">(afhankelijkheden)</span></label>
+          <div id="mi-deps-container" class="deps-scroll">
+            <div style="color:var(--gy400);font-size:12px;font-style:italic;">Laden…</div>
           </div>
         </div>
-      </div>
-      <div class="field"><label class="label">Status</label>
-        <select class="select" id="mi-status">
-          <option value="pending">○ Te doen</option>
-          <option value="active">▶ Actief</option>
-          <option value="done">✓ Klaar</option>
-        </select>
-      </div>
-      <div class="field">
-        <label class="label">Gezondheidsstatus</label>
-        <div style="display:flex;gap:8px;margin-top:4px;" id="mi-health-picker">
-          <button type="button" class="health-btn" data-val="" onclick="setHealthStatus('')" title="Geen status">—</button>
-          <button type="button" class="health-btn" data-val="sunny" onclick="setHealthStatus('sunny')" title="Goed op koers">☀️</button>
-          <button type="button" class="health-btn" data-val="partly_cloudy" onclick="setHealthStatus('partly_cloudy')" title="Kleine aandachtspunten">⛅</button>
-          <button type="button" class="health-btn" data-val="cloudy" onclick="setHealthStatus('cloudy')" title="Problemen in zicht">☁️</button>
-          <button type="button" class="health-btn" data-val="stormy" onclick="setHealthStatus('stormy')" title="Kritieke problemen">⛈️</button>
+        <hr class="sep">
+        <div class="field">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <label class="label" style="margin:0;">📋 Fasen van deze activiteit</label>
+            <button class="btn btn-sm btn-p" onclick="addItemPhase()">＋ Fase</button>
+          </div>
+          <div id="mi-phases-container"></div>
         </div>
-        <input type="hidden" id="mi-health" value="">
       </div>
+
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger btn-sm" id="mi-del-btn" onclick="deleteItem()" style="margin-right:auto;display:none">🗑 Verwijder</button>
@@ -642,6 +720,8 @@ let editingMeetingTypeId = null;
 let editingSubcatId = null;
 let editingSubcatTrackId = null;
 let subcatFields = []; // temp fields in track modal
+let itemStatusHistory = [];
+let itemPhasesTemp = [];
 let saveTimer = null;
 
 // ═══════════════════════════════════════════
@@ -1306,6 +1386,7 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
   editingItemId = mode === 'edit' ? id : null;
   document.getElementById('mi-title').textContent = mode === 'edit' ? '✏️ Activiteit bewerken' : '📝 Nieuwe activiteit';
   document.getElementById('mi-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
+  switchItemTab('general');
 
   fillMonthYearSelects('mi-start-m','mi-start-y','mi-end-m','mi-end-y');
 
@@ -1315,18 +1396,28 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
 
   if (mode === 'edit' && editingItemId) {
     const it = items.find(x => x.id === editingItemId);
+    // Tab 1
     document.getElementById('mi-name').value = it.title;
     document.getElementById('mi-name-count').textContent = it.title.length + '/30';
     document.getElementById('mi-context').value = it.context_scope || '';
     document.getElementById('mi-context-count').textContent = (it.context_scope||'').length + '/30';
     document.getElementById('mi-deliverables').value = it.deliverables || '';
     document.getElementById('mi-key').checked = !!it.key_activity;
-    document.getElementById('mi-status').value = it.status || 'pending';
-    setHealthStatus(it.health_status || '');
     psel.value = it.phase_id || '';
     fillTrackSubDropdown(it.track_id, it.subcategory_id);
     setMonthYear('mi-start-m','mi-start-y', it.start_date);
     setMonthYear('mi-end-m','mi-end-y', it.end_date);
+    // Tab 2
+    document.getElementById('mi-status').value = it.status || 'pending';
+    setHealthStatus(it.health_status || '');
+    document.getElementById('mi-status-desc').value = '';
+    // Tab 3
+    document.getElementById('mi-owner').value = it.owner || '';
+    document.getElementById('mi-other-roadmap').checked = !!it.managed_in_other_roadmap;
+    document.getElementById('mi-other-roadmap-name').value = it.other_roadmap_name || '';
+    document.getElementById('mi-other-roadmap-wrap').style.display = it.managed_in_other_roadmap ? 'block' : 'none';
+    itemPhasesTemp = Array.isArray(it.item_phases) ? JSON.parse(JSON.stringify(it.item_phases)) : [];
+    loadStatusHistory(editingItemId);
   } else {
     document.getElementById('mi-name').value = '';
     document.getElementById('mi-name-count').textContent = '0/30';
@@ -1336,9 +1427,18 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     document.getElementById('mi-key').checked = false;
     document.getElementById('mi-status').value = 'pending';
     setHealthStatus('');
+    document.getElementById('mi-status-desc').value = '';
+    document.getElementById('mi-history-wrap').style.display = 'none';
     psel.value = prefillPhaseId || '';
     fillTrackSubDropdown(prefillTrackId, prefillSubcatId);
+    document.getElementById('mi-owner').value = '';
+    document.getElementById('mi-other-roadmap').checked = false;
+    document.getElementById('mi-other-roadmap-name').value = '';
+    document.getElementById('mi-other-roadmap-wrap').style.display = 'none';
+    itemPhasesTemp = [];
+    itemStatusHistory = [];
   }
+  renderItemPhasesBuilder();
   document.getElementById('modal-item').classList.add('open');
 }
 
@@ -1347,6 +1447,9 @@ async function saveItem() {
   if (!title) { alert('Activiteit naam is verplicht'); return; }
   const trackSubVal = document.getElementById('mi-track-sub').value;
   const [track_id, subcategory_id] = trackSubVal ? trackSubVal.split('|') : ['', ''];
+  const newStatus = document.getElementById('mi-status').value;
+  const newHealth = document.getElementById('mi-health').value || null;
+  const statusDesc = document.getElementById('mi-status-desc').value.trim();
   const data = {
     title,
     context_scope: document.getElementById('mi-context').value,
@@ -1357,17 +1460,39 @@ async function saveItem() {
     phase_id: document.getElementById('mi-phase').value || null,
     start_date: getDateFromMonthYear('mi-start-m','mi-start-y', false),
     end_date: getDateFromMonthYear('mi-end-m','mi-end-y', true),
-    status: document.getElementById('mi-status').value,
-    health_status: document.getElementById('mi-health').value || null,
+    status: newStatus,
+    health_status: newHealth,
+    owner: document.getElementById('mi-owner').value.trim() || null,
+    managed_in_other_roadmap: document.getElementById('mi-other-roadmap').checked,
+    other_roadmap_name: document.getElementById('mi-other-roadmap-name').value.trim() || null,
+    dependencies: getDepsSelected(),
+    item_phases: itemPhasesTemp,
     updated_at: new Date().toISOString()
   };
   if (editingItemId) {
+    const prevItem = items.find(x => x.id === editingItemId);
+    const prevStatus = prevItem?.status;
+    const prevHealth = prevItem?.health_status || null;
     await sb.from('roadmap_items').update(data).eq('id', editingItemId);
     const idx = items.findIndex(x => x.id === editingItemId);
     if (idx !== -1) Object.assign(items[idx], data);
+    if (statusDesc || newStatus !== prevStatus || newHealth !== prevHealth) {
+      await sb.from('item_status_history').insert({
+        item_id: editingItemId, status: newStatus, health_status: newHealth,
+        description: statusDesc || null, user_id: currentUser.id
+      });
+    }
   } else {
     const {data: nd} = await sb.from('roadmap_items').insert({...data, project_id: currentProjectId}).select().single();
-    if (nd) items.push(nd);
+    if (nd) {
+      items.push(nd);
+      if (statusDesc) {
+        await sb.from('item_status_history').insert({
+          item_id: nd.id, status: newStatus, health_status: newHealth,
+          description: statusDesc, user_id: currentUser.id
+        });
+      }
+    }
   }
   closeModal('modal-item');
   renderStoryboard(); renderTimeline();
@@ -1381,6 +1506,125 @@ async function deleteItem() {
   closeModal('modal-item');
   renderStoryboard(); renderTimeline();
   toast('Verwijderd');
+}
+
+// ── ITEM DETAIL HELPERS ──────────────────────────────────────
+function switchItemTab(tab) {
+  ['general','status','aanpak'].forEach(t => {
+    document.getElementById(`itab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`itab-btn-${t}`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'aanpak') renderDepsMultiselect();
+}
+function toggleOtherRoadmap() {
+  document.getElementById('mi-other-roadmap-wrap').style.display =
+    document.getElementById('mi-other-roadmap').checked ? 'block' : 'none';
+}
+async function loadStatusHistory(itemId) {
+  const { data } = await sb.from('item_status_history')
+    .select('*').eq('item_id', itemId).order('created_at', { ascending: false });
+  itemStatusHistory = data || [];
+  renderStatusHistory();
+}
+function renderStatusHistory() {
+  const wrap = document.getElementById('mi-history-wrap');
+  const list = document.getElementById('mi-history-list');
+  if (!itemStatusHistory.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  document.getElementById('mi-history-count').textContent = `(${itemStatusHistory.length})`;
+  const statusLabel = { pending: '○ Te doen', active: '▶ Actief', done: '✓ Klaar' };
+  const healthIcon = { sunny: '☀️', partly_cloudy: '⛅', cloudy: '☁️', stormy: '⛈️' };
+  list.innerHTML = itemStatusHistory.map(e => {
+    const dt = new Date(e.created_at);
+    const dtStr = dt.toLocaleDateString('nl-BE',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + dt.toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit'});
+    const hl = e.health_status ? healthIcon[e.health_status]||'' : '';
+    return `<div class="sh-entry">
+      <div class="sh-dot"></div>
+      <div style="flex:1;min-width:0;">
+        <div class="sh-meta">${dtStr} · ${statusLabel[e.status]||e.status||'—'} ${hl}</div>
+        ${e.description
+          ? `<div class="sh-desc">${e.description.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>`
+          : `<div class="sh-desc" style="color:var(--gy400);font-style:italic;">Geen opmerking</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+function getDepsSelected() {
+  return Array.from(document.querySelectorAll('#mi-deps-container input[type=checkbox]:checked')).map(c => c.value);
+}
+function renderDepsMultiselect() {
+  const container = document.getElementById('mi-deps-container');
+  const currentItem = editingItemId ? items.find(x => x.id === editingItemId) : null;
+  const currentDeps = new Set((currentItem?.dependencies || []).map(String));
+  const otherItems = items.filter(x => x.id !== editingItemId);
+  if (!otherItems.length) {
+    container.innerHTML = '<div style="color:var(--gy400);font-size:12px;font-style:italic;padding:6px 0;">Geen andere activiteiten in dit project.</div>';
+    return;
+  }
+  let html = '';
+  tracks.forEach(tr => {
+    const trackItems = otherItems.filter(i => i.track_id === tr.id);
+    if (!trackItems.length) return;
+    const subs = subcategories.filter(s => s.track_id === tr.id);
+    html += `<div class="deps-group-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${tr.color};"></span>${tr.icon||''} ${tr.name}</div>`;
+    if (subs.length) {
+      subs.forEach(sub => {
+        const subItems = trackItems.filter(i => i.subcategory_id === sub.id);
+        if (!subItems.length) return;
+        html += `<div style="padding-left:10px;font-size:11px;color:var(--gy500);font-weight:600;margin-bottom:2px;">${sub.name}</div>`;
+        subItems.forEach(it => {
+          html += `<div class="dep-option" style="padding-left:20px;" onclick="document.getElementById('dep-${it.id}').click();event.stopPropagation()">
+            <input type="checkbox" id="dep-${it.id}" value="${it.id}" ${currentDeps.has(it.id)?'checked':''} onclick="event.stopPropagation()">
+            <label for="dep-${it.id}">${it.title}</label></div>`;
+        });
+      });
+      trackItems.filter(i => !i.subcategory_id).forEach(it => {
+        html += `<div class="dep-option" style="padding-left:10px;" onclick="document.getElementById('dep-${it.id}').click();event.stopPropagation()">
+          <input type="checkbox" id="dep-${it.id}" value="${it.id}" ${currentDeps.has(it.id)?'checked':''} onclick="event.stopPropagation()">
+          <label for="dep-${it.id}">${it.title}</label></div>`;
+      });
+    } else {
+      trackItems.forEach(it => {
+        html += `<div class="dep-option" style="padding-left:10px;" onclick="document.getElementById('dep-${it.id}').click();event.stopPropagation()">
+          <input type="checkbox" id="dep-${it.id}" value="${it.id}" ${currentDeps.has(it.id)?'checked':''} onclick="event.stopPropagation()">
+          <label for="dep-${it.id}">${it.title}</label></div>`;
+      });
+    }
+  });
+  const noTrack = otherItems.filter(i => !i.track_id);
+  if (noTrack.length) {
+    html += `<div class="deps-group-label">Geen stream</div>`;
+    noTrack.forEach(it => {
+      html += `<div class="dep-option" onclick="document.getElementById('dep-${it.id}').click();event.stopPropagation()">
+        <input type="checkbox" id="dep-${it.id}" value="${it.id}" ${currentDeps.has(it.id)?'checked':''} onclick="event.stopPropagation()">
+        <label for="dep-${it.id}">${it.title}</label></div>`;
+    });
+  }
+  container.innerHTML = html || '<div style="color:var(--gy400);font-size:12px;font-style:italic;padding:6px 0;">Geen andere activiteiten.</div>';
+}
+function addItemPhase() {
+  itemPhasesTemp.push({ id: Date.now().toString(), name: '', start_date: '', end_date: '', completed: false });
+  renderItemPhasesBuilder();
+}
+function renderItemPhasesBuilder() {
+  const container = document.getElementById('mi-phases-container');
+  if (!itemPhasesTemp.length) {
+    container.innerHTML = '<div style="color:var(--gy400);font-size:12px;font-style:italic;text-align:center;padding:14px 0;">Nog geen fasen. Klik ＋ Fase om er een toe te voegen.</div>';
+    return;
+  }
+  container.innerHTML = itemPhasesTemp.map((ph, i) => `
+    <div class="iph-row">
+      <input type="checkbox" class="iph-check" ${ph.completed?'checked':''} title="Afgerond"
+        onchange="itemPhasesTemp[${i}].completed=this.checked" style="width:16px;height:16px;accent-color:var(--g700);flex-shrink:0;">
+      <input class="iph-name" value="${(ph.name||'').replace(/"/g,'&quot;')}" placeholder="Naam fase…"
+        oninput="itemPhasesTemp[${i}].name=this.value">
+      <input class="iph-date" type="date" value="${ph.start_date||''}" title="Start"
+        onchange="itemPhasesTemp[${i}].start_date=this.value">
+      <input class="iph-date" type="date" value="${ph.end_date||''}" title="Eind"
+        onchange="itemPhasesTemp[${i}].end_date=this.value">
+      <button class="btn btn-danger btn-sm" title="Verwijder"
+        onclick="itemPhasesTemp.splice(${i},1);renderItemPhasesBuilder()">✕</button>
+    </div>`).join('');
 }
 
 async function copyItem(itemId) {
@@ -1807,7 +2051,7 @@ function renderStoryboard() {
   if (!rowPhases.length) rowPhases = [null];
 
   const labelW = 140;
-  const MIN_COL_W = 170;
+  const MIN_COL_W = 130;
   const minGridW = labelW + colDefs.length * MIN_COL_W;
   const gridCols = `${labelW}px ${colDefs.map(() => `minmax(${MIN_COL_W}px, 1fr)`).join(' ')}`;
   let html = `<div style="display:grid;grid-template-columns:${gridCols};width:max(100%, ${minGridW}px);border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
