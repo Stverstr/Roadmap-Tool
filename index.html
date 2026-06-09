@@ -1789,10 +1789,12 @@ let sbFilterStatuses = new Set();
 let sbFilterHealthStatuses = new Set();
 let sbFilterKeyOnly = false;
 let sbFilterOtherRoadmap = false;
+let sbFilterNoBacklog = false;
 
 function sbItemVisible(it) {
   if (sbFilterKeyOnly && !it.key_activity) return false;
   if (sbFilterOtherRoadmap && !it.managed_in_other_roadmap) return false;
+  if (sbFilterNoBacklog && !it.start_date) return false;
   if (sbFilterStatuses.size && !sbFilterStatuses.has(it.status || 'pending')) return false;
   if (sbFilterHealthStatuses.size && !sbFilterHealthStatuses.has(it.health_status || '')) return false;
   return true;
@@ -1802,6 +1804,7 @@ function sbToggleFilter(type, value) {
   const map = {track: sbFilterTracks, subcat: sbFilterSubcats, phase: sbFilterPhases, status: sbFilterStatuses, health: sbFilterHealthStatuses};
   if (type === 'key') { sbFilterKeyOnly = !sbFilterKeyOnly; }
   else if (type === 'other') { sbFilterOtherRoadmap = !sbFilterOtherRoadmap; }
+  else if (type === 'nobacklog') { sbFilterNoBacklog = !sbFilterNoBacklog; }
   else { const s = map[type]; s.has(value) ? s.delete(value) : s.add(value); }
   renderSbLegend();
   renderStoryboard();
@@ -1844,14 +1847,14 @@ function tlToggleFilter() {
 
 function sbClearFilters() {
   sbFilterTracks.clear(); sbFilterSubcats.clear(); sbFilterPhases.clear();
-  sbFilterStatuses.clear(); sbFilterHealthStatuses.clear(); sbFilterKeyOnly = false; sbFilterOtherRoadmap = false;
+  sbFilterStatuses.clear(); sbFilterHealthStatuses.clear(); sbFilterKeyOnly = false; sbFilterOtherRoadmap = false; sbFilterNoBacklog = false;
   renderSbLegend(); renderStoryboard();
 }
 
 function renderSbLegend() {
   const el = document.getElementById('sb-legend');
   if (!el || !sbLegendOpen) return;
-  const anyActive = sbFilterTracks.size || sbFilterSubcats.size || sbFilterPhases.size || sbFilterStatuses.size || sbFilterHealthStatuses.size || sbFilterKeyOnly || sbFilterOtherRoadmap;
+  const anyActive = sbFilterTracks.size || sbFilterSubcats.size || sbFilterPhases.size || sbFilterStatuses.size || sbFilterHealthStatuses.size || sbFilterKeyOnly || sbFilterOtherRoadmap || sbFilterNoBacklog;
 
   const chip = (label, active, onclick, bg, fg) => {
     const border = active ? `2px solid ${bg||'var(--g700)'}` : '2px solid transparent';
@@ -1888,6 +1891,7 @@ function renderSbLegend() {
   row2.push(`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${lbl('Gezondheid')}${[['sunny','☀️','#92400E','#FEF3C7'],['partly_cloudy','⛅','#1E40AF','#DBEAFE'],['cloudy','☁️','#374151','#F3F4F6'],['stormy','⛈️','#991B1B','#FEE2E2']].map(([val,l,fg,bg]) => chip(l, sbFilterHealthStatuses.has(val), `sbToggleFilter('health','${val}')`, bg, fg)).join('')}</div>`);
   row2.push(`<div style="display:flex;align-items:center;">${chip('⭐ Key', sbFilterKeyOnly, `sbToggleFilter('key')`, '#FEF9C3', '#713F12')}</div>`);
   row2.push(`<div style="display:flex;align-items:center;">${chip('🔗 Andere roadmap', sbFilterOtherRoadmap, `sbToggleFilter('other')`, '#E5E7EB', '#374151')}</div>`);
+  row2.push(`<div style="display:flex;align-items:center;">${chip('📥 Geen backlog', sbFilterNoBacklog, `sbToggleFilter('nobacklog')`, '#F0FDF4', '#14532D')}</div>`);
   if (anyActive) {
     row2.push(`<span onclick="sbClearFilters()" style="font-size:12px;color:#DC2626;cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;background:#FEE2E2;white-space:nowrap;">✕ Wissen</span>`);
   }
@@ -1914,6 +1918,7 @@ let tlFilterStatuses = new Set();
 let tlFilterHealthStatuses = new Set();
 let tlFilterKeyOnly = false;
 let tlFilterOtherRoadmap = false;
+let tlFilterNoBacklog = false;
 let tlYearMode = 'calendar';
 let tlFilterYears = new Set();
 let tlFromDate = '';
@@ -2214,6 +2219,7 @@ function toggleTlFilterStatus(s) { tlFilterStatuses.has(s) ? tlFilterStatuses.de
 function toggleTlFilterHealth(v) { tlFilterHealthStatuses.has(v) ? tlFilterHealthStatuses.delete(v) : tlFilterHealthStatuses.add(v); renderTimeline(); }
 function setTlFilterKeyOnly(v) { tlFilterKeyOnly = v; renderTimeline(); }
 function setTlFilterOtherRoadmap(v) { tlFilterOtherRoadmap = v; renderTimeline(); }
+function setTlFilterNoBacklog(v) { tlFilterNoBacklog = v; renderTimeline(); }
 function setTlFromDate(v) { tlFromDate = v; tlFilterYears = new Set(); renderTimeline(); }
 function setTlToDate(v) { tlToDate = v; tlFilterYears = new Set(); renderTimeline(); }
 function tlClearDateFilter() { tlFromDate = ''; tlToDate = ''; tlFilterYears = new Set(); renderTimeline(); }
@@ -2245,7 +2251,7 @@ function toggleTlFilterPhase(id) {
   }
   renderTimeline();
 }
-function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterHealthStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterOtherRoadmap = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); renderTimeline(); }
+function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterHealthStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterOtherRoadmap = false; tlFilterNoBacklog = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); renderTimeline(); }
 function toggleTlFilterSubcat(id) { tlFilterSubcats.has(id) ? tlFilterSubcats.delete(id) : tlFilterSubcats.add(id); renderTimeline(); }
 function toggleTlFilterMeetingType(id) { tlFilterMeetingTypes.has(id) ? tlFilterMeetingTypes.delete(id) : tlFilterMeetingTypes.add(id); renderTimeline(); }
 function toggleTlFilterMilestoneType(id) { tlFilterMilestoneTypes.has(id) ? tlFilterMilestoneTypes.delete(id) : tlFilterMilestoneTypes.add(id); renderTimeline(); }
@@ -2628,6 +2634,7 @@ function renderTimeline() {
 
   const keyChip = `<button onclick="setTlFilterKeyOnly(${!tlFilterKeyOnly})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterKeyOnly?'#D97706':'var(--gy300)'};background:${tlFilterKeyOnly?'#FFFBEB':'white'};color:${tlFilterKeyOnly?'#D97706':'var(--gy700)'};cursor:pointer;white-space:nowrap;">⭐ Key only</button>`;
   const otherRoadmapChip = `<button onclick="setTlFilterOtherRoadmap(${!tlFilterOtherRoadmap})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterOtherRoadmap?'#6B7280':'var(--gy300)'};background:${tlFilterOtherRoadmap?'#F3F4F6':'white'};color:${tlFilterOtherRoadmap?'#374151':'var(--gy700)'};cursor:pointer;white-space:nowrap;">🔗 Andere roadmap</button>`;
+  const noBacklogChip = `<button onclick="setTlFilterNoBacklog(${!tlFilterNoBacklog})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterNoBacklog?'#14532D':'var(--gy300)'};background:${tlFilterNoBacklog?'#F0FDF4':'white'};color:${tlFilterNoBacklog?'#14532D':'var(--gy700)'};cursor:pointer;white-space:nowrap;">📥 Geen backlog</button>`;
 
   const phaseChips = phases.map(ph => {
     const act = tlFilterPhases.has(ph.id);
@@ -2660,7 +2667,7 @@ function renderTimeline() {
   }).join('') : '';
 
   const hasDateFilter = tlFromDate || tlToDate || tlFilterYears.size;
-  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterHealthStatuses.size || tlFilterKeyOnly || tlFilterOtherRoadmap || tlFilterSubcats.size || tlFilterMeetingTypes.size || tlFilterMilestoneTypes.size;
+  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterHealthStatuses.size || tlFilterKeyOnly || tlFilterOtherRoadmap || tlFilterNoBacklog || tlFilterSubcats.size || tlFilterMeetingTypes.size || tlFilterMilestoneTypes.size;
 
   const hasSidebar = false; // sidebar vervangen door backlog-sectie onderaan
   const SIDEBAR_W = 168;
@@ -2674,7 +2681,7 @@ function renderTimeline() {
     if (tracks.length) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Streams')}${streamChips}</div>`);
     if (subcatChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Subcategorieën')}${subcatChips}</div>`);
     if (phaseChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Fasen')}${phaseChips}</div>`);
-    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}${otherRoadmapChip}</div>`);
+    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}${otherRoadmapChip}${noBacklogChip}</div>`);
     const healthDefs = [['sunny','☀️','#92400E','#FEF3C7'],['partly_cloudy','⛅','#1E40AF','#DBEAFE'],['cloudy','☁️','#374151','#F3F4F6'],['stormy','⛈️','#991B1B','#FEE2E2']];
     const healthChips = healthDefs.map(([v,l,color,bg]) => { const act = tlFilterHealthStatuses.has(v); return `<button onclick="toggleTlFilterHealth('${v}')" style="padding:3px 9px;font-size:13px;font-weight:600;border-radius:12px;border:1.5px solid ${act?color:'var(--gy300)'};background:${act?bg:'white'};color:${act?color:'var(--gy700)'};cursor:pointer;white-space:nowrap;">${l}</button>`; }).join('');
     tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Gezondheid')}${healthChips}</div>`);
@@ -2970,49 +2977,6 @@ function renderTimeline() {
     html += `<div class="empty" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-title">Geen streams</div><div class="empty-sub">Voeg streams toe via Setup om de tijdslijn te zien.</div></div>`;
   }
 
-  // ── 15. Backlog row (items without track_id) ───────────────────────────────
-  const backlogScheduled = items.filter(it => !it.track_id && it.start_date);
-  const backlogUnscheduled = items.filter(it => {
-    if (it.track_id || it.start_date) return false;
-    if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
-    if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
-    if (tlFilterKeyOnly && !it.key_activity) return false;
-    return true;
-  });
-  if (backlogScheduled.length || backlogUnscheduled.length) {
-    const blBarColor = '#6B7280';
-    html += `<div style="display:flex;border-top:2px dashed var(--gy300);background:#F8FAFC;align-items:stretch;">
-      <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;font-weight:700;color:var(--gy500);border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;">
-        📥 Backlog
-      </div>
-      <div data-tl-grid="1" data-track-id="" data-subcat-id="" style="flex:1;position:relative;min-height:48px;"
-        ondragover="tlLaneDragOver(event)" ondragleave="tlLaneDragLeave(event)" ondrop="tlLaneDrop(event)">
-        ${phaseBandsHtml}${colGridLines()}
-        ${backlogScheduled.map(it => {
-          const startPct = dateToPercent(it.start_date);
-          const endPct = dateToPercent(it.end_date || it.start_date);
-          if (startPct === null) return '';
-          const w = Math.max(0.5, (endPct || startPct) - startPct);
-          const isDone = it.status === 'done', isActive = it.status === 'active';
-          const safeTitle = it.title.replace(/"/g,'&quot;');
-          return `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:28px;top:10px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:white;background:${blBarColor};z-index:2;transition:filter .15s;opacity:${isDone?.75:1};${isDone?'text-decoration:line-through;':''}${isActive?'font-weight:800;':'font-weight:600;'}cursor:grab;user-select:none;overflow:hidden;white-space:nowrap;"
-            onmousedown="tlBarMouseDown(event,'${it.id}','move')"
-            onclick="if(!tlBarDragged){openModal('modal-item','${it.id}','edit')}else{tlBarDragged=false;}"
-            title="${safeTitle}"
-            onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">
-            <div onmousedown="tlBarMouseDown(event,'${it.id}','left');event.stopPropagation();" style="position:absolute;left:0;top:0;bottom:0;width:8px;cursor:w-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:5px 0 0 5px;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
-            ${isActive ? `<span style="flex-shrink:0;margin-right:4px;font-size:9px;opacity:.9;">▶</span>` : ''}
-            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.key_activity?'⭐ ':''}${it.title}</span>
-            <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
-          </div>`;
-        }).join('')}
-      </div>
-      ${hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;padding:3px 4px;display:flex;flex-direction:column;gap:2px;">
-        ${backlogUnscheduled.map(sit => `<div draggable="true" ondragstart="tlCardDragStart(event,'${sit.id}')" onclick="openModal('modal-item','${sit.id}','edit')" style="border-left:3px solid ${blBarColor};border-radius:0 4px 4px 0;padding:3px 5px;background:white;border-top:1px solid var(--gy200);border-right:1px solid var(--gy200);border-bottom:1px solid var(--gy200);cursor:pointer;font-size:10px;font-weight:600;color:var(--gy900);line-height:1.3;">${sit.key_activity?'⭐ ':''}${sit.title}</div>`).join('')}
-      </div>` : ''}
-    </div>`;
-  }
-
   html += `</div>`; // close inner timeline column
 
   // (sidebar is now inline per lane row — no standalone sidebar block needed)
@@ -3027,95 +2991,37 @@ function renderBacklog() {
   const el = document.getElementById('tl-backlog');
   if (!el) return;
 
+  // Hidden when "geen backlog" filter is on
+  if (tlFilterNoBacklog) { el.innerHTML = ''; return; }
+
   // All items without start_date, apply active filters
   const backlogItems = items.filter(it => {
     if (it.start_date) return false;
-    if (tlFilterStreams.size && it.track_id && !tlFilterStreams.has(it.track_id)) return false;
-    if (tlFilterSubcats.size && it.subcategory_id && !tlFilterSubcats.has(it.subcategory_id)) return false;
-    if (tlFilterPhases.size && it.phase_id && !tlFilterPhases.has(it.phase_id)) return false;
     if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
     if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
     if (tlFilterKeyOnly && !it.key_activity) return false;
+    if (tlFilterOtherRoadmap && !it.managed_in_other_roadmap) return false;
     return true;
   });
 
   if (!backlogItems.length) { el.innerHTML = ''; return; }
 
-  // Group by track (ungrouped items at top)
-  const byTrack = new Map();
-  byTrack.set(null, []);
-  tracks.forEach(tr => byTrack.set(tr.id, []));
-  backlogItems.forEach(it => {
-    const key = it.track_id || null;
-    if (!byTrack.has(key)) byTrack.set(key, []);
-    byTrack.get(key).push(it);
-  });
-
-  let html = `<div style="border:1px solid var(--gy200);border-radius:10px;background:#F8FAFC;overflow:hidden;">
-    <div style="padding:8px 14px;background:white;border-bottom:2px solid var(--gy200);display:flex;align-items:center;gap:8px;">
-      <span style="font-size:14px;font-weight:700;color:var(--gy700);">📥 Backlog</span>
-      <span style="font-size:11px;color:var(--gy500);font-weight:500;">${backlogItems.length} item${backlogItems.length !== 1 ? 's' : ''} nog te plannen — sleep naar de tijdslijn om in te plannen</span>
-    </div>
-    <div style="padding:10px 14px;display:flex;flex-direction:column;gap:10px;">`;
-
-  // Ungrouped first
-  const ungrouped = byTrack.get(null) || [];
-  if (ungrouped.length) {
-    html += renderBacklogGroup('Geen stream', '#6B7280', ungrouped);
-  }
-
-  // Per track
-  tracks.forEach(tr => {
-    const trItems = byTrack.get(tr.id) || [];
-    if (!trItems.length) return;
-
-    // Sub-group by subcategory
-    const bySub = new Map();
-    bySub.set(null, []);
-    subcategories.filter(s => s.track_id === tr.id).forEach(s => bySub.set(s.id, []));
-    trItems.forEach(it => {
-      const key = it.subcategory_id || null;
-      if (!bySub.has(key)) bySub.set(key, []);
-      bySub.get(key).push(it);
-    });
-
-    const hasSubcats = subcategories.some(s => s.track_id === tr.id);
-    if (!hasSubcats) {
-      html += renderBacklogGroup(tr.name, tr.color, trItems);
-    } else {
-      html += `<div style="border-left:3px solid ${tr.color};border-radius:0 6px 6px 0;padding:4px 0 4px 10px;">
-        <div style="font-size:11px;font-weight:700;color:${tr.color};text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">${tr.name}</div>`;
-      // Items without subcat
-      const noSub = bySub.get(null) || [];
-      if (noSub.length) html += renderBacklogGroup(null, tr.color, noSub);
-      // Items per subcat
-      subcategories.filter(s => s.track_id === tr.id).forEach(sub => {
-        const subItems = bySub.get(sub.id) || [];
-        if (!subItems.length) return;
-        html += renderBacklogGroup(sub.name, sub.color || tr.color, subItems);
-      });
-      html += `</div>`;
-    }
-  });
-
-  html += `</div></div>`;
-  el.innerHTML = html;
-}
-
-function renderBacklogGroup(label, color, groupItems) {
-  const cards = groupItems.map(it => {
+  const cards = backlogItems.map(it => {
     const statusColor = it.status === 'done' ? '#14532D' : it.status === 'active' ? '#1E40AF' : '#6B7280';
     const statusBg   = it.status === 'done' ? '#F0FDF4' : it.status === 'active' ? '#EFF6FF' : '#F3F4F6';
     const phaseName  = phases.find(ph => ph.id === it.phase_id)?.name || '';
+    const trackColor = tracks.find(tr => tr.id === it.track_id)?.color || '#9CA3AF';
+    const isOther    = !!it.managed_in_other_roadmap;
+    const cardBg     = isOther ? '#E5E7EB' : 'white';
     const safeTitle  = (it.title || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     return `<div draggable="true"
       ondragstart="tlCardDragStart(event,'${it.id}')"
       onclick="openModal('modal-item','${it.id}','edit')"
-      style="border:1px solid var(--gy200);border-left:3px solid ${color};border-radius:5px;padding:6px 9px;background:white;cursor:grab;min-width:130px;max-width:200px;flex:0 0 auto;transition:box-shadow .15s;"
-      onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,.12)';this.style.cursor='grab';"
+      style="border:1px solid var(--gy200);border-left:3px solid ${trackColor};border-radius:5px;padding:6px 9px;background:${cardBg};cursor:grab;min-width:130px;max-width:200px;flex:0 0 auto;transition:box-shadow .15s;"
+      onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,.12)';"
       onmouseout="this.style.boxShadow=''">
       <div style="font-size:12px;font-weight:600;color:var(--gy900);line-height:1.4;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${safeTitle}">
-        ${it.key_activity ? '⭐ ' : ''}${it.title}
+        ${it.key_activity ? '⭐ ' : ''}${isOther ? '🔗 ' : ''}${it.title}
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
         <span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:8px;background:${statusBg};color:${statusColor};">${it.status === 'done' ? '✓ Klaar' : it.status === 'active' ? '▶ Actief' : '○ Te doen'}</span>
@@ -3124,8 +3030,43 @@ function renderBacklogGroup(label, color, groupItems) {
     </div>`;
   }).join('');
 
-  const labelHtml = label ? `<div style="font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">${label}</div>` : '';
-  return `<div>${labelHtml}<div style="display:flex;flex-wrap:wrap;gap:6px;">${cards}</div></div>`;
+  el.innerHTML = `<div id="tl-backlog-zone"
+    style="border:2px dashed var(--gy300);border-radius:10px;background:#F8FAFC;padding:10px 14px;transition:background .15s,border-color .15s;"
+    ondragover="tlBacklogDragOver(event)" ondragleave="tlBacklogDragLeave(event)" ondrop="tlBacklogDrop(event)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:13px;font-weight:700;color:var(--gy600);">📥 Backlog</span>
+      <span style="font-size:11px;color:var(--gy400);">${backlogItems.length} item${backlogItems.length !== 1 ? 's' : ''} — sleep naar een lane om in te plannen, of sleep een geplande activiteit hierheen om te deplannnen</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">${cards}</div>
+  </div>`;
+}
+
+function tlBacklogDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const zone = document.getElementById('tl-backlog-zone');
+  if (zone) { zone.style.background = 'rgba(107,114,128,.08)'; zone.style.borderColor = '#6B7280'; }
+}
+function tlBacklogDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    const zone = document.getElementById('tl-backlog-zone');
+    if (zone) { zone.style.background = '#F8FAFC'; zone.style.borderColor = 'var(--gy300)'; }
+  }
+}
+async function tlBacklogDrop(e) {
+  e.preventDefault();
+  const zone = document.getElementById('tl-backlog-zone');
+  if (zone) { zone.style.background = '#F8FAFC'; zone.style.borderColor = 'var(--gy300)'; }
+  const id = tlDragItemId || e.dataTransfer.getData('text/plain');
+  if (!id) return;
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  const updates = { start_date: null, end_date: null, track_id: null, subcategory_id: null, phase_id: null };
+  await sb.from('roadmap_items').update(updates).eq('id', id);
+  Object.assign(item, updates);
+  tlDragItemId = null;
+  renderTimeline();
+  toast('📥 Activiteit terug in backlog gezet');
 }
 
 // ═══════════════════════════════════════════
@@ -3139,6 +3080,7 @@ function syncFiltersToTimeline() {
   tlFilterHealthStatuses = new Set(sbFilterHealthStatuses);
   tlFilterKeyOnly        = sbFilterKeyOnly;
   tlFilterOtherRoadmap   = sbFilterOtherRoadmap;
+  tlFilterNoBacklog      = sbFilterNoBacklog;
 }
 function syncFiltersToStoryboard() {
   sbFilterTracks         = new Set(tlFilterStreams);
@@ -3148,6 +3090,7 @@ function syncFiltersToStoryboard() {
   sbFilterHealthStatuses = new Set(tlFilterHealthStatuses);
   sbFilterKeyOnly        = tlFilterKeyOnly;
   sbFilterOtherRoadmap   = tlFilterOtherRoadmap;
+  sbFilterNoBacklog      = tlFilterNoBacklog;
 }
 function switchTab(name) {
   const prev = [...document.querySelectorAll('.ntab.active')].map(b => b.id.replace('tab-','').replace('-btn',''))[0];
@@ -3353,6 +3296,8 @@ async function exportToPptx() {
       filterLines.push('Gezondheid: ' + [...tlFilterHealthStatuses].map(s => hlbl[s] || s).join(', '));
     }
     if (tlFilterKeyOnly) filterLines.push('Enkel Key Activities');
+    if (tlFilterNoBacklog) filterLines.push('Geen backlog (enkel geplande items)');
+    if (tlFilterOtherRoadmap) filterLines.push('Enkel "Andere roadmap" items');
     if (tlFilterMeetingTypes.size) filterLines.push('Meeting types: ' + meetingTypes.filter(m => tlFilterMeetingTypes.has(m.id)).map(m => m.name).join(', '));
     if (tlFilterMilestoneTypes.size) filterLines.push('Milestone types: ' + milestoneTypes.filter(m => tlFilterMilestoneTypes.has(m.id)).map(m => m.name).join(', '));
     if (tlFilterYears.size) filterLines.push('Jaren: ' + [...tlFilterYears].sort().join(', '));
@@ -3368,6 +3313,7 @@ async function exportToPptx() {
       if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
       if (tlFilterKeyOnly && !it.key_activity) return false;
       if (tlFilterOtherRoadmap && !it.managed_in_other_roadmap) return false;
+      if (tlFilterNoBacklog && !it.start_date) return false;
       return true;
     }
 
