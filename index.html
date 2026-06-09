@@ -2840,8 +2840,9 @@ function renderTimeline() {
         <div onmousedown="tlBarMouseDown(event,'${it.id}','left');event.stopPropagation();" style="position:absolute;left:0;top:0;bottom:0;width:8px;cursor:w-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:5px 0 0 5px;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
         ${isActive ? `<span style="flex-shrink:0;margin-right:4px;font-size:9px;opacity:.9;">▶</span>` : ''}
         ${isOtherRoadmap ? `<span style="flex-shrink:0;margin-right:4px;font-size:11px;opacity:.7;" title="${it.other_roadmap_name||'Andere roadmap'}">🔗</span>` : ''}
-        ${it.health_status ? `<span style="flex-shrink:0;margin-right:4px;font-size:13px;line-height:1;">${HEALTH_ICON[it.health_status]||''}</span>` : ''}
-        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${content}</span>
+        ${it.health_status ? `<span style="flex-shrink:0;margin-right:5px;font-size:13px;line-height:1;">${HEALTH_ICON[it.health_status]||''}</span>` : ''}
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${content}</span>
+        ${it.key_activity && !tlFilterKeyOnly ? `<span style="flex-shrink:0;margin-left:4px;font-size:11px;opacity:.85;">⭐</span>` : ''}
         <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
       </div>`;
     });
@@ -2927,7 +2928,7 @@ function renderTimeline() {
   }
 
   // ── 13. Track lanes ────────────────────────────────────────────────────────
-  const keyContentFn = (it) => (it.key_activity ? '⭐ ' : '') + it.title;
+  const keyContentFn = (it) => it.title;
   tracks.forEach(tr => {
     if (tlFilterStreams.size && !tlFilterStreams.has(tr.id)) return;
     const subs = subcategories.filter(s => s.track_id === tr.id);
