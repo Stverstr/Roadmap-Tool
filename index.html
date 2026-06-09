@@ -3623,7 +3623,7 @@ async function exportToPptx() {
       if (todayP !== null) {
         const todayX = TX + todayP * TW;
         s.addShape(pptx.shapes.LINE, { x: todayX, y: LANE_Y0, w: 0, h: MAX_Y - LANE_Y0, line: { color: 'EF4444', width: 1.5, dashType: 'dash' } });
-        s.addText('Nu', { x: todayX - 0.22, y: HDR_Y + 0.02, w: 0.44, h: HDR_H - 0.04, fontSize: 7, color: 'EF4444', bold: true, align: 'center', margin: 0 });
+        s.addText('Nu', { x: todayX - 0.22, y: LANE_Y0, w: 0.44, h: TRK_H, fontSize: 8, color: 'EF4444', bold: true, align: 'center', valign: 'middle', margin: 0 });
       }
 
       // Stacking helper: assigns each item/milestone to a sub-row so nothing overlaps
