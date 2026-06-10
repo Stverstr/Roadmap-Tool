@@ -141,19 +141,50 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gmap-chip-add:hover{background:#e8f4f4;}
 .gmap-chip-input{font-size:10px;font-family:inherit;border:1px solid #1a8c8a;border-radius:12px;padding:1px 8px;outline:none;width:90px;color:#1a5f7a;background:white;}
 
-/* ── GOV MAP DROPZONES & PILLS ── */
-.gmap-dropzone{min-height:60px;border:2px dashed transparent;border-radius:6px;padding:4px;transition:all .18s;}
-.gmap-dropzone.dz-over{border-color:var(--teal);background:#f0fdf9;}
-.gmap-dz-hint{font-size:10px;color:#bbb;text-align:center;padding:4px 0;display:none;}
-.gmap-dropzone:empty .gmap-dz-hint,.gmap-dropzone[data-empty="1"] .gmap-dz-hint{display:block;}
-.gmap-body-pill{background:white;border:2px solid #1a5f7a;border-radius:6px;padding:6px 10px;margin-bottom:6px;cursor:grab;display:flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
-.gmap-body-pill:active{cursor:grabbing;opacity:.7;}
-.gmap-body-pill-name{font-size:11px;font-weight:700;flex:1;color:#1a2e44;}
-.gmap-body-pill-focus{font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(0,0,0,.08);color:white;white-space:nowrap;}
-.gmap-body-pill-actions{display:flex;gap:3px;opacity:0;transition:opacity .15s;}
-.gmap-body-pill:hover .gmap-body-pill-actions{opacity:1;}
-.gmap-body-pill-btn{background:none;border:none;font-size:12px;cursor:pointer;padding:1px 3px;border-radius:3px;color:#666;}
-.gmap-body-pill-btn:hover{background:rgba(0,0,0,.08);}
+/* ── GOV MAP V2 — KOLOM-KAARTJES ── */
+.gmap-v2{padding:0;}
+.gmap-v2-cols{display:flex;align-items:stretch;gap:3px;overflow-x:auto;}
+.gmap-v2-col{display:flex;flex-direction:column;flex:1;min-width:240px;transition:flex .25s,min-width .25s;}
+.gmap-v2-col.collapsed{flex:0 0 38px;min-width:38px;overflow:hidden;cursor:pointer;}
+.gmap-v2-col-hd{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--teal);color:white;flex-shrink:0;min-height:46px;}
+.gmap-v2-col.collapsed .gmap-v2-col-hd{flex-direction:column;align-items:center;justify-content:flex-start;padding:14px 8px;height:100%;min-height:200px;gap:6px;}
+.gmap-v2-col-icon{font-size:15px;flex-shrink:0;}
+.gmap-v2-col.collapsed .gmap-v2-col-icon{margin-bottom:4px;}
+.gmap-v2-col-label{font-size:10px;font-weight:700;letter-spacing:.6px;flex:1;text-transform:uppercase;}
+.gmap-v2-col.collapsed .gmap-v2-col-label{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;flex:1;}
+.gmap-v2-col-toggle{background:rgba(255,255,255,.2);border:none;color:white;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:10px;flex-shrink:0;}
+.gmap-v2-col-toggle:hover{background:rgba(255,255,255,.35);}
+.gmap-v2-col-body{flex:1;padding:10px;background:#f8fafb;border:1px solid #dde5ea;border-top:none;min-height:80px;transition:background .15s;}
+.gmap-v2-col-body.dz-over{background:#e8f7f4;border-color:var(--teal);}
+.gmap-v2-col.collapsed .gmap-v2-col-body{display:none;}
+.gmap-v2-empty{font-size:11px;color:#bbb;text-align:center;padding:20px 0;}
+/* Card */
+.gmap-v2-card{background:white;border-radius:8px;border:2px solid #e0e8ed;margin-bottom:10px;cursor:grab;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07);transition:opacity .2s,border-color .15s;}
+.gmap-v2-card:active{cursor:grabbing;opacity:.6;}
+.gmap-v2-card:hover{border-color:#aac;}
+.gmap-v2-card.te-plannen{opacity:.5;border-style:dashed;}
+.gmap-v2-card-hd{padding:8px 12px;color:white;display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.gmap-v2-card-name{font-size:12px;font-weight:700;flex:1;line-height:1.3;}
+.gmap-v2-card-focus{font-size:9px;font-weight:700;background:rgba(255,255,255,.25);padding:2px 6px;border-radius:3px;white-space:nowrap;}
+.gmap-v2-card-body{padding:8px 12px 4px;}
+.gmap-v2-freq{font-size:10px;color:var(--gy500);margin-bottom:6px;}
+.gmap-v2-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;}
+.gmap-v2-chip{display:inline-flex;background:#e8f4f4;border:1px solid #b2d8d8;border-radius:12px;padding:2px 7px;font-size:10px;font-weight:600;color:#1a5f7a;white-space:nowrap;}
+.gmap-chip-more{background:#f0f0f0;border-color:#ccc;color:#888;}
+.gmap-v2-card-footer{padding:6px 10px 8px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f0f4f6;margin-top:6px;}
+.gmap-v2-status-btn{font-size:10px;font-weight:600;border:1px solid;border-radius:12px;padding:2px 9px;cursor:pointer;background:transparent;}
+.gmap-v2-status-gepland{border-color:#86efac;color:#166534;background:#f0fdf4;}
+.gmap-v2-status-gepland:hover{background:#dcfce7;}
+.gmap-v2-status-tepland{border-color:#fcd34d;color:#92400e;background:#fffbeb;}
+.gmap-v2-status-tepland:hover{background:#fef3c7;}
+.gmap-v2-card-actions{display:flex;gap:2px;}
+.gmap-body-pill-btn{background:none;border:none;font-size:12px;cursor:pointer;padding:2px 4px;border-radius:3px;color:#777;}
+.gmap-body-pill-btn:hover{background:rgba(0,0,0,.08);color:#333;}
+/* Support row */
+.gmap-v2-support{display:flex;align-items:flex-start;background:#f0f8f7;border:2px solid var(--teal);border-top:2px solid var(--teal);margin-top:4px;padding:10px 14px;gap:14px;border-radius:0 0 8px 8px;}
+.gmap-v2-support-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--teal);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;flex-shrink:0;padding:2px 0;align-self:center;}
+.gmap-v2-support-cards{display:flex;flex-wrap:wrap;gap:10px;flex:1;min-height:60px;transition:background .15s;}
+.gmap-v2-support-cards.dz-over{background:#d0f0eb;}
 /* Palette */
 .gov-palette{border-top:1px solid var(--gy200);padding:14px 18px;background:#f8faf9;}
 .gov-palette-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -163,6 +194,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gov-palette-pill:active{cursor:grabbing;opacity:.7;}
 .gov-palette-pill-actions{display:flex;gap:3px;opacity:0;transition:opacity .15s;}
 .gov-palette-pill:hover .gov-palette-pill-actions{opacity:1;}
+.gmap-focus-pill{margin-left:auto;background:rgba(0,0,0,.12);font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;white-space:nowrap;color:white;}
 
 /* ── STAKEHOLDER MINDMAP ── */
 .smap-wrapper{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.09);overflow:hidden;margin-bottom:28px;}
@@ -173,30 +205,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .smap-toggle-arrow.open{transform:rotate(180deg);}
 .smap-body{display:none;}
 .smap-body.open{display:block;}
-/* mindmap */
-.smap-mindmap{padding:18px 20px;overflow-x:auto;}
-.smap-mm-toolbar{display:flex;justify-content:flex-end;margin-bottom:14px;}
-.smap-node-group{margin-bottom:12px;}
-.smap-node-row{display:flex;align-items:flex-start;gap:0;}
-.smap-entity-box{border-radius:8px;overflow:hidden;min-width:180px;max-width:230px;flex-shrink:0;border:2px solid #d0d8e0;box-shadow:0 1px 4px rgba(0,0,0,.07);}
-.smap-entity-hd{padding:9px 12px;color:white;display:flex;align-items:center;gap:8px;}
-.smap-entity-hd-icon{font-size:15px;flex-shrink:0;}
-.smap-entity-hd-name{font-size:12px;font-weight:700;flex:1;line-height:1.3;}
-.smap-entity-hd-btns{display:flex;gap:2px;opacity:0;transition:opacity .15s;}
-.smap-entity-box:hover .smap-entity-hd-btns{opacity:1;}
-.smap-entity-hd-btn{background:rgba(255,255,255,.2);border:none;color:white;border-radius:4px;padding:2px 5px;font-size:10px;cursor:pointer;line-height:1.4;}
-.smap-entity-hd-btn:hover{background:rgba(255,255,255,.4);}
-.smap-connector-h{width:20px;height:2px;background:#c8d5de;margin-top:17px;flex-shrink:0;}
-.smap-persons{display:flex;flex-direction:column;gap:4px;padding-top:1px;}
-.smap-person{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;border:1px solid;white-space:nowrap;}
-.smap-person-icon{font-size:11px;}
+/* mindmap container */
+.smap-mindmap{padding:0;}
+/* person pills (reused in cluster layout) */
+.smap-person{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10px;border:1px solid;white-space:nowrap;}
+.smap-person-icon{font-size:10px;}
 .smap-person-naam{font-weight:600;}
 .smap-person-rol{opacity:.75;}
 .smap-p-lead{background:#fef9e7;border-color:#f1c40f;color:#7d6608;}
 .smap-p-spoc{background:#e8f8f5;border-color:#1abc9c;color:#0e6655;}
 .smap-p-betrokken{background:#f4f6f7;border-color:#b2bec3;color:#555;}
-.smap-children{margin-left:52px;padding-left:18px;border-left:2px solid #d0d8e0;margin-top:4px;padding-top:2px;}
-.smap-add-child{margin-left:52px;margin-top:4px;}
 /* modal smap */
 .smap-modal-section{margin-bottom:18px;}
 .smap-modal-section-title{font-size:12px;font-weight:700;color:var(--gy700);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--gy200);}
@@ -209,6 +227,56 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .smap-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s;}
 .smap-swatch:hover{transform:scale(1.2);}
 .smap-swatch.selected{border-color:white;box-shadow:0 0 0 2px #374151;}
+/* ── CLUSTER MINDMAP (smm-*) ── */
+.smm-toolbar{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--gy200);background:#f8faf9;flex-wrap:wrap;align-items:center;}
+.smm-canvas{position:relative;display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:auto auto auto;gap:40px 32px;align-items:center;justify-items:center;padding:32px 28px;min-height:420px;background:white;width:100%;}
+.smm-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible;}
+.smm-pos-top{grid-column:2;grid-row:1;z-index:1;}
+.smm-pos-left{grid-column:1;grid-row:2;z-index:1;justify-self:end;}
+.smm-root-wrap{grid-column:2;grid-row:2;z-index:1;}
+.smm-pos-right{grid-column:3;grid-row:2;z-index:1;justify-self:start;}
+.smm-pos-bottom{grid-column:2;grid-row:3;z-index:1;}
+/* Root node */
+.smm-root-node{background:white;border:3px solid var(--teal);border-radius:50%;padding:20px 28px;text-align:center;box-shadow:0 3px 14px rgba(0,0,0,.13);min-width:130px;position:relative;}
+.smm-root-icon{font-size:22px;}
+.smm-root-name{font-size:13px;font-weight:700;color:#1a2e44;margin-top:5px;white-space:nowrap;}
+.smm-root-actions{display:flex;gap:4px;justify-content:center;margin-top:8px;opacity:0;transition:opacity .15s;}
+.smm-root-node:hover .smm-root-actions{opacity:1;}
+.smm-root-btn{background:var(--gy100);border:1px solid var(--gy300);border-radius:5px;padding:3px 9px;font-size:10px;cursor:pointer;color:var(--gy700);}
+.smm-root-btn:hover{background:var(--gy200);}
+/* Cluster box */
+.smm-cluster-box{background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);z-index:2;min-width:200px;max-width:260px;}
+.smm-pos-top .smm-cluster-entities,.smm-pos-bottom .smm-cluster-entities{flex-direction:row;flex-wrap:wrap;min-width:0;max-width:600px;}
+.smm-pos-top .smm-cluster-box,.smm-pos-bottom .smm-cluster-box{max-width:600px;}
+.smm-cluster-hd{padding:9px 13px;color:white;display:flex;align-items:center;gap:7px;}
+.smm-cluster-hd-icon{font-size:13px;flex-shrink:0;}
+.smm-cluster-hd-name{font-size:12px;font-weight:700;flex:1;}
+.smm-cluster-hd-actions{display:flex;gap:2px;opacity:0;transition:opacity .15s;}
+.smm-cluster-box:hover .smm-cluster-hd-actions{opacity:1;}
+.smm-cluster-hd-btn{background:rgba(255,255,255,.2);border:none;color:white;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;}
+.smm-cluster-hd-btn:hover{background:rgba(255,255,255,.4);}
+.smm-cluster-entities{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:44px;}
+.smm-cluster-add{font-size:10px;color:#bbb;border:1px dashed #ddd;border-radius:6px;padding:4px 10px;cursor:pointer;text-align:center;transition:all .15s;margin-top:2px;white-space:nowrap;}
+.smm-cluster-add:hover{border-color:var(--teal);color:var(--teal);background:#f0fdf9;}
+/* Entity node inside cluster */
+.smm-entity-node{background:#f7fafc;border-radius:7px;border:1px solid #dde6ec;padding:6px 10px;}
+.smm-entity-hd{display:flex;align-items:center;gap:5px;}
+.smm-entity-icon{font-size:13px;flex-shrink:0;}
+.smm-entity-name{font-size:11px;font-weight:700;flex:1;color:#1a2e44;}
+.smm-entity-actions{display:flex;gap:2px;opacity:0;transition:opacity .15s;}
+.smm-entity-node:hover .smm-entity-actions{opacity:1;}
+.smm-entity-btn{background:none;border:none;font-size:10px;cursor:pointer;padding:2px 4px;border-radius:3px;color:#999;}
+.smm-entity-btn:hover{background:rgba(0,0,0,.1);color:#333;}
+.smm-entity-persons{display:flex;flex-direction:column;gap:2px;margin-top:5px;}
+/* Cluster placeholder (empty position) */
+.smm-cluster-ph{border:2px dashed #cdd5db;border-radius:10px;padding:14px 22px;cursor:pointer;transition:all .15s;min-width:90px;text-align:center;z-index:2;color:#bbb;font-size:11px;font-weight:600;}
+.smm-cluster-ph:hover{border-color:var(--teal);color:var(--teal);background:#f0fdf9;}
+/* Unassigned palette */
+.smm-unassigned{padding:12px 18px 14px;border-top:1px solid var(--gy200);background:var(--gy100);}
+.smm-unassigned-label{font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+.smm-unassigned-list{display:flex;flex-wrap:wrap;gap:6px;}
+.smm-unassigned-chip{background:white;border:1px solid var(--gy300);border-radius:6px;padding:4px 11px;font-size:11px;font-weight:600;color:var(--gy700);cursor:pointer;display:flex;align-items:center;gap:5px;}
+.smm-unassigned-chip:hover{border-color:var(--teal);color:var(--teal);}
 .gov-body-card{background:white;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.09);overflow:hidden;}
 .gov-body-header{padding:16px 18px 12px;border-bottom:1px solid var(--gy100);}
 .gov-body-name{font-size:15px;font-weight:700;color:var(--gy900);margin-bottom:4px;}
@@ -368,103 +436,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <span class="gov-map-toggle-arrow open" id="gov-map-arrow">▼</span>
         </div>
         <div class="gov-map-body open" id="gov-map-body">
-          <!-- COLUMN HEADERS -->
-          <div class="gmap-col-header-row">
-            <div class="gmap-col-header-label"></div>
-            <div class="gmap-col-header"><div class="gmap-col-icon">🏢</div>STRATEGISCHE WERKING HEALTH</div>
-            <div class="gmap-col-header"><div class="gmap-col-icon">⚡</div>TACTISCHE WERKING VERTICAL &amp; WERF</div>
-            <div class="gmap-col-header"><div class="gmap-col-icon">🏬</div>WERKING HEALTH BOU's</div>
+          <div class="gmap-v2" style="padding:14px 16px 0;">
+            <div class="gmap-v2-cols" id="gmap-v2-cols"></div>
+            <div id="gmap-v2-support"></div>
           </div>
-          <!-- GRID -->
-          <div class="gmap-grid">
-            <!-- ROW: OVERLEG-ORGAAN -->
-            <div class="gmap-label-cell"><span class="gmap-label-text">Overleg-orgaan</span></div>
-            <div class="gmap-data-cell">
-              <div class="gmap-dropzone" id="gmap-zone-strategic" data-col="strategic"
-                   ondragover="event.preventDefault();this.classList.add('dz-over')"
-                   ondragleave="this.classList.remove('dz-over')"
-                   ondrop="govDrop(event,'strategic')">
-                <div id="gmap-placed-strategic"></div>
-                <div class="gmap-dz-hint">↓ Sleep hier</div>
-              </div>
-            </div>
-            <div class="gmap-data-cell">
-              <div class="gmap-sticky">Dit wordt nog niet ingericht.<br>Voorlopig wel een <strong>"Health Sturing meeting"</strong><br><span style="font-size:10px;font-weight:400;">Lisa &amp; Gilles · om de 2 weken</span></div>
-              <div class="gmap-dropzone" id="gmap-zone-tactical" data-col="tactical"
-                   ondragover="event.preventDefault();this.classList.add('dz-over')"
-                   ondragleave="this.classList.remove('dz-over')"
-                   ondrop="govDrop(event,'tactical')">
-                <div id="gmap-placed-tactical"></div>
-                <div class="gmap-dz-hint">↓ Sleep hier</div>
-              </div>
-            </div>
-            <div class="gmap-data-cell">
-              <div class="gmap-dropzone" id="gmap-zone-bous" data-col="bous"
-                   ondragover="event.preventDefault();this.classList.add('dz-over')"
-                   ondragleave="this.classList.remove('dz-over')"
-                   ondrop="govDrop(event,'bous')">
-                <div id="gmap-placed-bous"></div>
-                <div class="gmap-dz-hint">↓ Sleep hier</div>
-              </div>
-            </div>
-
-            <!-- ROW: DEELNEMERS -->
-            <div class="gmap-label-cell"><span class="gmap-label-text">Deelnemers</span></div>
-            <div class="gmap-data-cell">
-              <div class="gmap-label-sm">TKR Health CG — Rol</div>
-              <div class="gmap-chip-list" id="gmap-chips-tkr-cg-roles"></div>
-              <div class="gmap-label-sm" style="margin-top:7px;">Naam</div>
-              <div class="gmap-chip-list" id="gmap-chips-tkr-cg-names"></div>
-              <hr class="gmap-sub-divider">
-              <div class="gmap-label-sm">Strategic Alignment — Rol</div>
-              <div class="gmap-chip-list" id="gmap-chips-align-roles"></div>
-              <div class="gmap-label-sm" style="margin-top:7px;">Naam</div>
-              <div class="gmap-chip-list" id="gmap-chips-align-names"></div>
-            </div>
-            <div class="gmap-data-cell">
-              <div class="gmap-label-sm">Tactical Coordination — Rol</div>
-              <div class="gmap-chip-list" id="gmap-chips-tact-roles"></div>
-              <div class="gmap-label-sm" style="margin-top:7px;">Naam</div>
-              <div class="gmap-chip-list" id="gmap-chips-tact-names"></div>
-            </div>
-            <div class="gmap-data-cell">
-              <div class="gmap-label-sm">TKR Health BOU — Rol</div>
-              <div class="gmap-chip-list" id="gmap-chips-bou-roles"></div>
-              <div class="gmap-label-sm" style="margin-top:7px;">Naam</div>
-              <div class="gmap-chip-list" id="gmap-chips-bou-names"></div>
-            </div>
-
-            <!-- ROW: FREQUENTIE -->
-            <div class="gmap-label-cell"><span class="gmap-label-text">Frequentie</span></div>
-            <div class="gmap-data-cell">
-              <div class="gmap-freq-tag">📅 TKR: 1ste eind sept., dan elk kwartaal</div><br>
-              <div class="gmap-freq-tag">📅 Strategic Alignment: nader te bepalen</div>
-            </div>
-            <div class="gmap-data-cell">
-              <div class="gmap-freq-tag">📅 Health Sturing: om de 2 weken</div>
-            </div>
-            <div class="gmap-data-cell">
-              <div class="gmap-freq-tag">📅 Elke 2 maand</div>
-              <div style="font-size:10px;color:#666;margin-top:4px;">• TKR Newpharma / Yoboo<br>• TKR Jims</div>
-            </div>
-          </div><!-- end gmap-grid -->
-
-          <!-- SUPPORT ROW -->
-          <div class="gmap-support-row">
-            <div class="gmap-support-label"><span class="gmap-label-text" style="color:white;">Support</span></div>
-            <div class="gmap-support-content" style="flex:1;">
-              <div style="flex:1;">
-                <div class="gmap-dropzone" id="gmap-zone-support" data-col="support"
-                     ondragover="event.preventDefault();this.classList.add('dz-over')"
-                     ondragleave="this.classList.remove('dz-over')"
-                     ondrop="govDrop(event,'support')" style="display:flex;flex-wrap:wrap;gap:8px;min-height:60px;">
-                  <div id="gmap-placed-support" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
-                  <div class="gmap-dz-hint">↓ Sleep hier</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div><!-- end gov-map-body -->
         <div class="gov-palette" id="gov-palette">
           <div class="gov-palette-header">
@@ -551,24 +526,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div><!-- /main -->
 </div><!-- /app -->
 
-<!-- ── MODAL: STAKEHOLDER ENTITY ── -->
+<!-- ── MODAL: STAKEHOLDER (root / cluster / entiteit) ── -->
 <div class="modal-bg" id="smap-modal">
   <div class="modal" style="width:min(600px,100%);">
-    <div class="modal-title" id="smap-modal-title">Entiteit bewerken</div>
-    <input type="hidden" id="smap-edit-id" />
+    <div class="modal-title" id="smap-modal-title">Toevoegen</div>
+    <input type="hidden" id="smap-f-type" value="entity" />
 
-    <!-- Naam + kleur + parent -->
+    <!-- Naam + kleur (altijd zichtbaar) -->
     <div class="smap-modal-section">
-      <div class="smap-modal-section-title">Entiteit</div>
+      <div class="smap-modal-section-title" id="smap-modal-basis-title">Basis</div>
       <div class="field">
         <label class="label">Naam</label>
-        <input class="input" id="smap-f-naam" placeholder="bv. Colruyt Group Health" />
-      </div>
-      <div class="field">
-        <label class="label">Parent entiteit (optioneel — maakt een child node)</label>
-        <select class="select" id="smap-f-parent">
-          <option value="">— Geen parent (root niveau) —</option>
-        </select>
+        <input class="input" id="smap-f-naam" placeholder="bv. Intern" />
       </div>
       <div class="field">
         <label class="label">Kleur</label>
@@ -576,29 +545,50 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!-- Lead -->
-    <div class="smap-modal-section">
-      <div class="smap-modal-section-title">👑 Lead</div>
-      <div class="smap-modal-row">
-        <div><label class="label">Rol</label><input class="input" id="smap-f-lead-rol" placeholder="bv. COO Health" /></div>
-        <div><label class="label">Naam</label><input class="input" id="smap-f-lead-naam" placeholder="bv. Jan Janssen" /></div>
+    <!-- Cluster-only: positie selector -->
+    <div id="smap-cluster-fields" style="display:none">
+      <div class="smap-modal-section">
+        <div class="smap-modal-section-title">Positie rond de root</div>
+        <div class="field">
+          <select class="select" id="smap-f-position">
+            <option value="top">⬆ Boven</option>
+            <option value="right">➡ Rechts</option>
+            <option value="bottom">⬇ Onder</option>
+            <option value="left">⬅ Links</option>
+          </select>
+        </div>
       </div>
     </div>
 
-    <!-- SPOC -->
-    <div class="smap-modal-section">
-      <div class="smap-modal-section-title">🎯 SPOC</div>
-      <div class="smap-modal-row">
-        <div><label class="label">Rol</label><input class="input" id="smap-f-spoc-rol" placeholder="bv. Lead Werf" /></div>
-        <div><label class="label">Naam</label><input class="input" id="smap-f-spoc-naam" placeholder="bv. Lisa Peeters" /></div>
+    <!-- Entity-only: cluster + personen -->
+    <div id="smap-entity-fields">
+      <div class="smap-modal-section">
+        <div class="smap-modal-section-title">Cluster</div>
+        <div class="field">
+          <select class="select" id="smap-f-cluster">
+            <option value="">— Geen cluster —</option>
+          </select>
+        </div>
       </div>
-    </div>
-
-    <!-- Medewerkers -->
-    <div class="smap-modal-section">
-      <div class="smap-modal-section-title">👥 Medewerkers</div>
-      <div id="smap-modal-meds"></div>
-      <button class="btn btn-s btn-sm" onclick="smapModalAddMed()" type="button">＋ Medewerker toevoegen</button>
+      <div class="smap-modal-section">
+        <div class="smap-modal-section-title">👑 Lead</div>
+        <div class="smap-modal-row">
+          <div><label class="label">Rol</label><input class="input" id="smap-f-lead-rol" placeholder="bv. COO Health" /></div>
+          <div><label class="label">Naam</label><input class="input" id="smap-f-lead-naam" placeholder="bv. Jan Janssen" /></div>
+        </div>
+      </div>
+      <div class="smap-modal-section">
+        <div class="smap-modal-section-title">🎯 SPOC</div>
+        <div class="smap-modal-row">
+          <div><label class="label">Rol</label><input class="input" id="smap-f-spoc-rol" placeholder="bv. Lead Werf" /></div>
+          <div><label class="label">Naam</label><input class="input" id="smap-f-spoc-naam" placeholder="bv. Lisa Peeters" /></div>
+        </div>
+      </div>
+      <div class="smap-modal-section">
+        <div class="smap-modal-section-title">👥 Medewerkers</div>
+        <div id="smap-modal-meds"></div>
+        <button class="btn btn-s btn-sm" onclick="smapModalAddMed()" type="button">＋ Medewerker toevoegen</button>
+      </div>
     </div>
 
     <div class="modal-footer">
@@ -1431,9 +1421,9 @@ function initGmapChips() {
   Object.keys(gmapData).forEach(renderChipList);
 }
 
-// ── STAKEHOLDER MINDMAP ──
+// ── STAKEHOLDER MINDMAP V2 — cluster/radial layout ──
 const SMAP_COLORS = ['#1a5f7a','#2e8b6a','#6d4c9e','#c05621','#0D9488','#b8391e','#2d6a4f','#7c4d1e','#1e4080','#8b5e2e'];
-const SMAP_ICONS  = ['🏢','🏥','🏬','⚙️','📦','🌿','🔬','💊','🛒','📊'];
+const SMAP_POSITIONS = [{id:'top',label:'⬆ Boven'},{id:'right',label:'➡ Rechts'},{id:'bottom',label:'⬇ Onder'},{id:'left',label:'⬅ Links'}];
 let smapEntities = [];
 
 async function smapLoad() {
@@ -1442,27 +1432,60 @@ async function smapLoad() {
     .eq('user_id', currentUser.id)
     .eq('project_id', projectId)
     .order('volgorde');
-  if (error) { console.error('stakeholders load:', error); smapEntities = []; return; }
-  if (data && data.length > 0) {
-    smapEntities = data.map(r => ({
-      id: r.id, naam: r.naam, kleur: r.kleur, icon: r.icon,
-      parent_id: r.parent_id || null,
-      lead: {rol: r.lead_rol||'', naam: r.lead_naam||''},
-      spoc: {rol: r.spoc_rol||'', naam: r.spoc_naam||''},
-      medewerkers: r.medewerkers || []
-    }));
-  } else {
-    const defaults = [
-      { naam:'Colruyt Group Health', kleur:'#1a5f7a', icon:'🏥', lead_rol:'COO Health', lead_naam:'', spoc_rol:'Lead Werf', spoc_naam:'', medewerkers:[{rol:"BUM's HV",naam:''},{rol:'Werf Lead',naam:''}], volgorde:0 },
-      { naam:'Vertical Food', kleur:'#2e8b6a', icon:'🛒', lead_rol:'Vert. Directeur', lead_naam:'', spoc_rol:'', spoc_naam:'', medewerkers:[], volgorde:1 },
-      { naam:'P&O', kleur:'#6d4c9e', icon:'👥', lead_rol:'Dir. P&O', lead_naam:'', spoc_rol:'', spoc_naam:'', medewerkers:[], volgorde:2 },
-      { naam:'Marketing & Vakmanschap', kleur:'#c05621', icon:'📊', lead_rol:'', lead_naam:'', spoc_rol:'', spoc_naam:'', medewerkers:[], volgorde:3 },
-    ];
-    for (const d of defaults) {
-      await sb.from('gov_stakeholders').insert({...d, project_id: projectId, user_id: currentUser.id});
-    }
-    await smapLoad();
+  if (error) { console.error('stakeholders:', error); smapEntities = []; return; }
+
+  if (!data || data.length === 0) {
+    await smapSeedDefault();
+    return smapLoad();
   }
+
+  smapEntities = data.map(r => ({
+    id: r.id, naam: r.naam, kleur: r.kleur || '#1a5f7a', icon: r.icon || '🏢',
+    parent_id: r.parent_id || null,
+    is_root: r.is_root || false,
+    is_cluster: r.is_cluster || false,
+    map_position: r.map_position || null,
+    lead: { rol: r.lead_rol||'', naam: r.lead_naam||'' },
+    spoc: { rol: r.spoc_rol||'', naam: r.spoc_naam||'' },
+    medewerkers: r.medewerkers || [],
+    volgorde: r.volgorde || 0
+  }));
+
+  // Auto-migrate: if no root exists, mark the first entity as root
+  if (!smapEntities.some(e => e.is_root) && smapEntities.length > 0) {
+    const first = [...smapEntities].sort((a,b) => a.volgorde - b.volgorde)[0];
+    first.is_root = true;
+    await sb.from('gov_stakeholders').update({ is_root: true }).eq('id', first.id);
+  }
+}
+
+async function smapSeedDefault() {
+  const { data: root } = await sb.from('gov_stakeholders').insert({
+    naam: 'Colruyt Group Health', kleur: '#1a5f7a', icon: '🏥',
+    is_root: true, is_cluster: false,
+    project_id: projectId, user_id: currentUser.id, volgorde: 0
+  }).select('id').single();
+  if (!root) return;
+
+  const { data: cl } = await sb.from('gov_stakeholders').insert({
+    naam: 'Intern', kleur: '#2e8b6a', icon: '🏢',
+    is_cluster: true, map_position: 'left', parent_id: root.id,
+    project_id: projectId, user_id: currentUser.id, volgorde: 1
+  }).select('id').single();
+
+  const { data: cr } = await sb.from('gov_stakeholders').insert({
+    naam: 'Partners', kleur: '#6d4c9e', icon: '🤝',
+    is_cluster: true, map_position: 'right', parent_id: root.id,
+    project_id: projectId, user_id: currentUser.id, volgorde: 2
+  }).select('id').single();
+
+  if (cl) await sb.from('gov_stakeholders').insert([
+    { naam:'Vertical Food', kleur:'#2e8b6a', icon:'🛒', parent_id: cl.id, lead_rol:'Vert. Directeur', project_id: projectId, user_id: currentUser.id, volgorde: 3 },
+    { naam:'P&O', kleur:'#2e8b6a', icon:'👥', parent_id: cl.id, lead_rol:'Dir. P&O', project_id: projectId, user_id: currentUser.id, volgorde: 4 },
+  ]);
+  if (cr) await sb.from('gov_stakeholders').insert([
+    { naam:'Marketing & Vakmanschap', kleur:'#6d4c9e', icon:'📊', parent_id: cr.id, project_id: projectId, user_id: currentUser.id, volgorde: 5 },
+  ]);
 }
 
 function toggleSmap() {
@@ -1470,73 +1493,188 @@ function toggleSmap() {
   const open = b.classList.toggle('open'); a.classList.toggle('open', open);
 }
 
-// ── mindmap render helpers ──
-function smapBuildPersonList(entity) {
+// ── render cluster mindmap ──
+function smapEntityNodeHTML(entity) {
   const persons = [];
-  if (entity.lead && (entity.lead.naam || entity.lead.rol))
-    persons.push({...entity.lead, type:'lead'});
-  if (entity.spoc && (entity.spoc.naam || entity.spoc.rol))
-    persons.push({...entity.spoc, type:'spoc'});
+  if (entity.lead && (entity.lead.naam || entity.lead.rol)) persons.push({...entity.lead, type:'lead'});
+  if (entity.spoc && (entity.spoc.naam || entity.spoc.rol)) persons.push({...entity.spoc, type:'spoc'});
   (entity.medewerkers||[]).forEach(m => { if (m.rol||m.naam) persons.push({...m, type:'betrokken'}); });
-  return persons;
-}
-
-function smapPersonHTML(p) {
-  const icon = p.type==='lead'?'👑':p.type==='spoc'?'🎯':'👥';
-  const parts = [];
-  if (p.naam) parts.push(`<span class="smap-person-naam">${p.naam}</span>`);
-  if (p.rol)  parts.push(`<span class="smap-person-rol">${p.naam&&p.rol?' · ':''}${p.rol}</span>`);
-  return `<div class="smap-person smap-p-${p.type}"><span class="smap-person-icon">${icon}</span>${parts.join('')}</div>`;
-}
-
-function smapRenderNode(entity) {
-  const children = smapEntities.filter(e => e.parent_id === entity.id);
-  const persons  = smapBuildPersonList(entity);
-  const clr = entity.kleur || '#1a5f7a';
-  return `<div class="smap-node-group">
-    <div class="smap-node-row">
-      <div class="smap-entity-box" style="border-color:${clr}">
-        <div class="smap-entity-hd" style="background:${clr}">
-          <span class="smap-entity-hd-icon">${entity.icon||'🏢'}</span>
-          <span class="smap-entity-hd-name">${entity.naam}</span>
-          <div class="smap-entity-hd-btns">
-            <button class="smap-entity-hd-btn" onclick="smapOpenEdit('${entity.id}');event.stopPropagation()" title="Bewerken">✏️</button>
-            <button class="smap-entity-hd-btn" onclick="smapDelete('${entity.id}');event.stopPropagation()" title="Verwijderen">✕</button>
-          </div>
-        </div>
+  const icon = {lead:'👑', spoc:'🎯', betrokken:'👥'};
+  const personsHTML = persons.map(p => {
+    const lbl = [p.naam && `<span class="smap-person-naam">${p.naam}</span>`, p.rol && `<span class="smap-person-rol">${p.naam&&p.rol?' · ':''}${p.rol}</span>`].filter(Boolean).join('');
+    return `<div class="smap-person smap-p-${p.type}"><span class="smap-person-icon">${icon[p.type]}</span>${lbl}</div>`;
+  }).join('');
+  return `<div class="smm-entity-node">
+    <div class="smm-entity-hd">
+      <span class="smm-entity-icon">${entity.icon||'🏢'}</span>
+      <span class="smm-entity-name">${entity.naam}</span>
+      <div class="smm-entity-actions">
+        <button class="smm-entity-btn" onclick="smapOpenEdit('${entity.id}');event.stopPropagation()" title="Bewerken">✏️</button>
+        <button class="smm-entity-btn" onclick="smapDelete('${entity.id}');event.stopPropagation()" title="Verwijderen">✕</button>
       </div>
-      ${persons.length ? `<div class="smap-connector-h"></div><div class="smap-persons">${persons.map(smapPersonHTML).join('')}</div>` : ''}
     </div>
-    ${children.length ? `<div class="smap-children">${children.map(smapRenderNode).join('')}</div>` : ''}
+    ${personsHTML ? `<div class="smm-entity-persons">${personsHTML}</div>` : ''}
   </div>`;
 }
 
 function renderSmap() {
   const el = document.getElementById('smap-mindmap');
   if (!el) return;
-  const roots = smapEntities.filter(e => !e.parent_id);
-  el.innerHTML = `<div class="smap-mm-toolbar">
-    <button class="btn btn-teal btn-sm" onclick="smapOpenNew()">＋ Entiteit toevoegen</button>
-  </div>` + (roots.length
-    ? roots.map(smapRenderNode).join('')
-    : `<div class="empty"><div class="empty-icon">🤝</div><div class="empty-text">Nog geen entiteiten. Voeg er een toe.</div></div>`);
+
+  const root = smapEntities.find(e => e.is_root);
+  const clusters = smapEntities.filter(e => e.is_cluster);
+  const clusterIds = new Set(clusters.map(c => c.id));
+  const rootId = root ? root.id : null;
+  // Unassigned = not root, not cluster, and parent doesn't point to a cluster
+  const unassigned = smapEntities.filter(e =>
+    !e.is_root && !e.is_cluster && !clusterIds.has(e.parent_id) && e.parent_id !== rootId
+  );
+
+  const rootHTML = root
+    ? `<div class="smm-root-wrap"><div class="smm-root-node" id="smm-root-node">
+        <div class="smm-root-icon">${root.icon||'🏥'}</div>
+        <div class="smm-root-name">${root.naam}</div>
+        <div class="smm-root-actions">
+          <button class="smm-root-btn" onclick="smapOpenEditRoot()">✏️ Bewerken</button>
+        </div>
+      </div></div>`
+    : `<div class="smm-root-wrap"><div class="smm-cluster-ph" onclick="smapOpenNewRoot()" style="padding:22px 30px">＋ Root instellen</div></div>`;
+
+  const posHTML = SMAP_POSITIONS.map(pos => {
+    const cluster = clusters.find(c => c.map_position === pos.id);
+    if (cluster) {
+      const entities = smapEntities.filter(e => !e.is_root && !e.is_cluster && e.parent_id === cluster.id);
+      const clr = cluster.kleur || '#1a5f7a';
+      return `<div class="smm-pos-${pos.id}">
+        <div class="smm-cluster-box" id="smm-cluster-${cluster.id}" data-position="${pos.id}" data-color="${clr}">
+          <div class="smm-cluster-hd" style="background:${clr}">
+            <span class="smm-cluster-hd-icon">${cluster.icon||'📁'}</span>
+            <span class="smm-cluster-hd-name">${cluster.naam}</span>
+            <div class="smm-cluster-hd-actions">
+              <button class="smm-cluster-hd-btn" onclick="smapOpenEdit('${cluster.id}');event.stopPropagation()">✏️</button>
+              <button class="smm-cluster-hd-btn" onclick="smapDeleteCluster('${cluster.id}');event.stopPropagation()">✕</button>
+            </div>
+          </div>
+          <div class="smm-cluster-entities">
+            ${entities.map(smapEntityNodeHTML).join('')}
+            <div class="smm-cluster-add" onclick="smapOpenNewEntity('${cluster.id}')">＋ entiteit toevoegen</div>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      return `<div class="smm-pos-${pos.id}">
+        <div class="smm-cluster-ph" onclick="smapOpenNewCluster('${pos.id}')" title="${pos.label}">＋ cluster</div>
+      </div>`;
+    }
+  }).join('');
+
+  const unassignedHTML = unassigned.length
+    ? `<div class="smm-unassigned">
+        <div class="smm-unassigned-label">Niet toegewezen aan cluster</div>
+        <div class="smm-unassigned-list">${unassigned.map(e =>
+          `<div class="smm-unassigned-chip" onclick="smapOpenEdit('${e.id}')">${e.icon||'🏢'} ${e.naam}</div>`
+        ).join('')}</div>
+      </div>` : '';
+
+  el.innerHTML = `
+    <div class="smm-toolbar">
+      <button class="btn btn-teal btn-sm" onclick="smapOpenNewEntity(null)">＋ Entiteit</button>
+      <button class="btn btn-s btn-sm" onclick="smapOpenNewCluster(null)">＋ Cluster</button>
+    </div>
+    <div class="smm-canvas" id="smm-canvas">
+      <svg class="smm-svg" id="smm-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      ${posHTML}
+      ${rootHTML}
+    </div>
+    ${unassignedHTML}`;
+
+  requestAnimationFrame(() => requestAnimationFrame(drawSmapLines));
+}
+
+function drawSmapLines() {
+  const canvas = document.getElementById('smm-canvas');
+  const svg    = document.getElementById('smm-svg');
+  const rootEl = document.getElementById('smm-root-node');
+  if (!canvas || !svg || !rootEl) return;
+
+  const cr = canvas.getBoundingClientRect();
+  const rr = rootEl.getBoundingClientRect();
+  const rootCx = rr.left - cr.left + rr.width / 2;
+  const rootCy = rr.top  - cr.top  + rr.height / 2;
+
+  let paths = '';
+  document.querySelectorAll('.smm-cluster-box').forEach(clEl => {
+    const pos   = clEl.dataset.position;
+    const color = clEl.dataset.color || '#1a5f7a';
+    const cl    = clEl.getBoundingClientRect();
+    const clCx  = cl.left - cr.left + cl.width  / 2;
+    const clCy  = cl.top  - cr.top  + cl.height / 2;
+
+    let x1,y1,x2,y2,cx1,cy1,cx2,cy2;
+    if (pos === 'top') {
+      x1=rootCx; y1=rr.top-cr.top; x2=clCx; y2=cl.bottom-cr.top;
+      const m=(y1+y2)/2; cx1=x1;cy1=m;cx2=x2;cy2=m;
+    } else if (pos === 'bottom') {
+      x1=rootCx; y1=rr.bottom-cr.top; x2=clCx; y2=cl.top-cr.top;
+      const m=(y1+y2)/2; cx1=x1;cy1=m;cx2=x2;cy2=m;
+    } else if (pos === 'left') {
+      x1=rr.left-cr.left; y1=rootCy; x2=cl.right-cr.left; y2=clCy;
+      const m=(x1+x2)/2; cx1=m;cy1=y1;cx2=m;cy2=y2;
+    } else if (pos === 'right') {
+      x1=rr.right-cr.left; y1=rootCy; x2=cl.left-cr.left; y2=clCy;
+      const m=(x1+x2)/2; cx1=m;cy1=y1;cx2=m;cy2=y2;
+    }
+    paths += `<path d="M${x1},${y1} C${cx1},${cy1} ${cx2},${cy2} ${x2},${y2}"
+                    stroke="${color}" stroke-width="2.5" fill="none"
+                    stroke-linecap="round" opacity="0.65"/>`;
+  });
+  svg.innerHTML = paths;
 }
 
 // ── smap modal ──
 let smapEditId = null;
 let smapModalMeds = [];
 
-function smapRenderParentOptions(excludeId) {
-  const sel = document.getElementById('smap-f-parent');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— Geen parent (root niveau) —</option>' +
-    smapEntities
-      .filter(e => e.id !== excludeId)
-      .map(e => `<option value="${e.id}">${e.naam}</option>`)
-      .join('');
+function smapSetModalType(type) {
+  document.getElementById('smap-f-type').value = type;
+  document.getElementById('smap-cluster-fields').style.display = type === 'cluster' ? 'block' : 'none';
+  document.getElementById('smap-entity-fields').style.display  = type === 'entity'  ? 'block' : 'none';
+  document.getElementById('smap-modal-basis-title').textContent =
+    type === 'root' ? 'Root' : type === 'cluster' ? 'Cluster' : 'Entiteit';
 }
 
-function smapOpenNew(defaultParentId) {
+function smapOpenNewRoot() {
+  smapEditId = null;
+  document.getElementById('smap-modal-title').textContent = 'Root instellen';
+  document.getElementById('smap-f-naam').value = '';
+  smapSetModalType('root');
+  smapRenderSwatches('#1a5f7a');
+  openModal('smap-modal');
+}
+
+function smapOpenEditRoot() {
+  const root = smapEntities.find(e => e.is_root);
+  if (!root) return smapOpenNewRoot();
+  smapEditId = root.id;
+  document.getElementById('smap-modal-title').textContent = 'Root bewerken';
+  document.getElementById('smap-f-naam').value = root.naam;
+  smapSetModalType('root');
+  smapRenderSwatches(root.kleur);
+  openModal('smap-modal');
+}
+
+function smapOpenNewCluster(pos) {
+  smapEditId = null;
+  document.getElementById('smap-modal-title').textContent = 'Cluster toevoegen';
+  document.getElementById('smap-f-naam').value = '';
+  smapSetModalType('cluster');
+  const sel = document.getElementById('smap-f-position');
+  if (sel && pos) sel.value = pos;
+  smapRenderSwatches(SMAP_COLORS[smapEntities.filter(e=>e.is_cluster).length % SMAP_COLORS.length]);
+  openModal('smap-modal');
+}
+
+function smapOpenNewEntity(clusterId) {
   smapEditId = null;
   smapModalMeds = [];
   document.getElementById('smap-modal-title').textContent = 'Entiteit toevoegen';
@@ -1545,33 +1683,71 @@ function smapOpenNew(defaultParentId) {
   document.getElementById('smap-f-lead-naam').value = '';
   document.getElementById('smap-f-spoc-rol').value = '';
   document.getElementById('smap-f-spoc-naam').value = '';
-  smapRenderParentOptions(null);
-  if (defaultParentId) document.getElementById('smap-f-parent').value = defaultParentId;
-  smapRenderSwatches(SMAP_COLORS[smapEntities.length % SMAP_COLORS.length]);
+  smapSetModalType('entity');
+  smapRenderClusterOptions(null);
+  if (clusterId) document.getElementById('smap-f-cluster').value = clusterId;
+  smapRenderSwatches(SMAP_COLORS[smapEntities.filter(e=>!e.is_root&&!e.is_cluster).length % SMAP_COLORS.length]);
   smapRenderModalMeds();
   openModal('smap-modal');
 }
+
+function smapOpenNew() { smapOpenNewEntity(null); } // legacy alias
 
 function smapOpenEdit(id) {
   const e = smapEntities.find(x => x.id === id);
   if (!e) return;
   smapEditId = id;
   smapModalMeds = (e.medewerkers||[]).map(m=>({...m}));
-  document.getElementById('smap-modal-title').textContent = 'Entiteit bewerken';
-  document.getElementById('smap-f-naam').value = e.naam;
-  document.getElementById('smap-f-lead-rol').value = e.lead.rol||'';
-  document.getElementById('smap-f-lead-naam').value = e.lead.naam||'';
-  document.getElementById('smap-f-spoc-rol').value = e.spoc.rol||'';
-  document.getElementById('smap-f-spoc-naam').value = e.spoc.naam||'';
-  smapRenderParentOptions(id);
-  document.getElementById('smap-f-parent').value = e.parent_id || '';
-  smapRenderSwatches(e.kleur);
-  smapRenderModalMeds();
+
+  if (e.is_root) {
+    document.getElementById('smap-modal-title').textContent = 'Root bewerken';
+    document.getElementById('smap-f-naam').value = e.naam;
+    smapSetModalType('root');
+    smapRenderSwatches(e.kleur);
+  } else if (e.is_cluster) {
+    document.getElementById('smap-modal-title').textContent = 'Cluster bewerken';
+    document.getElementById('smap-f-naam').value = e.naam;
+    smapSetModalType('cluster');
+    const sel = document.getElementById('smap-f-position');
+    if (sel) sel.value = e.map_position || 'top';
+    smapRenderSwatches(e.kleur);
+  } else {
+    document.getElementById('smap-modal-title').textContent = 'Entiteit bewerken';
+    document.getElementById('smap-f-naam').value = e.naam;
+    document.getElementById('smap-f-lead-rol').value  = e.lead.rol  || '';
+    document.getElementById('smap-f-lead-naam').value = e.lead.naam || '';
+    document.getElementById('smap-f-spoc-rol').value  = e.spoc.rol  || '';
+    document.getElementById('smap-f-spoc-naam').value = e.spoc.naam || '';
+    smapSetModalType('entity');
+    smapRenderClusterOptions(id);
+    document.getElementById('smap-f-cluster').value = e.parent_id || '';
+    smapRenderSwatches(e.kleur);
+    smapRenderModalMeds();
+  }
   openModal('smap-modal');
+}
+
+function smapRenderClusterOptions(excludeId) {
+  const sel = document.getElementById('smap-f-cluster');
+  if (!sel) return;
+  const clusters = smapEntities.filter(e => e.is_cluster && e.id !== excludeId);
+  sel.innerHTML = '<option value="">— Geen cluster —</option>' +
+    clusters.map(c => `<option value="${c.id}">${c.naam}</option>`).join('');
+}
+
+async function smapDeleteCluster(id) {
+  const e = smapEntities.find(x => x.id === id);
+  if (!e || !confirm(`Cluster "${e.naam}" verwijderen? Entiteiten worden losgekoppeld.`)) return;
+  await sb.from('gov_stakeholders').update({ parent_id: null }).eq('parent_id', id);
+  await sb.from('gov_stakeholders').delete().eq('id', id);
+  await smapLoad();
+  renderSmap();
+  toast('Cluster verwijderd');
 }
 
 function smapRenderSwatches(selected) {
   const el = document.getElementById('smap-swatches');
+  if (!el) return;
   el.innerHTML = SMAP_COLORS.map(c =>
     `<div class="smap-swatch${c===selected?' selected':''}" style="background:${c}" data-color="${c}" onclick="smapSelectColor('${c}')" title="${c}"></div>`
   ).join('');
@@ -1581,11 +1757,12 @@ function smapSelectColor(c) { smapRenderSwatches(c); }
 
 function smapGetSelectedColor() {
   const sel = document.querySelector('#smap-swatches .smap-swatch.selected');
-  return sel ? (sel.dataset.color || sel.style.background) : SMAP_COLORS[0];
+  return sel ? (sel.dataset.color || SMAP_COLORS[0]) : SMAP_COLORS[0];
 }
 
 function smapRenderModalMeds() {
   const el = document.getElementById('smap-modal-meds');
+  if (!el) return;
   el.innerHTML = smapModalMeds.map((m,i) =>
     `<div class="smap-med-row">
       <input class="input" placeholder="Naam" value="${m.naam||''}" oninput="smapModalMeds[${i}].naam=this.value" />
@@ -1613,19 +1790,28 @@ async function smapModalSave() {
   const btn = document.querySelector('#smap-modal .btn-p');
   btn.textContent = 'Opslaan…'; btn.disabled = true;
 
-  const parentVal = document.getElementById('smap-f-parent').value;
-  const row = {
-    naam,
-    kleur: smapGetSelectedColor(),
-    parent_id: parentVal || null,
-    lead_rol: document.getElementById('smap-f-lead-rol').value.trim(),
-    lead_naam: document.getElementById('smap-f-lead-naam').value.trim(),
-    spoc_rol: document.getElementById('smap-f-spoc-rol').value.trim(),
-    spoc_naam: document.getElementById('smap-f-spoc-naam').value.trim(),
-    medewerkers: smapModalMeds.filter(m=>m.rol||m.naam),
-    project_id: projectId,
-    user_id: currentUser.id
-  };
+  const type  = document.getElementById('smap-f-type').value;
+  const kleur = smapGetSelectedColor();
+  const root  = smapEntities.find(e => e.is_root);
+  let row = { naam, kleur, project_id: projectId, user_id: currentUser.id };
+
+  if (type === 'root') {
+    row.is_root = true; row.is_cluster = false; row.parent_id = null;
+  } else if (type === 'cluster') {
+    const pos = document.getElementById('smap-f-position')?.value || 'top';
+    row.is_cluster = true; row.is_root = false;
+    row.map_position = pos;
+    row.parent_id = root ? root.id : null;
+  } else {
+    const clusterId = document.getElementById('smap-f-cluster')?.value || null;
+    row.is_root = false; row.is_cluster = false;
+    row.parent_id   = clusterId || null;
+    row.lead_rol    = document.getElementById('smap-f-lead-rol')?.value.trim() || '';
+    row.lead_naam   = document.getElementById('smap-f-lead-naam')?.value.trim() || '';
+    row.spoc_rol    = document.getElementById('smap-f-spoc-rol')?.value.trim() || '';
+    row.spoc_naam   = document.getElementById('smap-f-spoc-naam')?.value.trim() || '';
+    row.medewerkers = smapModalMeds.filter(m => m.rol || m.naam);
+  }
 
   let error;
   if (smapEditId) {
@@ -1636,16 +1822,20 @@ async function smapModalSave() {
   }
 
   btn.textContent = 'Opslaan'; btn.disabled = false;
-  if (error) { alert('Fout bij opslaan: ' + error.message); return; }
+  if (error) { alert('Fout: ' + error.message); return; }
   closeModal('smap-modal');
   await smapLoad();
   renderSmap();
-  toast('Entiteit opgeslagen');
+  toast('Opgeslagen');
 }
 
 async function smapDelete(id) {
-  const e = smapEntities.find(x=>x.id===id);
-  if (!e || !confirm(`"${e.naam}" verwijderen? Child entiteiten worden losgekoppeld.`)) return;
+  const e = smapEntities.find(x => x.id === id);
+  if (!e || !confirm(`"${e.naam}" verwijderen?`)) return;
+  // If cluster: unlink entities first
+  if (e.is_cluster) {
+    await sb.from('gov_stakeholders').update({ parent_id: null }).eq('parent_id', id);
+  }
   await sb.from('gov_stakeholders').delete().eq('id', id);
   await smapLoad();
   renderSmap();
@@ -1657,56 +1847,128 @@ async function initSmap() {
   renderSmap();
 }
 
-// ── GOVERNANCE BODY DND MAP ──
+// ── GOVERNANCE BODY KAART V2 ──
 let draggedBodyId = null;
+const GOV_COLS = [
+  {id:'strategic', label:'Strategische werking Health', icon:'🏢'},
+  {id:'tactical',  label:'Tactische werking Vertical & Werf', icon:'⚡'},
+  {id:'bous',      label:"Werking Health BOU's", icon:'🏬'},
+];
+const govCollapseState = {strategic:false, tactical:false, bous:false};
 
-function govRenderMap() {
-  const cols = ['strategic','tactical','bous','support'];
-  cols.forEach(col => {
-    const zone = document.getElementById('gmap-placed-' + col);
-    if (!zone) return;
-    const bodies = allBodies.filter(b => b.map_col === col).sort((a,b) => a.map_row - b.map_row);
-    zone.innerHTML = bodies.map(b => govMapPillHTML(b)).join('');
-    const zoneEl = document.getElementById('gmap-zone-' + col);
-    if (zoneEl) zoneEl.setAttribute('data-empty', bodies.length === 0 ? '1' : '0');
-  });
-  // Palette: unplaced
-  const palette = document.getElementById('gov-palette-items');
-  if (!palette) return;
-  const unplaced = allBodies.filter(b => !b.map_col);
-  palette.innerHTML = unplaced.length === 0
-    ? '<span style="font-size:12px;color:#aaa;font-style:italic;">Alle organen staan op de kaart</span>'
-    : unplaced.map(b => `
-        <div class="gov-palette-pill" draggable="true" ondragstart="govDragStart(event,'${b.id}')" style="border-color:${b.kleur||'#1a5f7a'}">
-          <span>${b.name}</span>
-          <span class="gmap-focus-pill" style="background:${b.kleur||'#1a5f7a'};margin-left:4px;">${b.focus||''}</span>
-          <div class="gov-palette-pill-actions">
-            <button class="gmap-body-pill-btn" onclick="govOpenEdit('${b.id}');event.stopPropagation()">✏️</button>
-            <button class="gmap-body-pill-btn" onclick="govDeleteBody('${b.id}');event.stopPropagation()">✕</button>
-          </div>
-        </div>`).join('');
+function toggleGovCol(col) {
+  govCollapseState[col] = !govCollapseState[col];
+  govRenderMap();
 }
 
-function govMapPillHTML(b) {
-  const people = (b.gov_participants || []).filter(p => p.participant_type === 'core');
-  const peopleChips = people.map(p => {
+function govCardHTML(b) {
+  const status = b.map_status || 'gepland';
+  const isPlanned = status === 'gepland';
+  const clr = b.kleur || '#1a5f7a';
+  const core = (b.gov_participants||[]).filter(p=>p.participant_type==='core').sort((a,x)=>a.sort_order-x.sort_order);
+  const chips = core.slice(0,8).map(p => {
     const lbl = [p.person_name, p.role_name].filter(Boolean).join(' · ');
-    return `<span class="gmap-persoon">${lbl}</span>`;
+    return `<span class="gmap-v2-chip">${lbl}</span>`;
   }).join('');
-  return `<div class="gmap-body-pill" draggable="true" ondragstart="govDragStart(event,'${b.id}')" style="border-color:${b.kleur||'#1a5f7a'}">
-    <div style="flex:1">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-        <span class="gmap-body-pill-name">${b.name}</span>
-        <span class="gmap-body-pill-focus" style="background:${b.kleur||'#1a5f7a'}">${b.focus||''}</span>
-      </div>
-      ${b.frequency ? `<div style="font-size:9px;color:#888;">📅 ${b.frequency}</div>` : ''}
-      ${peopleChips ? `<div style="margin-top:4px;">${peopleChips}</div>` : ''}
+  const more = core.length > 8 ? `<span class="gmap-v2-chip gmap-chip-more">+${core.length-8}</span>` : '';
+  return `<div class="gmap-v2-card${isPlanned?'':' te-plannen'}" draggable="true" ondragstart="govDragStart(event,'${b.id}')">
+    <div class="gmap-v2-card-hd" style="background:${clr}">
+      <span class="gmap-v2-card-name">${b.name}</span>
+      <span class="gmap-v2-card-focus">${b.focus||''}</span>
     </div>
-    <div class="gmap-body-pill-actions">
-      <button class="gmap-body-pill-btn" onclick="govOpenEdit('${b.id}');event.stopPropagation()">✏️</button>
-      <button class="gmap-body-pill-btn" onclick="govDragToNone('${b.id}');event.stopPropagation()" title="Verwijder van kaart">↩</button>
+    <div class="gmap-v2-card-body">
+      ${b.frequency ? `<div class="gmap-v2-freq">📅 ${b.frequency}</div>` : ''}
+      ${chips||more ? `<div class="gmap-v2-chips">${chips}${more}</div>` : ''}
+    </div>
+    <div class="gmap-v2-card-footer">
+      <button class="gmap-v2-status-btn ${isPlanned?'gmap-v2-status-gepland':'gmap-v2-status-tepland'}"
+              onclick="govToggleStatus('${b.id}');event.stopPropagation()">
+        ${isPlanned ? '✅ Gepland' : '⏳ Te plannen'}
+      </button>
+      <div class="gmap-v2-card-actions">
+        <button class="gmap-body-pill-btn" onclick="govOpenEdit('${b.id}');event.stopPropagation()" title="Bewerken">✏️</button>
+        <button class="gmap-body-pill-btn" onclick="govDragToNone('${b.id}');event.stopPropagation()" title="Verwijder van kaart">↩</button>
+      </div>
     </div>
   </div>`;
+}
+
+function govRenderMap() {
+  // Deduplicate allBodies by id
+  const seen = new Set();
+  const bodies = allBodies.filter(b => { if(seen.has(b.id)) return false; seen.add(b.id); return true; });
+
+  // Columns
+  const colsEl = document.getElementById('gmap-v2-cols');
+  if (colsEl) {
+    colsEl.innerHTML = GOV_COLS.map(col => {
+      const colBodies = bodies.filter(b => b.map_col === col.id).sort((a,b) => a.map_row - b.map_row);
+      const collapsed = govCollapseState[col.id];
+      if (collapsed) {
+        return `<div class="gmap-v2-col collapsed" id="gmap-v2-col-${col.id}" title="${col.label}" onclick="toggleGovCol('${col.id}')">
+          <div class="gmap-v2-col-hd">
+            <span class="gmap-v2-col-icon">${col.icon}</span>
+            <span class="gmap-v2-col-label">${col.label}</span>
+            <span class="gmap-v2-col-toggle">▶</span>
+          </div>
+        </div>`;
+      }
+      return `<div class="gmap-v2-col" id="gmap-v2-col-${col.id}">
+        <div class="gmap-v2-col-hd">
+          <span class="gmap-v2-col-icon">${col.icon}</span>
+          <span class="gmap-v2-col-label">${col.label}</span>
+          <button class="gmap-v2-col-toggle" onclick="toggleGovCol('${col.id}');event.stopPropagation()" title="Inklappen">◀</button>
+        </div>
+        <div class="gmap-v2-col-body" id="gmap-v2-body-${col.id}"
+             ondragover="event.preventDefault();this.classList.add('dz-over')"
+             ondragleave="this.classList.remove('dz-over')"
+             ondrop="govDrop(event,'${col.id}')">
+          ${colBodies.length ? colBodies.map(b => govCardHTML(b)).join('') : '<div class="gmap-v2-empty">↓ Sleep hier</div>'}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Support row
+  const supportEl = document.getElementById('gmap-v2-support');
+  if (supportEl) {
+    const supportBodies = bodies.filter(b => b.map_col === 'support').sort((a,b) => a.map_row - b.map_row);
+    supportEl.innerHTML = `<div class="gmap-v2-support">
+      <span class="gmap-v2-support-label">Support</span>
+      <div class="gmap-v2-support-cards" id="gmap-v2-support-cards"
+           ondragover="event.preventDefault();this.classList.add('dz-over')"
+           ondragleave="this.classList.remove('dz-over')"
+           ondrop="govDrop(event,'support')" style="min-height:80px;">
+        ${supportBodies.length ? supportBodies.map(b => govCardHTML(b)).join('') : '<div class="gmap-v2-empty">↓ Sleep hier</div>'}
+      </div>
+    </div>`;
+  }
+
+  // Palette: unplaced bodies
+  const palette = document.getElementById('gov-palette-items');
+  if (palette) {
+    const unplaced = bodies.filter(b => !b.map_col);
+    palette.innerHTML = unplaced.length === 0
+      ? '<span style="font-size:12px;color:#aaa;font-style:italic;">Alle organen staan op de kaart</span>'
+      : unplaced.map(b => `
+          <div class="gov-palette-pill" draggable="true" ondragstart="govDragStart(event,'${b.id}')" style="border-color:${b.kleur||'#1a5f7a'}">
+            <span>${b.name}</span>
+            <span class="gmap-focus-pill" style="background:${b.kleur||'#1a5f7a'}">${b.focus||''}</span>
+            <div class="gov-palette-pill-actions">
+              <button class="gmap-body-pill-btn" onclick="govOpenEdit('${b.id}');event.stopPropagation()">✏️</button>
+              <button class="gmap-body-pill-btn" onclick="govDeleteBody('${b.id}');event.stopPropagation()">✕</button>
+            </div>
+          </div>`).join('');
+  }
+}
+
+async function govToggleStatus(id) {
+  const b = allBodies.find(x => x.id === id);
+  if (!b) return;
+  const newStatus = (b.map_status || 'gepland') === 'gepland' ? 'te_plannen' : 'gepland';
+  b.map_status = newStatus;
+  await sb.from('gov_bodies').update({map_status: newStatus}).eq('id', id);
+  govRenderMap();
 }
 
 function govDragStart(e, id) {
@@ -1717,7 +1979,7 @@ function govDragStart(e, id) {
 
 async function govDrop(e, col) {
   e.preventDefault();
-  document.querySelectorAll('.gmap-dropzone').forEach(z => z.classList.remove('dz-over'));
+  document.querySelectorAll('.gmap-v2-col-body,.gmap-v2-support-cards').forEach(z => z.classList.remove('dz-over'));
   const id = e.dataTransfer.getData('text/plain') || draggedBodyId;
   if (!id) return;
   const body = allBodies.find(b => b.id === id);
