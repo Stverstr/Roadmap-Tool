@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Governance – Colruyt Group Health</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f4f6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+  }
+
+  /* ── SLIDE WRAPPER ── */
+  .slide {
+    background: white;
+    width: 100%;
+    max-width: 1280px;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    border-bottom: 2px solid #e0e0e0;
+    background: white;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: #1e8c8a;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 20px;
+  }
+  .header-title h1 {
+    font-size: 18px; font-weight: 700; color: #1a2e44; letter-spacing: 0.5px;
+  }
+  .header-title p {
+    font-size: 13px; color: #666; font-style: italic; margin-top: 1px;
+  }
+  .badge-termijn {
+    background: #1a2e44;
+    color: white;
+    font-size: 13px; font-weight: 700;
+    padding: 8px 20px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── BODY ── */
+  .body {
+    padding: 0;
+  }
+
+  /* ── COLUMN HEADER ROW ── */
+  .col-header-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 1fr 1fr;
+    border-bottom: 2px solid #1a8c8a;
+  }
+  .col-header-row .label-cell {
+    background: #f5f8fa;
+    border-right: 1px solid #d0dde5;
+  }
+  .col-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #1a8c8a;
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.8px;
+    border-right: 2px solid white;
+  }
+  .col-header:last-child { border-right: none; }
+  .col-header .col-icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+
+  /* ── CONTENT GRID ── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 90px 1fr 1fr 1fr;
+  }
+
+  /* Row separator */
+  .row-group {
+    display: contents;
+  }
+
+  /* ── LABEL CELLS (left column) ── */
+  .label-cell {
+    background: #f5f8fa;
+    border-right: 1px solid #d0dde5;
+    border-bottom: 1px solid #e8edf0;
+    padding: 14px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .label-text {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #556;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    white-space: nowrap;
+  }
+
+  /* ── DATA CELLS ── */
+  .data-cell {
+    padding: 14px 16px;
+    border-right: 1px solid #dde5ea;
+    border-bottom: 1px solid #e8edf0;
+    vertical-align: top;
+    position: relative;
+  }
+  .data-cell:last-child { border-right: none; }
+
+  /* ── OVERLEG ORGAAN ── */
+  .orgaan-block {
+    margin-bottom: 10px;
+  }
+  .orgaan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 6px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+    color: white;
+    cursor: pointer;
+    transition: filter 0.2s;
+    width: 100%;
+  }
+  .orgaan-badge:hover { filter: brightness(1.1); }
+  .orgaan-badge .focus-pill {
+    margin-left: auto;
+    background: rgba(255,255,255,0.25);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+  .color-decide  { background: #1a5f7a; }
+  .color-align   { background: #2e8b6a; }
+  .color-govern  { background: #1a8c8a; }
+  .color-pending { background: #b0bec5; }
+
+  /* ── DEELNEMERS ── */
+  .deelnemers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 4px;
+  }
+  .persoon {
+    background: #e8f4f4;
+    border: 1px solid #b2d8d8;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #1a5f7a;
+    white-space: nowrap;
+    cursor: default;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .persoon:hover {
+    background: #c5e8e8;
+    border-color: #1a8c8a;
+  }
+
+  /* ── FREQUENTIE ── */
+  .frequentie-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff8e1;
+    border: 1px solid #ffcc02;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #7a5800;
+    margin-bottom: 4px;
+  }
+  .frequentie-tag .icon { font-size: 11px; }
+
+  /* ── STICKY NOTE (yellow) ── */
+  .sticky-note {
+    background: #ffd740;
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #3a2800;
+    line-height: 1.5;
+    box-shadow: 2px 3px 8px rgba(0,0,0,0.15);
+    margin-bottom: 10px;
+  }
+  .sticky-note em {
+    font-style: normal;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* ── SUPPORT ROW ── */
+  .support-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    background: #f0f8f7;
+    border-top: 2px solid #1a8c8a;
+  }
+  .support-label {
+    background: #1a8c8a;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    padding: 14px 6px;
+  }
+  .support-label .label-text { color: white; }
+  .support-content {
+    padding: 14px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .tst-block {
+    flex: 1;
+    min-width: 200px;
+  }
+  .tst-header {
+    background: #1a8c8a;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+  .tst-sub-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tst-item {
+    background: white;
+    border: 1px solid #c5dedd;
+    border-radius: 5px;
+    padding: 6px 10px;
+  }
+  .tst-item .name {
+    font-size: 10px; font-weight: 700; color: #1a5f7a; margin-bottom: 3px;
+  }
+  .tst-item .freq {
+    font-size: 9px; color: #888;
+  }
+
+  /* ── TOOLTIP EFFECT ── */
+  .has-tooltip { position: relative; cursor: help; }
+  .tooltip {
+    display: none;
+    position: absolute;
+    left: 0; top: 100%;
+    z-index: 99;
+    background: #1a2e44;
+    color: white;
+    font-size: 11px;
+    font-weight: 400;
+    padding: 6px 10px;
+    border-radius: 5px;
+    width: max-content;
+    max-width: 220px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    line-height: 1.5;
+    pointer-events: none;
+    white-space: normal;
+  }
+  .has-tooltip:hover .tooltip { display: block; }
+
+  /* ── DIVIDER between organen ── */
+  .sub-divider {
+    border: none;
+    border-top: 1px dashed #d0dde5;
+    margin: 10px 0;
+  }
+
+  .empty-cell { background: #fafbfc; }
+</style>
+</head>
+<body>
+
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-icon">⚙️</div>
+      <div class="header-title">
+        <h1>COLRUYT GROUP HEALTH</h1>
+        <p>Steer &amp; Govern</p>
+      </div>
+    </div>
+    <div class="badge-termijn">Korte termijn</div>
+  </div>
+
+  <div class="body">
+
+    <!-- COLUMN HEADERS -->
+    <div class="col-header-row">
+      <div class="label-cell"></div>
+      <div class="col-header">
+        <div class="col-icon">🏢</div>
+        STRATEGISCHE WERKING HEALTH
+      </div>
+      <div class="col-header">
+        <div class="col-icon">⚡</div>
+        TACTISCHE WERKING VERTICAL &amp; WERF
+      </div>
+      <div class="col-header">
+        <div class="col-icon">🏬</div>
+        WERKING HEALTH BOU's
+      </div>
+    </div>
+
+    <!-- CONTENT GRID -->
+    <div class="content-grid">
+
+      <!-- ── ROW: OVERLEG-ORGAAN ── -->
+      <div class="label-cell">
+        <span class="label-text">Overleg-orgaan</span>
+      </div>
+
+      <!-- Strategische Werking -->
+      <div class="data-cell">
+        <div class="orgaan-block">
+          <div class="orgaan-badge color-decide has-tooltip">
+            <span>TKR HEALTH COLRUYT GROUP</span>
+            <span class="focus-pill">DECIDE</span>
+            <div class="tooltip">Top Kader Review — groep-overschrijdende health strategie & beslissingen</div>
+          </div>
+        </div>
+        <hr class="sub-divider">
+        <div class="orgaan-block">
+          <div class="orgaan-badge color-align has-tooltip">
+            <span>STRATEGIC ALIGNMENT HEALTH</span>
+            <span class="focus-pill">ALIGN</span>
+            <div class="tooltip">cfr. bosklasse — verdieping strategische topics &amp; impact op Colruyt Group Health</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tactische Werking -->
+      <div class="data-cell">
+        <div class="sticky-note">
+          Dit wordt nog niet ingericht.<br>
+          Voorlopig wel een <em>"Health Sturing meeting"</em><br>
+          <span style="font-size:11px; font-weight:400; color:#5a3e00;">Lisa &amp; Gilles · om de 2 weken</span>
+        </div>
+        <div class="orgaan-block">
+          <div class="orgaan-badge color-govern has-tooltip">
+            <span>TACTICAL COORDINATION HEALTH CG</span>
+            <span class="focus-pill">GOVERN &amp; PREPARE</span>
+            <div class="tooltip">cfr. TCFR — x-ou topics, synergiën en voortgang strategische trajecten</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Werking BOU's -->
+      <div class="data-cell">
+        <div class="orgaan-block">
+          <div class="orgaan-badge color-decide has-tooltip">
+            <span>TKR HEALTH BOU</span>
+            <span class="focus-pill">DECIDE</span>
+            <div class="tooltip">Operationele sturing per BOU: cijfers, P&amp;L en bijdrage strategisch plan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ROW: DEELNEMERS ── -->
+      <div class="label-cell">
+        <span class="label-text">Deelnemers</span>
+      </div>
+
+      <!-- Strategische Werking deelnemers -->
+      <div class="data-cell">
+        <p style="font-size:10px; font-weight:700; color:#888; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">TKR Health Colruyt Group</p>
+        <div class="deelnemers">
+          <span class="persoon">CEO CG</span>
+          <span class="persoon">COO HEALTH</span>
+          <span class="persoon">VERT. FOOD</span>
+          <span class="persoon">DIR P&amp;O</span>
+          <span class="persoon">LEAD WERF</span>
+          <span class="persoon">BUM's HV</span>
+        </div>
+        <hr class="sub-divider">
+        <p style="font-size:10px; font-weight:700; color:#888; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Strategic Alignment Health</p>
+        <div class="deelnemers">
+          <span class="persoon">COO HEALTH</span>
+          <span class="persoon">LEAD WERF</span>
+          <span class="persoon">BUM's HV</span>
+        </div>
+      </div>
+
+      <!-- Tactische Werking deelnemers -->
+      <div class="data-cell">
+        <p style="font-size:10px; font-weight:700; color:#888; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Tactical Coordination Health CG</p>
+        <div class="deelnemers">
+          <span class="persoon">BUM's HV</span>
+          <span class="persoon">BUM's HV</span>
+          <span class="persoon">BUM's FV</span>
+          <span class="persoon">MKT &amp; VAK</span>
+          <span class="persoon">VERT. P&amp;O</span>
+        </div>
+      </div>
+
+      <!-- BOU's deelnemers -->
+      <div class="data-cell">
+        <div class="deelnemers">
+          <span class="persoon">WERF LEAD</span>
+          <span class="persoon">COO HEALTH</span>
+          <span class="persoon">MGMT TEAM BOU</span>
+        </div>
+      </div>
+
+      <!-- ── ROW: FREQUENTIE ── -->
+      <div class="label-cell">
+        <span class="label-text">Frequentie</span>
+      </div>
+
+      <!-- Strategische frequentie -->
+      <div class="data-cell">
+        <div class="frequentie-tag">
+          <span class="icon">📅</span>
+          TKR: 1ste eind september, dan elk kwartaal
+        </div>
+        <br>
+        <div class="frequentie-tag">
+          <span class="icon">📅</span>
+          Strategic Alignment: nader te bepalen
+        </div>
+      </div>
+
+      <!-- Tactische frequentie -->
+      <div class="data-cell">
+        <div class="frequentie-tag">
+          <span class="icon">📅</span>
+          Health Sturing meeting: om de 2 weken
+        </div>
+        <br>
+        <div class="frequentie-tag" style="opacity:0.5;">
+          <span class="icon">🔜</span>
+          Tactical Coordination: nog in te richten
+        </div>
+      </div>
+
+      <!-- BOU's frequentie -->
+      <div class="data-cell">
+        <div class="frequentie-tag">
+          <span class="icon">📅</span>
+          Gepland elke 2 maand
+        </div>
+        <div style="margin-top:6px; font-size:10px; color:#666;">
+          <div>• TKR Newpharma / Yoboo</div>
+          <div>• TKR Jims</div>
+        </div>
+      </div>
+
+    </div><!-- end content-grid -->
+
+    <!-- ── SUPPORT ROW ── -->
+    <div class="support-row">
+      <div class="support-label">
+        <span class="label-text">Support</span>
+      </div>
+      <div class="support-content">
+        <div class="tst-block">
+          <div class="tst-header">TST COLRUYT GROUP HEALTH — WERF LEAD</div>
+          <div class="tst-sub-items">
+
+            <div class="tst-item">
+              <div class="name">TST MEETING COLRUYT HEALTH</div>
+              <div class="deelnemers" style="margin-top:4px;">
+                <span class="persoon">LEAD WERF</span>
+                <span class="persoon">BUM's HV</span>
+                <span class="persoon">BUM's HV</span>
+                <span class="persoon">BUM's HV</span>
+                <span class="persoon">BUM's FV</span>
+                <span class="persoon">VERT. P&amp;O</span>
+                <span class="persoon">MKT &amp; VAK</span>
+              </div>
+              <div class="freq" style="margin-top:5px;">📅 Kickoff nu, semi-wekelijks</div>
+            </div>
+
+            <div class="tst-item">
+              <div class="name">WO WERF</div>
+              <div class="deelnemers" style="margin-top:4px;">
+                <span class="persoon">EBA</span>
+                <span class="persoon">BA</span>
+                <span class="persoon">VAK</span>
+                <span class="persoon">Mrkt</span>
+                <span class="persoon">Innov. Lead</span>
+              </div>
+              <div class="freq" style="margin-top:5px;">📅 Wekelijks</div>
+            </div>
+
+            <div class="tst-item">
+              <div class="name">OPVOLGING WERF CEO – WERF LEAD</div>
+              <div class="deelnemers" style="margin-top:4px;">
+                <span class="persoon">CEO CG</span>
+                <span class="persoon">WERF LEAD</span>
+              </div>
+              <div class="freq" style="margin-top:5px;">📅 Elke 2 maand, wordt gepland</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end body -->
+</div><!-- end slide -->
+
+</body>
+</html>

@@ -95,6 +95,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gov-level{margin-bottom:32px;}
 .gov-level-title{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gy500);margin-bottom:12px;padding-left:4px;}
 .gov-bodies-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+
+/* ── GOVERNANCE VISUAL MAP ── */
+.gov-map-wrapper{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.09);overflow:hidden;margin-bottom:28px;}
+.gov-map-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;border-bottom:1px solid var(--gy200);background:#f8faf9;}
+.gov-map-toggle:hover{background:#f0f6f3;}
+.gov-map-toggle-label{font-size:14px;font-weight:700;color:var(--gy900);display:flex;align-items:center;gap:8px;}
+.gov-map-toggle-arrow{font-size:12px;color:var(--gy500);transition:transform .2s;}
+.gov-map-toggle-arrow.open{transform:rotate(180deg);}
+.gov-map-body{display:none;padding:18px;}
+.gov-map-body.open{display:block;overflow-x:auto;}
+.gmap-col-header-row{display:grid;grid-template-columns:80px 1fr 1fr 1fr;border-bottom:2px solid var(--teal);}
+.gmap-col-header-label{background:#f5f8fa;border-right:1px solid #d0dde5;}
+.gmap-col-header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--teal);color:white;font-weight:700;font-size:11px;letter-spacing:.7px;border-right:2px solid white;}
+.gmap-col-header:last-child{border-right:none;}
+.gmap-col-icon{width:24px;height:24px;background:rgba(255,255,255,.22);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.gmap-grid{display:grid;grid-template-columns:80px 1fr 1fr 1fr;}
+.gmap-label-cell{background:#f5f8fa;border-right:1px solid #d0dde5;border-bottom:1px solid #e8edf0;padding:10px 6px;display:flex;align-items:center;justify-content:center;}
+.gmap-label-text{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#556;writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);white-space:nowrap;}
+.gmap-data-cell{padding:12px 14px;border-right:1px solid #dde5ea;border-bottom:1px solid #e8edf0;}
+.gmap-data-cell:last-child{border-right:none;}
+.gmap-orgaan-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 9px 5px 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.3px;margin-bottom:5px;color:white;width:100%;}
+.gmap-focus-pill{margin-left:auto;background:rgba(255,255,255,.25);font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;white-space:nowrap;}
+.gmap-color-decide{background:#1a5f7a;}
+.gmap-color-align{background:#2e8b6a;}
+.gmap-color-govern{background:var(--teal);}
+.gmap-sub-divider{border:none;border-top:1px dashed #d0dde5;margin:8px 0;}
+.gmap-persoon{display:inline-flex;background:#e8f4f4;border:1px solid #b2d8d8;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:600;color:#1a5f7a;white-space:nowrap;margin:2px;}
+.gmap-label-sm{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;margin-top:2px;}
+.gmap-freq-tag{display:inline-flex;align-items:center;gap:4px;background:#fff8e1;border:1px solid #ffcc02;border-radius:4px;padding:3px 8px;font-size:10px;font-weight:600;color:#7a5800;margin-bottom:3px;}
+.gmap-sticky{background:#ffd740;border-radius:6px;padding:10px 12px;font-size:11px;font-weight:600;color:#3a2800;line-height:1.5;box-shadow:2px 2px 6px rgba(0,0,0,.12);margin-bottom:8px;}
+.gmap-support-row{display:grid;grid-template-columns:80px 1fr;background:#f0f8f7;border-top:2px solid var(--teal);}
+.gmap-support-label{background:var(--teal);color:white;display:flex;align-items:center;justify-content:center;padding:12px 5px;}
+.gmap-support-content{padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;}
+.gmap-tst-header{background:var(--teal);color:white;font-size:10px;font-weight:700;letter-spacing:.4px;padding:4px 10px;border-radius:4px;margin-bottom:6px;display:inline-block;}
+.gmap-tst-items{display:flex;flex-wrap:wrap;gap:8px;}
+.gmap-tst-item{background:white;border:1px solid #c5dedd;border-radius:5px;padding:6px 10px;}
+.gmap-tst-item-name{font-size:10px;font-weight:700;color:#1a5f7a;margin-bottom:3px;}
+.gmap-tst-item-freq{font-size:9px;color:#888;margin-top:3px;}
 .gov-body-card{background:white;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.09);overflow:hidden;}
 .gov-body-header{padding:16px 18px 12px;border-bottom:1px solid var(--gy100);}
 .gov-body-name{font-size:15px;font-weight:700;color:var(--gy900);margin-bottom:4px;}
@@ -247,6 +285,99 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <button class="btn btn-teal" onclick="openBodyModal()">+ Overlegorgaan toevoegen</button>
       </div>
+
+      <!-- ── VISUELE KAART ── -->
+      <div class="gov-map-wrapper">
+        <div class="gov-map-toggle" onclick="toggleGovMap()">
+          <span class="gov-map-toggle-label">🗺️ Visuele overzichtskaart — Korte termijn</span>
+          <span class="gov-map-toggle-arrow open" id="gov-map-arrow">▼</span>
+        </div>
+        <div class="gov-map-body open" id="gov-map-body">
+          <!-- COLUMN HEADERS -->
+          <div class="gmap-col-header-row">
+            <div class="gmap-col-header-label"></div>
+            <div class="gmap-col-header"><div class="gmap-col-icon">🏢</div>STRATEGISCHE WERKING HEALTH</div>
+            <div class="gmap-col-header"><div class="gmap-col-icon">⚡</div>TACTISCHE WERKING VERTICAL &amp; WERF</div>
+            <div class="gmap-col-header"><div class="gmap-col-icon">🏬</div>WERKING HEALTH BOU's</div>
+          </div>
+          <!-- GRID -->
+          <div class="gmap-grid">
+            <!-- ROW: OVERLEG-ORGAAN -->
+            <div class="gmap-label-cell"><span class="gmap-label-text">Overleg-orgaan</span></div>
+            <div class="gmap-data-cell">
+              <div class="gmap-orgaan-badge gmap-color-decide">TKR HEALTH COLRUYT GROUP<span class="gmap-focus-pill">DECIDE</span></div>
+              <hr class="gmap-sub-divider">
+              <div class="gmap-orgaan-badge gmap-color-align">STRATEGIC ALIGNMENT HEALTH<span class="gmap-focus-pill">ALIGN</span></div>
+            </div>
+            <div class="gmap-data-cell">
+              <div class="gmap-sticky">Dit wordt nog niet ingericht.<br>Voorlopig wel een <strong>"Health Sturing meeting"</strong><br><span style="font-size:10px;font-weight:400;">Lisa &amp; Gilles · om de 2 weken</span></div>
+              <div class="gmap-orgaan-badge gmap-color-govern">TACTICAL COORDINATION HEALTH CG<span class="gmap-focus-pill">GOVERN &amp; PREPARE</span></div>
+            </div>
+            <div class="gmap-data-cell">
+              <div class="gmap-orgaan-badge gmap-color-decide">TKR HEALTH BOU<span class="gmap-focus-pill">DECIDE</span></div>
+            </div>
+
+            <!-- ROW: DEELNEMERS -->
+            <div class="gmap-label-cell"><span class="gmap-label-text">Deelnemers</span></div>
+            <div class="gmap-data-cell">
+              <div class="gmap-label-sm">TKR Health Colruyt Group</div>
+              <span class="gmap-persoon">CEO CG</span><span class="gmap-persoon">COO HEALTH</span><span class="gmap-persoon">VERT. FOOD</span><span class="gmap-persoon">DIR P&amp;O</span><span class="gmap-persoon">LEAD WERF</span><span class="gmap-persoon">BUM's HV</span>
+              <hr class="gmap-sub-divider">
+              <div class="gmap-label-sm">Strategic Alignment Health</div>
+              <span class="gmap-persoon">COO HEALTH</span><span class="gmap-persoon">LEAD WERF</span><span class="gmap-persoon">BUM's HV</span>
+            </div>
+            <div class="gmap-data-cell">
+              <div class="gmap-label-sm">Tactical Coordination Health CG</div>
+              <span class="gmap-persoon">BUM's HV</span><span class="gmap-persoon">BUM's FV</span><span class="gmap-persoon">MKT &amp; VAK</span><span class="gmap-persoon">VERT. P&amp;O</span>
+            </div>
+            <div class="gmap-data-cell">
+              <span class="gmap-persoon">WERF LEAD</span><span class="gmap-persoon">COO HEALTH</span><span class="gmap-persoon">MGMT TEAM BOU</span>
+            </div>
+
+            <!-- ROW: FREQUENTIE -->
+            <div class="gmap-label-cell"><span class="gmap-label-text">Frequentie</span></div>
+            <div class="gmap-data-cell">
+              <div class="gmap-freq-tag">📅 TKR: 1ste eind sept., dan elk kwartaal</div><br>
+              <div class="gmap-freq-tag">📅 Strategic Alignment: nader te bepalen</div>
+            </div>
+            <div class="gmap-data-cell">
+              <div class="gmap-freq-tag">📅 Health Sturing: om de 2 weken</div>
+            </div>
+            <div class="gmap-data-cell">
+              <div class="gmap-freq-tag">📅 Elke 2 maand</div>
+              <div style="font-size:10px;color:#666;margin-top:4px;">• TKR Newpharma / Yoboo<br>• TKR Jims</div>
+            </div>
+          </div><!-- end gmap-grid -->
+
+          <!-- SUPPORT ROW -->
+          <div class="gmap-support-row">
+            <div class="gmap-support-label"><span class="gmap-label-text" style="color:white;">Support</span></div>
+            <div class="gmap-support-content">
+              <div>
+                <div class="gmap-tst-header">TST COLRUYT GROUP HEALTH — WERF LEAD</div>
+                <div class="gmap-tst-items">
+                  <div class="gmap-tst-item">
+                    <div class="gmap-tst-item-name">TST MEETING COLRUYT HEALTH</div>
+                    <span class="gmap-persoon">LEAD WERF</span><span class="gmap-persoon">BUM's HV (×3)</span><span class="gmap-persoon">BUM's FV</span><span class="gmap-persoon">VERT. P&amp;O</span><span class="gmap-persoon">MKT &amp; VAK</span>
+                    <div class="gmap-tst-item-freq">📅 Kickoff nu, semi-wekelijks</div>
+                  </div>
+                  <div class="gmap-tst-item">
+                    <div class="gmap-tst-item-name">WO WERF</div>
+                    <span class="gmap-persoon">EBA</span><span class="gmap-persoon">BA</span><span class="gmap-persoon">VAK</span><span class="gmap-persoon">Mrkt</span><span class="gmap-persoon">Innov. Lead</span>
+                    <div class="gmap-tst-item-freq">📅 Wekelijks</div>
+                  </div>
+                  <div class="gmap-tst-item">
+                    <div class="gmap-tst-item-name">OPVOLGING WERF CEO – WERF LEAD</div>
+                    <span class="gmap-persoon">CEO CG</span><span class="gmap-persoon">WERF LEAD</span>
+                    <div class="gmap-tst-item-freq">📅 Elke 2 maand, wordt gepland</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- end gov-map-body -->
+      </div><!-- end gov-map-wrapper -->
 
       <div id="gov-strategic" class="gov-level">
         <div class="gov-level-title">🔵 Strategisch niveau</div>
@@ -985,6 +1116,14 @@ function switchTab(tab) {
   document.querySelector(`.ntab[data-tab="${tab}"]`).classList.add('active');
   document.getElementById('panel-'+tab).classList.add('active');
   if (tab === 'overview') renderOverview();
+}
+
+// ── GOV MAP TOGGLE ──
+function toggleGovMap() {
+  const body = document.getElementById('gov-map-body');
+  const arrow = document.getElementById('gov-map-arrow');
+  const isOpen = body.classList.toggle('open');
+  arrow.classList.toggle('open', isOpen);
 }
 
 // ── MODAL HELPERS ──
