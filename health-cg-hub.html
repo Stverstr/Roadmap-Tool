@@ -141,6 +141,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gmap-chip-add:hover{background:#e8f4f4;}
 .gmap-chip-input{font-size:10px;font-family:inherit;border:1px solid #1a8c8a;border-radius:12px;padding:1px 8px;outline:none;width:90px;color:#1a5f7a;background:white;}
 
+/* ── GOV MAP DROPZONES & PILLS ── */
+.gmap-dropzone{min-height:60px;border:2px dashed transparent;border-radius:6px;padding:4px;transition:all .18s;}
+.gmap-dropzone.dz-over{border-color:var(--teal);background:#f0fdf9;}
+.gmap-dz-hint{font-size:10px;color:#bbb;text-align:center;padding:4px 0;display:none;}
+.gmap-dropzone:empty .gmap-dz-hint,.gmap-dropzone[data-empty="1"] .gmap-dz-hint{display:block;}
+.gmap-body-pill{background:white;border:2px solid #1a5f7a;border-radius:6px;padding:6px 10px;margin-bottom:6px;cursor:grab;display:flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.gmap-body-pill:active{cursor:grabbing;opacity:.7;}
+.gmap-body-pill-name{font-size:11px;font-weight:700;flex:1;color:#1a2e44;}
+.gmap-body-pill-focus{font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(0,0,0,.08);color:white;white-space:nowrap;}
+.gmap-body-pill-actions{display:flex;gap:3px;opacity:0;transition:opacity .15s;}
+.gmap-body-pill:hover .gmap-body-pill-actions{opacity:1;}
+.gmap-body-pill-btn{background:none;border:none;font-size:12px;cursor:pointer;padding:1px 3px;border-radius:3px;color:#666;}
+.gmap-body-pill-btn:hover{background:rgba(0,0,0,.08);}
+/* Palette */
+.gov-palette{border-top:1px solid var(--gy200);padding:14px 18px;background:#f8faf9;}
+.gov-palette-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.gov-palette-title{font-size:13px;font-weight:700;color:var(--gy700);}
+.gov-palette-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.gov-palette-pill{border:2px solid #ccc;border-radius:6px;padding:6px 12px;cursor:grab;font-size:12px;font-weight:600;color:#1a2e44;background:white;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.gov-palette-pill:active{cursor:grabbing;opacity:.7;}
+.gov-palette-pill-actions{display:flex;gap:3px;opacity:0;transition:opacity .15s;}
+.gov-palette-pill:hover .gov-palette-pill-actions{opacity:1;}
+
 /* ── STAKEHOLDER MAP ── */
 .smap-wrapper{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.09);overflow:hidden;margin-bottom:28px;}
 .smap-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;border-bottom:1px solid var(--gy200);background:#f8faf9;}
@@ -359,16 +382,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <!-- ROW: OVERLEG-ORGAAN -->
             <div class="gmap-label-cell"><span class="gmap-label-text">Overleg-orgaan</span></div>
             <div class="gmap-data-cell">
-              <div class="gmap-orgaan-badge gmap-color-decide">TKR HEALTH COLRUYT GROUP<span class="gmap-focus-pill">DECIDE</span></div>
-              <hr class="gmap-sub-divider">
-              <div class="gmap-orgaan-badge gmap-color-align">STRATEGIC ALIGNMENT HEALTH<span class="gmap-focus-pill">ALIGN</span></div>
+              <div class="gmap-dropzone" id="gmap-zone-strategic" data-col="strategic"
+                   ondragover="event.preventDefault();this.classList.add('dz-over')"
+                   ondragleave="this.classList.remove('dz-over')"
+                   ondrop="govDrop(event,'strategic')">
+                <div id="gmap-placed-strategic"></div>
+                <div class="gmap-dz-hint">↓ Sleep hier</div>
+              </div>
             </div>
             <div class="gmap-data-cell">
               <div class="gmap-sticky">Dit wordt nog niet ingericht.<br>Voorlopig wel een <strong>"Health Sturing meeting"</strong><br><span style="font-size:10px;font-weight:400;">Lisa &amp; Gilles · om de 2 weken</span></div>
-              <div class="gmap-orgaan-badge gmap-color-govern">TACTICAL COORDINATION HEALTH CG<span class="gmap-focus-pill">GOVERN &amp; PREPARE</span></div>
+              <div class="gmap-dropzone" id="gmap-zone-tactical" data-col="tactical"
+                   ondragover="event.preventDefault();this.classList.add('dz-over')"
+                   ondragleave="this.classList.remove('dz-over')"
+                   ondrop="govDrop(event,'tactical')">
+                <div id="gmap-placed-tactical"></div>
+                <div class="gmap-dz-hint">↓ Sleep hier</div>
+              </div>
             </div>
             <div class="gmap-data-cell">
-              <div class="gmap-orgaan-badge gmap-color-decide">TKR HEALTH BOU<span class="gmap-focus-pill">DECIDE</span></div>
+              <div class="gmap-dropzone" id="gmap-zone-bous" data-col="bous"
+                   ondragover="event.preventDefault();this.classList.add('dz-over')"
+                   ondragleave="this.classList.remove('dz-over')"
+                   ondrop="govDrop(event,'bous')">
+                <div id="gmap-placed-bous"></div>
+                <div class="gmap-dz-hint">↓ Sleep hier</div>
+              </div>
             </div>
 
             <!-- ROW: DEELNEMERS -->
@@ -415,32 +454,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <!-- SUPPORT ROW -->
           <div class="gmap-support-row">
             <div class="gmap-support-label"><span class="gmap-label-text" style="color:white;">Support</span></div>
-            <div class="gmap-support-content">
-              <div>
-                <div class="gmap-tst-header">TST COLRUYT GROUP HEALTH — WERF LEAD</div>
-                <div class="gmap-tst-items">
-                  <div class="gmap-tst-item">
-                    <div class="gmap-tst-item-name">TST MEETING COLRUYT HEALTH</div>
-                    <div class="gmap-label-sm">Rol</div>
-                    <div class="gmap-chip-list" id="gmap-chips-tst-roles"></div>
-                    <div class="gmap-label-sm" style="margin-top:5px;">Naam</div>
-                    <div class="gmap-chip-list" id="gmap-chips-tst-names"></div>
-                    <div class="gmap-tst-item-freq">📅 Kickoff nu, semi-wekelijks</div>
-                  </div>
-                  <div class="gmap-tst-item">
-                    <div class="gmap-tst-item-name">WO WERF</div>
-                    <div class="gmap-label-sm">Rol</div>
-                    <div class="gmap-chip-list" id="gmap-chips-wo-roles"></div>
-                    <div class="gmap-label-sm" style="margin-top:5px;">Naam</div>
-                    <div class="gmap-chip-list" id="gmap-chips-wo-names"></div>
-                    <div class="gmap-tst-item-freq">📅 Wekelijks</div>
-                  </div>
+            <div class="gmap-support-content" style="flex:1;">
+              <div style="flex:1;">
+                <div class="gmap-dropzone" id="gmap-zone-support" data-col="support"
+                     ondragover="event.preventDefault();this.classList.add('dz-over')"
+                     ondragleave="this.classList.remove('dz-over')"
+                     ondrop="govDrop(event,'support')" style="display:flex;flex-wrap:wrap;gap:8px;min-height:60px;">
+                  <div id="gmap-placed-support" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+                  <div class="gmap-dz-hint">↓ Sleep hier</div>
                 </div>
               </div>
             </div>
           </div>
 
         </div><!-- end gov-map-body -->
+        <div class="gov-palette" id="gov-palette">
+          <div class="gov-palette-header">
+            <span class="gov-palette-title">📋 Overlegorganen</span>
+            <button class="btn btn-teal btn-sm" onclick="govOpenNew()">+ Nieuw orgaan</button>
+          </div>
+          <div id="gov-palette-items" class="gov-palette-grid"></div>
+        </div>
       </div><!-- end gov-map-wrapper -->
 
       <!-- ── STAKEHOLDERKAART ── -->
@@ -566,6 +600,68 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="modal-footer">
       <button class="btn btn-s" onclick="closeModal('smap-modal')">Annuleren</button>
       <button class="btn btn-p" onclick="smapModalSave()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GOV BODY EDITOR -->
+<div class="modal-bg" id="modal-gov-body">
+  <div class="modal" style="width:min(640px,100%);">
+    <div class="modal-title" id="mgb-title">Overlegorgaan toevoegen</div>
+    <input type="hidden" id="mgb-id" />
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field" style="grid-column:1/-1;">
+        <label class="label">Naam overlegorgaan</label>
+        <input class="input" id="mgb-naam" placeholder="bv. TKR Health Colruyt Group" />
+      </div>
+      <div class="field">
+        <label class="label">Niveau</label>
+        <select class="select" id="mgb-level">
+          <option value="strategisch">Strategisch</option>
+          <option value="tactisch">Tactisch</option>
+          <option value="operationeel">Operationeel</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label">Focus</label>
+        <select class="select" id="mgb-focus">
+          <option value="DECIDE">DECIDE</option>
+          <option value="GOVERN & PREPARE">GOVERN &amp; PREPARE</option>
+          <option value="ALIGN">ALIGN</option>
+          <option value="INFORM">INFORM</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label class="label">Frequentie</label>
+        <input class="input" id="mgb-freq" placeholder="bv. Elk kwartaal" />
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label class="label">Kleur</label>
+        <div class="smap-color-swatches" id="mgb-swatches"></div>
+      </div>
+    </div>
+
+    <div style="margin:16px 0 8px;font-size:12px;font-weight:700;color:var(--gy700);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--gy200);padding-bottom:5px;">
+      👥 Rollen &amp; Mensen
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px;">
+      <span style="font-size:11px;font-weight:600;color:var(--gy500);">Rol</span>
+      <span style="font-size:11px;font-weight:600;color:var(--gy500);">Naam</span>
+      <span></span>
+    </div>
+    <div id="mgb-people-list"></div>
+    <button class="btn btn-s btn-sm" onclick="mgbAddPerson()" type="button" style="margin-top:4px;">＋ Persoon toevoegen</button>
+
+    <div style="margin:16px 0 8px;font-size:12px;font-weight:700;color:var(--gy700);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--gy200);padding-bottom:5px;">
+      📋 Mogelijke agenda
+    </div>
+    <div id="mgb-agenda-list"></div>
+    <button class="btn btn-s btn-sm" onclick="mgbAddAgenda()" type="button" style="margin-top:4px;">＋ Agendapunt toevoegen</button>
+
+    <div class="modal-footer">
+      <button class="btn btn-s" onclick="closeModal('modal-gov-body')">Annuleren</button>
+      <button class="btn btn-p" id="mgb-save-btn" onclick="mgbSave()">Opslaan</button>
     </div>
   </div>
 </div>
@@ -791,6 +887,8 @@ async function seedGovernance() {
       level: 'strategisch',
       frequency: 'Elk kwartaal (1ste eind september)',
       description: 'Validatie Colruyt Health strategie, groeistrategie BOU\'s, BVOR 5-HV',
+      kleur: '#1a5f7a',
+      map_col: 'strategic',
       participants: ['COO Health','CEO CG','VERT. FOOD','DIR P&O','LEAD WERF'],
       support: ['BUM\'s HV'],
       agenda: ['Validatie Colruyt Health strategie of bijsturing ervan','Validatie strategische topics (bv. Health advisory)','Rapportering op voortgang metrics werf en validatie acties','Validatie BVOR 5 - HV','Validatie groeistrategie BOU\'s - HV'],
@@ -802,6 +900,8 @@ async function seedGovernance() {
       level: 'strategisch',
       frequency: 'Elke 2 maanden',
       description: 'Verdieping op strategische topics, cfr. bosklasse',
+      kleur: '#2e8b6a',
+      map_col: 'strategic',
       participants: ['COO Health','LEAD WERF','BUM\'s HV','BUM\'s FV','VERT.','P&O','MKT & VAK'],
       support: [],
       agenda: ['Verdieping op strategische topics','Werken rond impact strategisch plan of delen ervan op Colruyt Group Health'],
@@ -813,6 +913,8 @@ async function seedGovernance() {
       level: 'tactisch',
       frequency: 'Kickoff nu, dan semi-wekelijks',
       description: 'Tactical coordination Health CG, cfr. TCFR',
+      kleur: '#0D9488',
+      map_col: 'tactical',
       participants: ['COO Health','LEAD WERF','BUM\'s HV','BUM\'s FV'],
       support: ['VERT.','P&O','MKT & VAK'],
       agenda: ['Opvolging portfolio & roadmap','Innovatie opvolging en sturing','X-OU topics en synergieën','Vooruitgang strategische trajecten met impact op Health CG'],
@@ -824,6 +926,8 @@ async function seedGovernance() {
       level: 'tactisch',
       frequency: 'Elke 2 maanden',
       description: 'Per BOU (Newpharma/Yoboo, Jims, …)',
+      kleur: '#1a5f7a',
+      map_col: 'bous',
       participants: ['COO Health','WERF LEAD','MGMT TEAM BOU'],
       support: [],
       agenda: ['Advies bijsturing/prioritering portfolio & roadmap Health CG','Innovatie opvolging/gating en sturing','X-OU topics en synergieën','Operationele cijfers & P&L','Bijdrage strategisch plan'],
@@ -835,6 +939,8 @@ async function seedGovernance() {
       level: 'tactisch',
       frequency: 'Gepland elke 2 maanden',
       description: 'ROCO-niveau, Health BOU\'s',
+      kleur: '#0D9488',
+      map_col: 'support',
       participants: ['ROCO','COO Health','BUM\'s HV','BUM\'s FV'],
       support: ['VERT.','P&O','MKT & VAK'],
       agenda: ['Opvolging portfolio & roadmap','Innovatie opvolging en sturing'],
@@ -846,6 +952,8 @@ async function seedGovernance() {
       level: 'operationeel',
       frequency: 'Lisa & Stijn: om de 2 weken',
       description: 'Operationele werf-opvolging',
+      kleur: '#555',
+      map_col: 'support',
       participants: ['WERF LEAD','WO WERF','EBA','BA','VAK','Mrkt','Innov. Lead'],
       support: [],
       agenda: ['Opvolging werf CEO – Werf lead','Resource planning','Lange termijn'],
@@ -862,6 +970,8 @@ async function seedGovernance() {
       level: b.level,
       frequency: b.frequency,
       description: b.description,
+      kleur: b.kleur || '#1a5f7a',
+      map_col: b.map_col || null,
       sort_order: b.sort_order
     }).select('id').single();
     if (!bd) continue;
@@ -890,6 +1000,7 @@ async function loadBodies() {
   renderBodies();
   renderBodyFilters();
   renderBodySelects();
+  govRenderMap();
 }
 
 async function loadMeetings() {
@@ -1249,7 +1360,10 @@ function switchTab(tab) {
   document.querySelector(`.ntab[data-tab="${tab}"]`).classList.add('active');
   document.getElementById('panel-'+tab).classList.add('active');
   if (tab === 'overview') renderOverview();
-  if (tab === 'governance' && !gmapChipsInited) { initGmapChips(); gmapChipsInited = true; }
+  if (tab === 'governance') {
+    if (!gmapChipsInited) { initGmapChips(); gmapChipsInited = true; }
+    govRenderMap();
+  }
 }
 
 // ── GOV MAP TOGGLE ──
@@ -1507,6 +1621,227 @@ async function smapDelete(id) {
 async function initSmap() {
   await smapLoad();
   renderSmap();
+}
+
+// ── GOVERNANCE BODY DND MAP ──
+let draggedBodyId = null;
+
+function govRenderMap() {
+  const cols = ['strategic','tactical','bous','support'];
+  cols.forEach(col => {
+    const zone = document.getElementById('gmap-placed-' + col);
+    if (!zone) return;
+    const bodies = allBodies.filter(b => b.map_col === col).sort((a,b) => a.map_row - b.map_row);
+    zone.innerHTML = bodies.map(b => govMapPillHTML(b)).join('');
+    const zoneEl = document.getElementById('gmap-zone-' + col);
+    if (zoneEl) zoneEl.setAttribute('data-empty', bodies.length === 0 ? '1' : '0');
+  });
+  // Palette: unplaced
+  const palette = document.getElementById('gov-palette-items');
+  if (!palette) return;
+  const unplaced = allBodies.filter(b => !b.map_col);
+  palette.innerHTML = unplaced.length === 0
+    ? '<span style="font-size:12px;color:#aaa;font-style:italic;">Alle organen staan op de kaart</span>'
+    : unplaced.map(b => `
+        <div class="gov-palette-pill" draggable="true" ondragstart="govDragStart(event,'${b.id}')" style="border-color:${b.kleur||'#1a5f7a'}">
+          <span>${b.name}</span>
+          <span class="gmap-focus-pill" style="background:${b.kleur||'#1a5f7a'};margin-left:4px;">${b.focus||''}</span>
+          <div class="gov-palette-pill-actions">
+            <button class="gmap-body-pill-btn" onclick="govOpenEdit('${b.id}');event.stopPropagation()">✏️</button>
+            <button class="gmap-body-pill-btn" onclick="govDeleteBody('${b.id}');event.stopPropagation()">✕</button>
+          </div>
+        </div>`).join('');
+}
+
+function govMapPillHTML(b) {
+  const people = (b.gov_participants || []).filter(p => p.participant_type === 'core');
+  const peopleChips = people.map(p => {
+    const lbl = [p.person_name, p.role_name].filter(Boolean).join(' · ');
+    return `<span class="gmap-persoon">${lbl}</span>`;
+  }).join('');
+  return `<div class="gmap-body-pill" draggable="true" ondragstart="govDragStart(event,'${b.id}')" style="border-color:${b.kleur||'#1a5f7a'}">
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span class="gmap-body-pill-name">${b.name}</span>
+        <span class="gmap-body-pill-focus" style="background:${b.kleur||'#1a5f7a'}">${b.focus||''}</span>
+      </div>
+      ${b.frequency ? `<div style="font-size:9px;color:#888;">📅 ${b.frequency}</div>` : ''}
+      ${peopleChips ? `<div style="margin-top:4px;">${peopleChips}</div>` : ''}
+    </div>
+    <div class="gmap-body-pill-actions">
+      <button class="gmap-body-pill-btn" onclick="govOpenEdit('${b.id}');event.stopPropagation()">✏️</button>
+      <button class="gmap-body-pill-btn" onclick="govDragToNone('${b.id}');event.stopPropagation()" title="Verwijder van kaart">↩</button>
+    </div>
+  </div>`;
+}
+
+function govDragStart(e, id) {
+  draggedBodyId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+}
+
+async function govDrop(e, col) {
+  e.preventDefault();
+  document.querySelectorAll('.gmap-dropzone').forEach(z => z.classList.remove('dz-over'));
+  const id = e.dataTransfer.getData('text/plain') || draggedBodyId;
+  if (!id) return;
+  const body = allBodies.find(b => b.id === id);
+  if (!body) return;
+  const siblings = allBodies.filter(b => b.map_col === col);
+  body.map_col = col;
+  body.map_row = siblings.length;
+  await sb.from('gov_bodies').update({map_col: col, map_row: body.map_row}).eq('id', id);
+  govRenderMap();
+}
+
+async function govDragToNone(id) {
+  const body = allBodies.find(b => b.id === id);
+  if (!body) return;
+  body.map_col = null;
+  await sb.from('gov_bodies').update({map_col: null}).eq('id', id);
+  govRenderMap();
+}
+
+async function govDeleteBody(id) {
+  const b = allBodies.find(x => x.id === id);
+  if (!b || !confirm(`"${b.name}" verwijderen?`)) return;
+  await sb.from('gov_bodies').delete().eq('id', id);
+  await loadBodies();
+  govRenderMap();
+}
+
+// ── BODY MODAL ──
+let mgbPeople = [];
+let mgbAgenda = [];
+
+function govOpenNew() {
+  document.getElementById('mgb-id').value = '';
+  document.getElementById('mgb-title').textContent = 'Overlegorgaan toevoegen';
+  document.getElementById('mgb-naam').value = '';
+  document.getElementById('mgb-level').value = 'strategisch';
+  document.getElementById('mgb-focus').value = 'DECIDE';
+  document.getElementById('mgb-freq').value = '';
+  mgbPeople = [];
+  mgbAgenda = [];
+  mgbRenderSwatches('#1a5f7a');
+  mgbRenderPeople();
+  mgbRenderAgenda();
+  openModal('modal-gov-body');
+}
+
+function govOpenEdit(id) {
+  const b = allBodies.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('mgb-id').value = b.id;
+  document.getElementById('mgb-title').textContent = 'Overlegorgaan bewerken';
+  document.getElementById('mgb-naam').value = b.name || '';
+  document.getElementById('mgb-level').value = b.level || 'strategisch';
+  document.getElementById('mgb-focus').value = b.focus || 'DECIDE';
+  document.getElementById('mgb-freq').value = b.frequency || '';
+  mgbPeople = (b.gov_participants || []).map(p => ({...p}));
+  mgbAgenda = (b.gov_agenda_items || []).map(a => ({...a}));
+  mgbRenderSwatches(b.kleur || '#1a5f7a');
+  mgbRenderPeople();
+  mgbRenderAgenda();
+  openModal('modal-gov-body');
+}
+
+function mgbRenderSwatches(selected) {
+  const el = document.getElementById('mgb-swatches');
+  if (!el) return;
+  el.innerHTML = SMAP_COLORS.map(c =>
+    `<div class="smap-swatch${c===selected?' selected':''}" style="background:${c}" onclick="mgbSelectColor('${c}')" title="${c}"></div>`
+  ).join('');
+}
+function mgbSelectColor(c) { mgbRenderSwatches(c); }
+function mgbGetColor() {
+  const s = document.querySelector('#mgb-swatches .smap-swatch.selected');
+  return s ? s.style.background : '#1a5f7a';
+}
+
+function mgbRenderPeople() {
+  const el = document.getElementById('mgb-people-list');
+  if (!el) return;
+  el.innerHTML = mgbPeople.map((p,i) => `
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px;" data-idx="${i}">
+      <input class="input" placeholder="Rol (bv. COO Health)" value="${p.role_name||''}" oninput="mgbPeople[${i}].role_name=this.value" />
+      <input class="input" placeholder="Naam (bv. Jan Janssen)" value="${p.person_name||''}" oninput="mgbPeople[${i}].person_name=this.value" />
+      <button class="smap-med-remove" onclick="mgbPeople.splice(${i},1);mgbRenderPeople()" type="button">×</button>
+    </div>`).join('');
+}
+
+function mgbAddPerson() {
+  mgbPeople.push({role_name:'', person_name:'', participant_type:'core', sort_order: mgbPeople.length});
+  mgbRenderPeople();
+  const inputs = document.querySelectorAll('#mgb-people-list input');
+  if (inputs.length) inputs[inputs.length-2].focus();
+}
+
+function mgbRenderAgenda() {
+  const el = document.getElementById('mgb-agenda-list');
+  if (!el) return;
+  el.innerHTML = mgbAgenda.map((a,i) => `
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <input class="input" placeholder="Agendapunt" value="${a.item||''}" oninput="mgbAgenda[${i}].item=this.value" style="flex:1"/>
+      <button class="smap-med-remove" onclick="mgbAgenda.splice(${i},1);mgbRenderAgenda()" type="button">×</button>
+    </div>`).join('');
+}
+
+function mgbAddAgenda() {
+  mgbAgenda.push({item:'', sort_order: mgbAgenda.length});
+  mgbRenderAgenda();
+  const inputs = document.querySelectorAll('#mgb-agenda-list input');
+  if (inputs.length) inputs[inputs.length-1].focus();
+}
+
+async function mgbSave() {
+  const naam = document.getElementById('mgb-naam').value.trim();
+  if (!naam) { document.getElementById('mgb-naam').focus(); return; }
+  const btn = document.getElementById('mgb-save-btn');
+  btn.textContent = 'Opslaan…'; btn.disabled = true;
+
+  const id = document.getElementById('mgb-id').value;
+  const row = {
+    name: naam,
+    level: document.getElementById('mgb-level').value,
+    focus: document.getElementById('mgb-focus').value,
+    frequency: document.getElementById('mgb-freq').value.trim(),
+    kleur: mgbGetColor(),
+    project_id: projectId,
+    user_id: currentUser.id
+  };
+
+  let bodyId = id;
+  if (id) {
+    await sb.from('gov_bodies').update(row).eq('id', id);
+    await sb.from('gov_participants').delete().eq('body_id', id);
+    await sb.from('gov_agenda_items').delete().eq('body_id', id);
+  } else {
+    row.sort_order = allBodies.length;
+    const {data: nb, error} = await sb.from('gov_bodies').insert(row).select('id').single();
+    if (error) { alert('Fout: ' + error.message); btn.textContent='Opslaan'; btn.disabled=false; return; }
+    bodyId = nb.id;
+  }
+
+  // Insert participants
+  for (let i=0; i<mgbPeople.length; i++) {
+    const p = mgbPeople[i];
+    if (!p.role_name && !p.person_name) continue;
+    await sb.from('gov_participants').insert({body_id: bodyId, role_name: p.role_name||'', person_name: p.person_name||'', participant_type: p.participant_type||'core', sort_order: i});
+  }
+  // Insert agenda
+  for (let i=0; i<mgbAgenda.length; i++) {
+    const a = mgbAgenda[i];
+    if (!a.item) continue;
+    await sb.from('gov_agenda_items').insert({body_id: bodyId, item: a.item, sort_order: i});
+  }
+
+  btn.textContent = 'Opslaan'; btn.disabled = false;
+  closeModal('modal-gov-body');
+  await loadBodies();
+  govRenderMap();
+  renderBodies();
 }
 
 // ── MODAL HELPERS ──
