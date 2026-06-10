@@ -164,41 +164,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gov-palette-pill-actions{display:flex;gap:3px;opacity:0;transition:opacity .15s;}
 .gov-palette-pill:hover .gov-palette-pill-actions{opacity:1;}
 
-/* ── STAKEHOLDER MAP ── */
+/* ── STAKEHOLDER MINDMAP ── */
 .smap-wrapper{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.09);overflow:hidden;margin-bottom:28px;}
 .smap-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;border-bottom:1px solid var(--gy200);background:#f8faf9;}
 .smap-toggle:hover{background:#f0f6f3;}
 .smap-toggle-label{font-size:14px;font-weight:700;color:var(--gy900);display:flex;align-items:center;gap:8px;}
 .smap-toggle-arrow{font-size:12px;color:var(--gy500);transition:transform .2s;}
 .smap-toggle-arrow.open{transform:rotate(180deg);}
-.smap-body{display:none;padding:20px;}
+.smap-body{display:none;}
 .smap-body.open{display:block;}
-.smap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
-/* entity card */
-.smap-card{border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.1);overflow:hidden;display:flex;flex-direction:column;}
-.smap-card-header{padding:14px 16px;display:flex;align-items:center;gap:10px;color:white;}
-.smap-card-icon{font-size:20px;flex-shrink:0;}
-.smap-card-title{font-size:13px;font-weight:700;flex:1;letter-spacing:.3px;}
-.smap-card-actions{display:flex;gap:5px;}
-.smap-btn-edit{background:rgba(255,255,255,.9);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;color:#1a2e44;display:flex;align-items:center;gap:4px;}
-.smap-btn-edit:hover{background:white;}
-.smap-btn-del{background:rgba(255,255,255,.2);border:none;color:white;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;}
-.smap-btn-del:hover{background:rgba(220,38,38,.5);}
-.smap-card-body{background:white;flex:1;padding:14px 16px;}
-.smap-section{margin-bottom:10px;}
-.smap-section:last-child{margin-bottom:0;}
-.smap-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gy500);margin-bottom:5px;display:flex;align-items:center;gap:4px;}
-.smap-person-display{font-size:12px;color:var(--gy700);padding:3px 0;}
-.smap-person-display .rol{font-weight:600;color:var(--gy900);}
-.smap-person-display .naam{color:var(--gy500);}
-.smap-person-empty{font-size:11px;color:var(--gy300);font-style:italic;}
-.smap-chips{display:flex;flex-wrap:wrap;gap:4px;}
-.smap-chip{background:var(--g50);border:1px solid var(--g200);color:var(--g800);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:500;}
-/* add card */
-.smap-new-card{border:2px dashed var(--gy300);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:140px;cursor:pointer;transition:all .18s;color:var(--gy500);gap:6px;}
-.smap-new-card:hover{border-color:var(--teal);color:var(--teal);background:#f0fdf9;}
-.smap-new-card .plus{font-size:28px;line-height:1;}
-.smap-new-card span{font-size:13px;font-weight:600;}
+/* mindmap */
+.smap-mindmap{padding:18px 20px;overflow-x:auto;}
+.smap-mm-toolbar{display:flex;justify-content:flex-end;margin-bottom:14px;}
+.smap-node-group{margin-bottom:12px;}
+.smap-node-row{display:flex;align-items:flex-start;gap:0;}
+.smap-entity-box{border-radius:8px;overflow:hidden;min-width:180px;max-width:230px;flex-shrink:0;border:2px solid #d0d8e0;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+.smap-entity-hd{padding:9px 12px;color:white;display:flex;align-items:center;gap:8px;}
+.smap-entity-hd-icon{font-size:15px;flex-shrink:0;}
+.smap-entity-hd-name{font-size:12px;font-weight:700;flex:1;line-height:1.3;}
+.smap-entity-hd-btns{display:flex;gap:2px;opacity:0;transition:opacity .15s;}
+.smap-entity-box:hover .smap-entity-hd-btns{opacity:1;}
+.smap-entity-hd-btn{background:rgba(255,255,255,.2);border:none;color:white;border-radius:4px;padding:2px 5px;font-size:10px;cursor:pointer;line-height:1.4;}
+.smap-entity-hd-btn:hover{background:rgba(255,255,255,.4);}
+.smap-connector-h{width:20px;height:2px;background:#c8d5de;margin-top:17px;flex-shrink:0;}
+.smap-persons{display:flex;flex-direction:column;gap:4px;padding-top:1px;}
+.smap-person{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;border:1px solid;white-space:nowrap;}
+.smap-person-icon{font-size:11px;}
+.smap-person-naam{font-weight:600;}
+.smap-person-rol{opacity:.75;}
+.smap-p-lead{background:#fef9e7;border-color:#f1c40f;color:#7d6608;}
+.smap-p-spoc{background:#e8f8f5;border-color:#1abc9c;color:#0e6655;}
+.smap-p-betrokken{background:#f4f6f7;border-color:#b2bec3;color:#555;}
+.smap-children{margin-left:52px;padding-left:18px;border-left:2px solid #d0d8e0;margin-top:4px;padding-top:2px;}
+.smap-add-child{margin-left:52px;margin-top:4px;}
 /* modal smap */
 .smap-modal-section{margin-bottom:18px;}
 .smap-modal-section-title{font-size:12px;font-weight:700;color:var(--gy700);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--gy200);}
@@ -477,14 +475,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
       </div><!-- end gov-map-wrapper -->
 
-      <!-- ── STAKEHOLDERKAART ── -->
+      <!-- ── STAKEHOLDERKAART MINDMAP ── -->
       <div class="smap-wrapper">
         <div class="smap-toggle" onclick="toggleSmap()">
           <span class="smap-toggle-label">🤝 Stakeholderkaart — Betrokken entiteiten</span>
           <span class="smap-toggle-arrow open" id="smap-arrow">▼</span>
         </div>
         <div class="smap-body open" id="smap-body">
-          <div id="smap-grid" class="smap-grid"></div>
+          <div id="smap-mindmap" class="smap-mindmap"></div>
         </div>
       </div>
 
@@ -559,12 +557,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="modal-title" id="smap-modal-title">Entiteit bewerken</div>
     <input type="hidden" id="smap-edit-id" />
 
-    <!-- Naam + kleur -->
+    <!-- Naam + kleur + parent -->
     <div class="smap-modal-section">
       <div class="smap-modal-section-title">Entiteit</div>
       <div class="field">
         <label class="label">Naam</label>
         <input class="input" id="smap-f-naam" placeholder="bv. Colruyt Group Health" />
+      </div>
+      <div class="field">
+        <label class="label">Parent entiteit (optioneel — maakt een child node)</label>
+        <select class="select" id="smap-f-parent">
+          <option value="">— Geen parent (root niveau) —</option>
+        </select>
       </div>
       <div class="field">
         <label class="label">Kleur</label>
@@ -1427,7 +1431,7 @@ function initGmapChips() {
   Object.keys(gmapData).forEach(renderChipList);
 }
 
-// ── STAKEHOLDER MAP ──
+// ── STAKEHOLDER MINDMAP ──
 const SMAP_COLORS = ['#1a5f7a','#2e8b6a','#6d4c9e','#c05621','#0D9488','#b8391e','#2d6a4f','#7c4d1e','#1e4080','#8b5e2e'];
 const SMAP_ICONS  = ['🏢','🏥','🏬','⚙️','📦','🌿','🔬','💊','🛒','📊'];
 let smapEntities = [];
@@ -1442,12 +1446,12 @@ async function smapLoad() {
   if (data && data.length > 0) {
     smapEntities = data.map(r => ({
       id: r.id, naam: r.naam, kleur: r.kleur, icon: r.icon,
-      lead: {rol: r.lead_rol, naam: r.lead_naam},
-      spoc: {rol: r.spoc_rol, naam: r.spoc_naam},
+      parent_id: r.parent_id || null,
+      lead: {rol: r.lead_rol||'', naam: r.lead_naam||''},
+      spoc: {rol: r.spoc_rol||'', naam: r.spoc_naam||''},
       medewerkers: r.medewerkers || []
     }));
   } else {
-    // seed defaults
     const defaults = [
       { naam:'Colruyt Group Health', kleur:'#1a5f7a', icon:'🏥', lead_rol:'COO Health', lead_naam:'', spoc_rol:'Lead Werf', spoc_naam:'', medewerkers:[{rol:"BUM's HV",naam:''},{rol:'Werf Lead',naam:''}], volgorde:0 },
       { naam:'Vertical Food', kleur:'#2e8b6a', icon:'🛒', lead_rol:'Vert. Directeur', lead_naam:'', spoc_rol:'', spoc_naam:'', medewerkers:[], volgorde:1 },
@@ -1466,51 +1470,73 @@ function toggleSmap() {
   const open = b.classList.toggle('open'); a.classList.toggle('open', open);
 }
 
-function renderSmap() {
-  const grid = document.getElementById('smap-grid');
-  if (!grid) return;
-  grid.innerHTML = smapEntities.map(e => {
-    const leadTxt = [e.lead.naam, e.lead.rol].filter(Boolean).join(' · ') || '<span style="color:#aaa;font-style:italic">Niet ingevuld</span>';
-    const spocTxt = [e.spoc.naam, e.spoc.rol].filter(Boolean).join(' · ') || '<span style="color:#aaa;font-style:italic">Niet ingevuld</span>';
-    const medChips = (e.medewerkers||[]).filter(m=>m.rol||m.naam).map(m=>{
-      const lbl = [m.naam, m.rol].filter(Boolean).join(' · ');
-      return `<span class="smap-chip">${lbl}</span>`;
-    }).join('') || '<span style="color:#aaa;font-size:11px;font-style:italic">Geen medewerkers</span>';
-    return `<div class="smap-card">
-      <div class="smap-card-header" style="background:${e.kleur}">
-        <span class="smap-card-icon">${e.icon}</span>
-        <span class="smap-card-title">${e.naam}</span>
-        <div class="smap-card-actions">
-          <button class="smap-btn-edit" onclick="smapOpenEdit(${e.id})">✏️ Bewerken</button>
-          <button class="smap-btn-del" onclick="smapDelete(${e.id})" title="Verwijderen">✕</button>
+// ── mindmap render helpers ──
+function smapBuildPersonList(entity) {
+  const persons = [];
+  if (entity.lead && (entity.lead.naam || entity.lead.rol))
+    persons.push({...entity.lead, type:'lead'});
+  if (entity.spoc && (entity.spoc.naam || entity.spoc.rol))
+    persons.push({...entity.spoc, type:'spoc'});
+  (entity.medewerkers||[]).forEach(m => { if (m.rol||m.naam) persons.push({...m, type:'betrokken'}); });
+  return persons;
+}
+
+function smapPersonHTML(p) {
+  const icon = p.type==='lead'?'👑':p.type==='spoc'?'🎯':'👥';
+  const parts = [];
+  if (p.naam) parts.push(`<span class="smap-person-naam">${p.naam}</span>`);
+  if (p.rol)  parts.push(`<span class="smap-person-rol">${p.naam&&p.rol?' · ':''}${p.rol}</span>`);
+  return `<div class="smap-person smap-p-${p.type}"><span class="smap-person-icon">${icon}</span>${parts.join('')}</div>`;
+}
+
+function smapRenderNode(entity) {
+  const children = smapEntities.filter(e => e.parent_id === entity.id);
+  const persons  = smapBuildPersonList(entity);
+  const clr = entity.kleur || '#1a5f7a';
+  return `<div class="smap-node-group">
+    <div class="smap-node-row">
+      <div class="smap-entity-box" style="border-color:${clr}">
+        <div class="smap-entity-hd" style="background:${clr}">
+          <span class="smap-entity-hd-icon">${entity.icon||'🏢'}</span>
+          <span class="smap-entity-hd-name">${entity.naam}</span>
+          <div class="smap-entity-hd-btns">
+            <button class="smap-entity-hd-btn" onclick="smapOpenEdit('${entity.id}');event.stopPropagation()" title="Bewerken">✏️</button>
+            <button class="smap-entity-hd-btn" onclick="smapDelete('${entity.id}');event.stopPropagation()" title="Verwijderen">✕</button>
+          </div>
         </div>
       </div>
-      <div class="smap-card-body">
-        <div class="smap-section">
-          <div class="smap-section-label">👑 Lead</div>
-          <div class="smap-person-display">${leadTxt}</div>
-        </div>
-        <div class="smap-section">
-          <div class="smap-section-label">🎯 SPOC</div>
-          <div class="smap-person-display">${spocTxt}</div>
-        </div>
-        <div class="smap-section">
-          <div class="smap-section-label">👥 Medewerkers</div>
-          <div class="smap-chips">${medChips}</div>
-        </div>
-      </div>
-    </div>`;
-  }).join('') +
-  `<div class="smap-new-card" onclick="smapOpenNew()">
-    <div class="plus">＋</div><span>Entiteit toevoegen</span>
+      ${persons.length ? `<div class="smap-connector-h"></div><div class="smap-persons">${persons.map(smapPersonHTML).join('')}</div>` : ''}
+    </div>
+    ${children.length ? `<div class="smap-children">${children.map(smapRenderNode).join('')}</div>` : ''}
   </div>`;
+}
+
+function renderSmap() {
+  const el = document.getElementById('smap-mindmap');
+  if (!el) return;
+  const roots = smapEntities.filter(e => !e.parent_id);
+  el.innerHTML = `<div class="smap-mm-toolbar">
+    <button class="btn btn-teal btn-sm" onclick="smapOpenNew()">＋ Entiteit toevoegen</button>
+  </div>` + (roots.length
+    ? roots.map(smapRenderNode).join('')
+    : `<div class="empty"><div class="empty-icon">🤝</div><div class="empty-text">Nog geen entiteiten. Voeg er een toe.</div></div>`);
 }
 
 // ── smap modal ──
 let smapEditId = null;
 let smapModalMeds = [];
 
-function smapOpenNew() {
+function smapRenderParentOptions(excludeId) {
+  const sel = document.getElementById('smap-f-parent');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Geen parent (root niveau) —</option>' +
+    smapEntities
+      .filter(e => e.id !== excludeId)
+      .map(e => `<option value="${e.id}">${e.naam}</option>`)
+      .join('');
+}
+
+function smapOpenNew(defaultParentId) {
   smapEditId = null;
   smapModalMeds = [];
   document.getElementById('smap-modal-title').textContent = 'Entiteit toevoegen';
@@ -1519,6 +1545,8 @@ function smapOpenNew() {
   document.getElementById('smap-f-lead-naam').value = '';
   document.getElementById('smap-f-spoc-rol').value = '';
   document.getElementById('smap-f-spoc-naam').value = '';
+  smapRenderParentOptions(null);
+  if (defaultParentId) document.getElementById('smap-f-parent').value = defaultParentId;
   smapRenderSwatches(SMAP_COLORS[smapEntities.length % SMAP_COLORS.length]);
   smapRenderModalMeds();
   openModal('smap-modal');
@@ -1535,6 +1563,8 @@ function smapOpenEdit(id) {
   document.getElementById('smap-f-lead-naam').value = e.lead.naam||'';
   document.getElementById('smap-f-spoc-rol').value = e.spoc.rol||'';
   document.getElementById('smap-f-spoc-naam').value = e.spoc.naam||'';
+  smapRenderParentOptions(id);
+  document.getElementById('smap-f-parent').value = e.parent_id || '';
   smapRenderSwatches(e.kleur);
   smapRenderModalMeds();
   openModal('smap-modal');
@@ -1543,7 +1573,7 @@ function smapOpenEdit(id) {
 function smapRenderSwatches(selected) {
   const el = document.getElementById('smap-swatches');
   el.innerHTML = SMAP_COLORS.map(c =>
-    `<div class="smap-swatch${c===selected?' selected':''}" style="background:${c}" onclick="smapSelectColor('${c}')" title="${c}"></div>`
+    `<div class="smap-swatch${c===selected?' selected':''}" style="background:${c}" data-color="${c}" onclick="smapSelectColor('${c}')" title="${c}"></div>`
   ).join('');
 }
 
@@ -1551,22 +1581,22 @@ function smapSelectColor(c) { smapRenderSwatches(c); }
 
 function smapGetSelectedColor() {
   const sel = document.querySelector('#smap-swatches .smap-swatch.selected');
-  return sel ? sel.style.background : SMAP_COLORS[0];
+  return sel ? (sel.dataset.color || sel.style.background) : SMAP_COLORS[0];
 }
 
 function smapRenderModalMeds() {
   const el = document.getElementById('smap-modal-meds');
   el.innerHTML = smapModalMeds.map((m,i) =>
     `<div class="smap-med-row">
-      <input class="input" placeholder="Rol" value="${m.rol||''}" oninput="smapModalMeds[${i}].rol=this.value" />
       <input class="input" placeholder="Naam" value="${m.naam||''}" oninput="smapModalMeds[${i}].naam=this.value" />
+      <input class="input" placeholder="Rol" value="${m.rol||''}" oninput="smapModalMeds[${i}].rol=this.value" />
       <button class="smap-med-remove" onclick="smapModalRemoveMed(${i})" type="button">×</button>
     </div>`
   ).join('');
 }
 
 function smapModalAddMed() {
-  smapModalMeds.push({rol:'',naam:''});
+  smapModalMeds.push({naam:'',rol:''});
   smapRenderModalMeds();
   const inputs = document.querySelectorAll('#smap-modal-meds .smap-med-row input');
   if (inputs.length) inputs[inputs.length-2].focus();
@@ -1583,9 +1613,11 @@ async function smapModalSave() {
   const btn = document.querySelector('#smap-modal .btn-p');
   btn.textContent = 'Opslaan…'; btn.disabled = true;
 
+  const parentVal = document.getElementById('smap-f-parent').value;
   const row = {
     naam,
     kleur: smapGetSelectedColor(),
+    parent_id: parentVal || null,
     lead_rol: document.getElementById('smap-f-lead-rol').value.trim(),
     lead_naam: document.getElementById('smap-f-lead-naam').value.trim(),
     spoc_rol: document.getElementById('smap-f-spoc-rol').value.trim(),
@@ -1608,14 +1640,16 @@ async function smapModalSave() {
   closeModal('smap-modal');
   await smapLoad();
   renderSmap();
+  toast('Entiteit opgeslagen');
 }
 
 async function smapDelete(id) {
   const e = smapEntities.find(x=>x.id===id);
-  if (!e || !confirm(`"${e.naam}" verwijderen?`)) return;
+  if (!e || !confirm(`"${e.naam}" verwijderen? Child entiteiten worden losgekoppeld.`)) return;
   await sb.from('gov_stakeholders').delete().eq('id', id);
   await smapLoad();
   renderSmap();
+  toast('Verwijderd');
 }
 
 async function initSmap() {
@@ -1751,13 +1785,13 @@ function mgbRenderSwatches(selected) {
   const el = document.getElementById('mgb-swatches');
   if (!el) return;
   el.innerHTML = SMAP_COLORS.map(c =>
-    `<div class="smap-swatch${c===selected?' selected':''}" style="background:${c}" onclick="mgbSelectColor('${c}')" title="${c}"></div>`
+    `<div class="smap-swatch${c===selected?' selected':''}" style="background:${c}" data-color="${c}" onclick="mgbSelectColor('${c}')" title="${c}"></div>`
   ).join('');
 }
 function mgbSelectColor(c) { mgbRenderSwatches(c); }
 function mgbGetColor() {
   const s = document.querySelector('#mgb-swatches .smap-swatch.selected');
-  return s ? s.style.background : '#1a5f7a';
+  return s ? (s.dataset.color || s.style.background) : '#1a5f7a';
 }
 
 function mgbRenderPeople() {
