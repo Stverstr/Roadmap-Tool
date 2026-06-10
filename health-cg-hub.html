@@ -167,15 +167,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .smap-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gy500);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
 .smap-section-icon{font-size:12px;}
 .smap-person-row{display:flex;gap:6px;align-items:center;margin-bottom:5px;flex-wrap:wrap;}
-.smap-person-field{font-size:11px;border:1px solid var(--gy200);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--gy700);background:#fafafa;min-width:60px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.smap-person-field:empty::before{content:attr(data-ph);color:var(--gy300);}
-.smap-person-field:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(13,148,136,.12);background:white;white-space:normal;overflow:visible;}
-.smap-person-field.rol{font-weight:600;color:var(--gy900);}
-.smap-person-field.naam{color:var(--gy500);}
-.smap-person-remove{background:none;border:none;color:var(--gy300);font-size:13px;cursor:pointer;padding:0 2px;line-height:1;}
+.smap-person-field{font-size:11px;border:1.5px solid var(--gy300);border-radius:6px;padding:4px 8px;cursor:text;color:var(--gy900);background:white;min-width:70px;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:border-color .15s,box-shadow .15s;}
+.smap-person-field:empty::before{content:attr(data-ph);color:var(--gy300);font-style:italic;}
+.smap-person-field:hover{border-color:var(--teal);}
+.smap-person-field:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.15);background:#f0fdf9;white-space:normal;overflow:visible;}
+.smap-person-field.rol{font-weight:600;}
+.smap-card-name-wrap{position:relative;flex:1;}
+.smap-card-name{font-size:13px;font-weight:700;width:100%;border:1.5px solid rgba(255,255,255,.4);border-radius:6px;background:rgba(255,255,255,.15);color:white;font-family:inherit;padding:3px 8px;outline:none;transition:background .15s,border-color .15s;}
+.smap-card-name:hover{background:rgba(255,255,255,.25);}
+.smap-card-name:focus{background:rgba(255,255,255,.3);border-color:white;box-shadow:0 0 0 2px rgba(255,255,255,.3);}
+.smap-person-remove{background:none;border:none;color:var(--gy300);font-size:14px;cursor:pointer;padding:0 3px;line-height:1;flex-shrink:0;}
 .smap-person-remove:hover{color:#c00;}
-.smap-add-person{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--teal);background:none;border:1px dashed var(--teal);border-radius:6px;padding:3px 9px;cursor:pointer;margin-top:2px;}
+.smap-add-person{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--teal);background:white;border:1.5px dashed var(--teal);border-radius:6px;padding:4px 10px;cursor:pointer;margin-top:4px;font-weight:500;}
 .smap-add-person:hover{background:#f0fdf9;}
+.smap-edit-hint{font-size:10px;color:var(--gy400);font-style:italic;margin-bottom:8px;display:flex;align-items:center;gap:4px;}
 /* new entity form */
 .smap-new-card{border:2px dashed var(--gy300);border-radius:10px;display:flex;align-items:center;justify-content:center;min-height:120px;cursor:pointer;transition:all .18s;color:var(--gy500);}
 .smap-new-card:hover{border-color:var(--teal);color:var(--teal);background:#f0fdf9;}
@@ -707,6 +712,7 @@ async function showApp() {
   await Promise.all([loadBodies(), loadMeetings(), loadActions()]);
   renderOverview();
   initGmapChips();
+  initSmap();
 }
 
 // ── PROJECT: zorg dat "Health CG" bestaat ──
@@ -1245,6 +1251,169 @@ function gmapEditChip(id, idx, span) {
 
 function initGmapChips() {
   Object.keys(gmapData).forEach(renderChipList);
+}
+
+// ── STAKEHOLDER MAP ──
+const SMAP_COLORS = ['#1a5f7a','#2e8b6a','#6d4c9e','#c05621','#0D9488','#b8391e','#2d6a4f','#7c4d1e','#1e4080','#8b5e2e'];
+const SMAP_ICONS  = ['🏢','🏥','🏬','⚙️','📦','🌿','🔬','💊','🛒','📊'];
+const SMAP_KEY    = 'health_cg_stakeholders_v1';
+
+let smapEntities = [];
+
+function smapLoad() {
+  try {
+    const raw = localStorage.getItem(SMAP_KEY);
+    if (raw) { smapEntities = JSON.parse(raw); return; }
+  } catch(e) {}
+  // defaults
+  smapEntities = [
+    { id: smapId(), naam: 'Colruyt Group Health', kleur: '#1a5f7a', icon: '🏥',
+      lead: {rol:'COO Health', naam:''},
+      spoc: {rol:'Lead Werf', naam:''},
+      medewerkers: [{rol:"BUM's HV", naam:''},{rol:'Werf Lead', naam:''}] },
+    { id: smapId(), naam: 'Vertical Food', kleur: '#2e8b6a', icon: '🛒',
+      lead: {rol:'Vert. Directeur', naam:''},
+      spoc: {rol:'', naam:''},
+      medewerkers: [] },
+    { id: smapId(), naam: 'P&O', kleur: '#6d4c9e', icon: '👥',
+      lead: {rol:'Dir. P&O', naam:''},
+      spoc: {rol:'', naam:''},
+      medewerkers: [] },
+    { id: smapId(), naam: 'Marketing & Vakmanschap', kleur: '#c05621', icon: '📊',
+      lead: {rol:'', naam:''},
+      spoc: {rol:'', naam:''},
+      medewerkers: [] },
+  ];
+  smapSave();
+}
+
+function smapSave() {
+  try { localStorage.setItem(SMAP_KEY, JSON.stringify(smapEntities)); } catch(e) {}
+}
+
+let _smapIdCtr = Date.now();
+function smapId() { return ++_smapIdCtr; }
+
+function toggleSmap() {
+  const body = document.getElementById('smap-body');
+  const arrow = document.getElementById('smap-arrow');
+  const open = body.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
+function renderSmap() {
+  const grid = document.getElementById('smap-grid');
+  if (!grid) return;
+  grid.innerHTML = smapEntities.map(e => smapCardHTML(e)).join('') +
+    `<div class="smap-new-card" onclick="smapAddEntity()">
+      <span>＋ Entiteit toevoegen</span>
+    </div>`;
+}
+
+function smapCardHTML(e) {
+  const meds = (e.medewerkers || []).map((m, i) =>
+    `<div class="smap-person-row" id="smap-med-row-${e.id}-${i}">
+      <div class="smap-person-field rol" contenteditable="true" data-ph="Rol"
+           onblur="smapUpdate(${e.id},'medewerkers',${i},'rol',this.textContent)">${m.rol||''}</div>
+      <div class="smap-person-field naam" contenteditable="true" data-ph="Naam"
+           onblur="smapUpdate(${e.id},'medewerkers',${i},'naam',this.textContent)">${m.naam||''}</div>
+      <button class="smap-person-remove" onclick="smapRemoveMed(${e.id},${i})" title="Verwijder">×</button>
+    </div>`
+  ).join('');
+
+  return `<div class="smap-card" id="smap-card-${e.id}">
+    <div class="smap-card-header" style="background:${e.kleur}">
+      <span class="smap-card-icon">${e.icon}</span>
+      <input class="smap-card-name" value="${smapEsc(e.naam)}"
+             onblur="smapUpdate(${e.id},'naam',null,null,this.value)"
+             title="Klik om naam te bewerken" />
+      <button class="smap-card-delete" onclick="smapDeleteEntity(${e.id})" title="Verwijder entiteit">✕</button>
+    </div>
+    <div class="smap-card-body">
+      <div class="smap-edit-hint">✏️ Klik op een veld om te bewerken</div>
+      <div class="smap-section">
+        <div class="smap-section-label"><span class="smap-section-icon">👑</span> Lead</div>
+        <div class="smap-person-row">
+          <div class="smap-person-field rol" contenteditable="true" data-ph="Rol"
+               onblur="smapUpdate(${e.id},'lead',null,'rol',this.textContent)">${e.lead.rol||''}</div>
+          <div class="smap-person-field naam" contenteditable="true" data-ph="Naam"
+               onblur="smapUpdate(${e.id},'lead',null,'naam',this.textContent)">${e.lead.naam||''}</div>
+        </div>
+      </div>
+      <div class="smap-section">
+        <div class="smap-section-label"><span class="smap-section-icon">🎯</span> SPOC</div>
+        <div class="smap-person-row">
+          <div class="smap-person-field rol" contenteditable="true" data-ph="Rol"
+               onblur="smapUpdate(${e.id},'spoc',null,'rol',this.textContent)">${e.spoc.rol||''}</div>
+          <div class="smap-person-field naam" contenteditable="true" data-ph="Naam"
+               onblur="smapUpdate(${e.id},'spoc',null,'naam',this.textContent)">${e.spoc.naam||''}</div>
+        </div>
+      </div>
+      <div class="smap-section">
+        <div class="smap-section-label"><span class="smap-section-icon">👥</span> Medewerkers</div>
+        <div id="smap-meds-${e.id}">${meds}</div>
+        <button class="smap-add-person" onclick="smapAddMed(${e.id})">＋ Medewerker</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function smapEsc(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function smapUpdate(id, field, subIdx, subField, val) {
+  val = (val||'').trim();
+  const e = smapEntities.find(x => x.id === id);
+  if (!e) return;
+  if (field === 'naam') { e.naam = val; }
+  else if (field === 'lead' || field === 'spoc') { e[field][subField] = val; }
+  else if (field === 'medewerkers' && subIdx !== null) { e.medewerkers[subIdx][subField] = val; }
+  smapSave();
+}
+
+function smapAddMed(id) {
+  const e = smapEntities.find(x => x.id === id);
+  if (!e) return;
+  e.medewerkers.push({rol:'', naam:''});
+  smapSave();
+  renderSmap();
+  // focus the new rol field
+  const rows = document.querySelectorAll(`#smap-meds-${id} .smap-person-row`);
+  if (rows.length) { const last = rows[rows.length-1]; const f = last.querySelector('.smap-person-field.rol'); if(f) f.focus(); }
+}
+
+function smapRemoveMed(id, idx) {
+  const e = smapEntities.find(x => x.id === id);
+  if (!e) return;
+  e.medewerkers.splice(idx, 1);
+  smapSave(); renderSmap();
+}
+
+function smapDeleteEntity(id) {
+  const e = smapEntities.find(x => x.id === id);
+  if (!e || !confirm(`"${e.naam}" verwijderen?`)) return;
+  smapEntities = smapEntities.filter(x => x.id !== id);
+  smapSave(); renderSmap();
+}
+
+function smapAddEntity() {
+  const naam = prompt('Naam van de entiteit:');
+  if (!naam || !naam.trim()) return;
+  const idx = smapEntities.length % SMAP_COLORS.length;
+  smapEntities.push({
+    id: smapId(),
+    naam: naam.trim(),
+    kleur: SMAP_COLORS[idx],
+    icon: SMAP_ICONS[idx],
+    lead: {rol:'', naam:''},
+    spoc: {rol:'', naam:''},
+    medewerkers: []
+  });
+  smapSave(); renderSmap();
+}
+
+function initSmap() {
+  smapLoad();
+  renderSmap();
 }
 
 // ── MODAL HELPERS ──
