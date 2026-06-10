@@ -140,6 +140,46 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gmap-chip-add{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1px dashed #b2d8d8;background:transparent;color:#1a8c8a;font-size:14px;cursor:pointer;line-height:1;font-weight:300;flex-shrink:0;}
 .gmap-chip-add:hover{background:#e8f4f4;}
 .gmap-chip-input{font-size:10px;font-family:inherit;border:1px solid #1a8c8a;border-radius:12px;padding:1px 8px;outline:none;width:90px;color:#1a5f7a;background:white;}
+
+/* ── STAKEHOLDER MAP ── */
+.smap-wrapper{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.09);overflow:hidden;margin-bottom:28px;}
+.smap-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;border-bottom:1px solid var(--gy200);background:#f8faf9;}
+.smap-toggle:hover{background:#f0f6f3;}
+.smap-toggle-label{font-size:14px;font-weight:700;color:var(--gy900);display:flex;align-items:center;gap:8px;}
+.smap-toggle-arrow{font-size:12px;color:var(--gy500);transition:transform .2s;}
+.smap-toggle-arrow.open{transform:rotate(180deg);}
+.smap-body{display:none;padding:20px;}
+.smap-body.open{display:block;}
+.smap-toolbar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:16px;}
+.smap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+/* entity card */
+.smap-card{border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.1);overflow:hidden;display:flex;flex-direction:column;}
+.smap-card-header{padding:12px 14px;display:flex;align-items:center;gap:8px;color:white;position:relative;}
+.smap-card-icon{font-size:18px;flex-shrink:0;}
+.smap-card-name{font-size:13px;font-weight:700;flex:1;letter-spacing:.3px;cursor:pointer;border:none;background:transparent;color:white;font-family:inherit;padding:0;outline:none;}
+.smap-card-name:focus{background:rgba(255,255,255,.2);border-radius:4px;padding:1px 5px;}
+.smap-card-delete{background:rgba(255,255,255,.2);border:none;color:white;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;flex-shrink:0;opacity:.7;}
+.smap-card-delete:hover{opacity:1;background:rgba(255,0,0,.35);}
+.smap-card-body{background:white;flex:1;padding:14px;}
+/* person sections */
+.smap-section{margin-bottom:12px;}
+.smap-section:last-child{margin-bottom:0;}
+.smap-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gy500);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.smap-section-icon{font-size:12px;}
+.smap-person-row{display:flex;gap:6px;align-items:center;margin-bottom:5px;flex-wrap:wrap;}
+.smap-person-field{font-size:11px;border:1px solid var(--gy200);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--gy700);background:#fafafa;min-width:60px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.smap-person-field:empty::before{content:attr(data-ph);color:var(--gy300);}
+.smap-person-field:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(13,148,136,.12);background:white;white-space:normal;overflow:visible;}
+.smap-person-field.rol{font-weight:600;color:var(--gy900);}
+.smap-person-field.naam{color:var(--gy500);}
+.smap-person-remove{background:none;border:none;color:var(--gy300);font-size:13px;cursor:pointer;padding:0 2px;line-height:1;}
+.smap-person-remove:hover{color:#c00;}
+.smap-add-person{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--teal);background:none;border:1px dashed var(--teal);border-radius:6px;padding:3px 9px;cursor:pointer;margin-top:2px;}
+.smap-add-person:hover{background:#f0fdf9;}
+/* new entity form */
+.smap-new-card{border:2px dashed var(--gy300);border-radius:10px;display:flex;align-items:center;justify-content:center;min-height:120px;cursor:pointer;transition:all .18s;color:var(--gy500);}
+.smap-new-card:hover{border-color:var(--teal);color:var(--teal);background:#f0fdf9;}
+.smap-new-card span{font-size:13px;font-weight:600;}
 .gov-body-card{background:white;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.09);overflow:hidden;}
 .gov-body-header{padding:16px 18px 12px;border-bottom:1px solid var(--gy100);}
 .gov-body-name{font-size:15px;font-weight:700;color:var(--gy900);margin-bottom:4px;}
@@ -394,6 +434,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
         </div><!-- end gov-map-body -->
       </div><!-- end gov-map-wrapper -->
+
+      <!-- ── STAKEHOLDERKAART ── -->
+      <div class="smap-wrapper">
+        <div class="smap-toggle" onclick="toggleSmap()">
+          <span class="smap-toggle-label">🤝 Stakeholderkaart — Betrokken entiteiten</span>
+          <span class="smap-toggle-arrow open" id="smap-arrow">▼</span>
+        </div>
+        <div class="smap-body open" id="smap-body">
+          <div id="smap-grid" class="smap-grid"></div>
+        </div>
+      </div>
 
       <div id="gov-strategic" class="gov-level">
         <div class="gov-level-title">🔵 Strategisch niveau</div>
