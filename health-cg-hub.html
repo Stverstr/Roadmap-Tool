@@ -765,17 +765,21 @@ async function showApp() {
   await ensureHealthCGProject();
   await Promise.all([loadBodies(), loadMeetings(), loadActions()]);
   renderOverview();
-  initGmapChips();
-  initSmap();
+  await initSmap();
 }
 
 // ── PROJECT: zorg dat "Health CG" bestaat ──
 async function ensureHealthCGProject() {
   const {data} = await sb.from('projects').select('id').eq('user_id', currentUser.id).eq('name', 'Health CG').maybeSingle();
-  if (data) { projectId = data.id; return; }
+  if (data) {
+    projectId = data.id;
+    // Seed governance als die nog leeg is
+    const {count} = await sb.from('gov_bodies').select('id', {count:'exact',head:true}).eq('project_id', projectId);
+    if (count === 0) await seedGovernance();
+    return;
+  }
   const {data: np} = await sb.from('projects').insert({user_id: currentUser.id, name: 'Health CG', description: 'Colruyt Group Health – Strategisch project'}).select('id').single();
   projectId = np.id;
-  // Laad standaard governance structuur
   await seedGovernance();
 }
 
@@ -1238,12 +1242,14 @@ document.querySelectorAll('.ntab').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
 
+let gmapChipsInited = false;
 function switchTab(tab) {
   document.querySelectorAll('.ntab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelector(`.ntab[data-tab="${tab}"]`).classList.add('active');
   document.getElementById('panel-'+tab).classList.add('active');
   if (tab === 'overview') renderOverview();
+  if (tab === 'governance' && !gmapChipsInited) { initGmapChips(); gmapChipsInited = true; }
 }
 
 // ── GOV MAP TOGGLE ──
@@ -1310,29 +1316,35 @@ function initGmapChips() {
 // ── STAKEHOLDER MAP ──
 const SMAP_COLORS = ['#1a5f7a','#2e8b6a','#6d4c9e','#c05621','#0D9488','#b8391e','#2d6a4f','#7c4d1e','#1e4080','#8b5e2e'];
 const SMAP_ICONS  = ['🏢','🏥','🏬','⚙️','📦','🌿','🔬','💊','🛒','📊'];
-const SMAP_KEY    = 'health_cg_stakeholders_v2';
 let smapEntities = [];
-let _smapIdCtr = Date.now();
-function smapId() { return ++_smapIdCtr; }
 
-function smapLoad() {
-  try { const r = localStorage.getItem(SMAP_KEY); if (r) { smapEntities = JSON.parse(r); return; } } catch(e) {}
-  smapEntities = [
-    { id:smapId(), naam:'Colruyt Group Health', kleur:'#1a5f7a', icon:'🏥',
-      lead:{rol:'COO Health',naam:''}, spoc:{rol:'Lead Werf',naam:''},
-      medewerkers:[{rol:"BUM's HV",naam:''},{rol:'Werf Lead',naam:''}] },
-    { id:smapId(), naam:'Vertical Food', kleur:'#2e8b6a', icon:'🛒',
-      lead:{rol:'Vert. Directeur',naam:''}, spoc:{rol:'',naam:''}, medewerkers:[] },
-    { id:smapId(), naam:'P&O', kleur:'#6d4c9e', icon:'👥',
-      lead:{rol:'Dir. P&O',naam:''}, spoc:{rol:'',naam:''}, medewerkers:[] },
-    { id:smapId(), naam:'Marketing & Vakmanschap', kleur:'#c05621', icon:'📊',
-      lead:{rol:'',naam:''}, spoc:{rol:'',naam:''}, medewerkers:[] },
-  ];
-  smapSave();
-}
-
-function smapSave() {
-  try { localStorage.setItem(SMAP_KEY, JSON.stringify(smapEntities)); } catch(e) {}
+async function smapLoad() {
+  const { data, error } = await sb.from('gov_stakeholders')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .eq('project_id', projectId)
+    .order('volgorde');
+  if (error) { console.error('stakeholders load:', error); smapEntities = []; return; }
+  if (data && data.length > 0) {
+    smapEntities = data.map(r => ({
+      id: r.id, naam: r.naam, kleur: r.kleur, icon: r.icon,
+      lead: {rol: r.lead_rol, naam: r.lead_naam},
+      spoc: {rol: r.spoc_rol, naam: r.spoc_naam},
+      medewerkers: r.medewerkers || []
+    }));
+  } else {
+    // seed defaults
+    const defaults = [
+      { naam:'Colruyt Group Health', kleur:'#1a5f7a', icon:'🏥', lead_rol:'COO Health', lead_naam:'', spoc_rol:'Lead Werf', spoc_naam:'', medewerkers:[{rol:"BUM's HV",naam:''},{rol:'Werf Lead',naam:''}], volgorde:0 },
+      { naam:'Vertical Food', kleur:'#2e8b6a', icon:'🛒', lead_rol:'Vert. Directeur', lead_naam:'', spoc_rol:'', spoc_naam:'', medewerkers:[], volgorde:1 },
+      { naam:'P&O', kleur:'#6d4c9e', icon:'👥', lead_rol:'Dir. P&O', lead_naam:'', spoc_rol:'', spoc_naam:'', medewerkers:[], volgorde:2 },
+      { naam:'Marketing & Vakmanschap', kleur:'#c05621', icon:'📊', lead_rol:'', lead_naam:'', spoc_rol:'', spoc_naam:'', medewerkers:[], volgorde:3 },
+    ];
+    for (const d of defaults) {
+      await sb.from('gov_stakeholders').insert({...d, project_id: projectId, user_id: currentUser.id});
+    }
+    await smapLoad();
+  }
 }
 
 function toggleSmap() {
@@ -1451,34 +1463,51 @@ function smapModalRemoveMed(i) {
   smapRenderModalMeds();
 }
 
-function smapModalSave() {
+async function smapModalSave() {
   const naam = document.getElementById('smap-f-naam').value.trim();
   if (!naam) { document.getElementById('smap-f-naam').focus(); return; }
-  const data = {
+  const btn = document.querySelector('#smap-modal .btn-p');
+  btn.textContent = 'Opslaan…'; btn.disabled = true;
+
+  const row = {
     naam,
     kleur: smapGetSelectedColor(),
-    lead: { rol: document.getElementById('smap-f-lead-rol').value.trim(), naam: document.getElementById('smap-f-lead-naam').value.trim() },
-    spoc: { rol: document.getElementById('smap-f-spoc-rol').value.trim(), naam: document.getElementById('smap-f-spoc-naam').value.trim() },
-    medewerkers: smapModalMeds.filter(m=>m.rol||m.naam)
+    lead_rol: document.getElementById('smap-f-lead-rol').value.trim(),
+    lead_naam: document.getElementById('smap-f-lead-naam').value.trim(),
+    spoc_rol: document.getElementById('smap-f-spoc-rol').value.trim(),
+    spoc_naam: document.getElementById('smap-f-spoc-naam').value.trim(),
+    medewerkers: smapModalMeds.filter(m=>m.rol||m.naam),
+    project_id: projectId,
+    user_id: currentUser.id
   };
+
+  let error;
   if (smapEditId) {
-    const e = smapEntities.find(x=>x.id===smapEditId);
-    if (e) Object.assign(e, data);
+    ({ error } = await sb.from('gov_stakeholders').update(row).eq('id', smapEditId));
   } else {
-    const idx = smapEntities.length % SMAP_ICONS.length;
-    smapEntities.push({ id:smapId(), icon:SMAP_ICONS[idx], ...data });
+    row.volgorde = smapEntities.length;
+    ({ error } = await sb.from('gov_stakeholders').insert(row));
   }
-  smapSave(); renderSmap(); closeModal('smap-modal');
+
+  btn.textContent = 'Opslaan'; btn.disabled = false;
+  if (error) { alert('Fout bij opslaan: ' + error.message); return; }
+  closeModal('smap-modal');
+  await smapLoad();
+  renderSmap();
 }
 
-function smapDelete(id) {
+async function smapDelete(id) {
   const e = smapEntities.find(x=>x.id===id);
   if (!e || !confirm(`"${e.naam}" verwijderen?`)) return;
-  smapEntities = smapEntities.filter(x=>x.id!==id);
-  smapSave(); renderSmap();
+  await sb.from('gov_stakeholders').delete().eq('id', id);
+  await smapLoad();
+  renderSmap();
 }
 
-function initSmap() { smapLoad(); renderSmap(); }
+async function initSmap() {
+  await smapLoad();
+  renderSmap();
+}
 
 // ── MODAL HELPERS ──
 function openModal(id) { document.getElementById(id).classList.add('open'); }
