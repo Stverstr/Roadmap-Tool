@@ -133,6 +133,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gmap-tst-item{background:white;border:1px solid #c5dedd;border-radius:5px;padding:6px 10px;}
 .gmap-tst-item-name{font-size:10px;font-weight:700;color:#1a5f7a;margin-bottom:3px;}
 .gmap-tst-item-freq{font-size:9px;color:#888;margin-top:3px;}
+.gmap-chip-list{display:flex;flex-wrap:wrap;gap:3px;min-height:22px;align-items:center;}
+.gmap-editable-chip{display:inline-flex;align-items:center;gap:3px;background:#e8f4f4;border:1px solid #b2d8d8;border-radius:20px;padding:2px 6px 2px 9px;font-size:10px;font-weight:600;color:#1a5f7a;white-space:nowrap;}
+.gmap-chip-remove{cursor:pointer;color:#888;font-size:11px;line-height:1;padding:0 1px;}
+.gmap-chip-remove:hover{color:#c00;}
+.gmap-chip-add{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1px dashed #b2d8d8;background:transparent;color:#1a8c8a;font-size:14px;cursor:pointer;line-height:1;font-weight:300;flex-shrink:0;}
+.gmap-chip-add:hover{background:#e8f4f4;}
+.gmap-chip-input{font-size:10px;font-family:inherit;border:1px solid #1a8c8a;border-radius:12px;padding:1px 8px;outline:none;width:90px;color:#1a5f7a;background:white;}
 .gov-body-card{background:white;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.09);overflow:hidden;}
 .gov-body-header{padding:16px 18px 12px;border-bottom:1px solid var(--gy100);}
 .gov-body-name{font-size:15px;font-weight:700;color:var(--gy900);margin-bottom:4px;}
@@ -283,7 +290,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <h2 style="font-size:18px;font-weight:700;color:var(--gy900)">Governance Structuur</h2>
           <p style="font-size:13px;color:var(--gy500);margin-top:3px">Colruyt Group Health — Steer &amp; Govern</p>
         </div>
-        <button class="btn btn-teal" onclick="openBodyModal()">+ Overlegorgaan toevoegen</button>
       </div>
 
       <!-- ── VISUELE KAART ── -->
@@ -320,18 +326,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <!-- ROW: DEELNEMERS -->
             <div class="gmap-label-cell"><span class="gmap-label-text">Deelnemers</span></div>
             <div class="gmap-data-cell">
-              <div class="gmap-label-sm">TKR Health Colruyt Group</div>
-              <span class="gmap-persoon">CEO CG</span><span class="gmap-persoon">COO HEALTH</span><span class="gmap-persoon">VERT. FOOD</span><span class="gmap-persoon">DIR P&amp;O</span><span class="gmap-persoon">LEAD WERF</span><span class="gmap-persoon">BUM's HV</span>
+              <div class="gmap-label-sm">TKR Health CG — Rol</div>
+              <div class="gmap-chip-list" id="gmap-chips-tkr-cg-roles"></div>
+              <div class="gmap-label-sm" style="margin-top:7px;">Naam</div>
+              <div class="gmap-chip-list" id="gmap-chips-tkr-cg-names"></div>
               <hr class="gmap-sub-divider">
-              <div class="gmap-label-sm">Strategic Alignment Health</div>
-              <span class="gmap-persoon">COO HEALTH</span><span class="gmap-persoon">LEAD WERF</span><span class="gmap-persoon">BUM's HV</span>
+              <div class="gmap-label-sm">Strategic Alignment — Rol</div>
+              <div class="gmap-chip-list" id="gmap-chips-align-roles"></div>
+              <div class="gmap-label-sm" style="margin-top:7px;">Naam</div>
+              <div class="gmap-chip-list" id="gmap-chips-align-names"></div>
             </div>
             <div class="gmap-data-cell">
-              <div class="gmap-label-sm">Tactical Coordination Health CG</div>
-              <span class="gmap-persoon">BUM's HV</span><span class="gmap-persoon">BUM's FV</span><span class="gmap-persoon">MKT &amp; VAK</span><span class="gmap-persoon">VERT. P&amp;O</span>
+              <div class="gmap-label-sm">Tactical Coordination — Rol</div>
+              <div class="gmap-chip-list" id="gmap-chips-tact-roles"></div>
+              <div class="gmap-label-sm" style="margin-top:7px;">Naam</div>
+              <div class="gmap-chip-list" id="gmap-chips-tact-names"></div>
             </div>
             <div class="gmap-data-cell">
-              <span class="gmap-persoon">WERF LEAD</span><span class="gmap-persoon">COO HEALTH</span><span class="gmap-persoon">MGMT TEAM BOU</span>
+              <div class="gmap-label-sm">TKR Health BOU — Rol</div>
+              <div class="gmap-chip-list" id="gmap-chips-bou-roles"></div>
+              <div class="gmap-label-sm" style="margin-top:7px;">Naam</div>
+              <div class="gmap-chip-list" id="gmap-chips-bou-names"></div>
             </div>
 
             <!-- ROW: FREQUENTIE -->
@@ -358,18 +373,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 <div class="gmap-tst-items">
                   <div class="gmap-tst-item">
                     <div class="gmap-tst-item-name">TST MEETING COLRUYT HEALTH</div>
-                    <span class="gmap-persoon">LEAD WERF</span><span class="gmap-persoon">BUM's HV (×3)</span><span class="gmap-persoon">BUM's FV</span><span class="gmap-persoon">VERT. P&amp;O</span><span class="gmap-persoon">MKT &amp; VAK</span>
+                    <div class="gmap-label-sm">Rol</div>
+                    <div class="gmap-chip-list" id="gmap-chips-tst-roles"></div>
+                    <div class="gmap-label-sm" style="margin-top:5px;">Naam</div>
+                    <div class="gmap-chip-list" id="gmap-chips-tst-names"></div>
                     <div class="gmap-tst-item-freq">📅 Kickoff nu, semi-wekelijks</div>
                   </div>
                   <div class="gmap-tst-item">
                     <div class="gmap-tst-item-name">WO WERF</div>
-                    <span class="gmap-persoon">EBA</span><span class="gmap-persoon">BA</span><span class="gmap-persoon">VAK</span><span class="gmap-persoon">Mrkt</span><span class="gmap-persoon">Innov. Lead</span>
+                    <div class="gmap-label-sm">Rol</div>
+                    <div class="gmap-chip-list" id="gmap-chips-wo-roles"></div>
+                    <div class="gmap-label-sm" style="margin-top:5px;">Naam</div>
+                    <div class="gmap-chip-list" id="gmap-chips-wo-names"></div>
                     <div class="gmap-tst-item-freq">📅 Wekelijks</div>
-                  </div>
-                  <div class="gmap-tst-item">
-                    <div class="gmap-tst-item-name">OPVOLGING WERF CEO – WERF LEAD</div>
-                    <span class="gmap-persoon">CEO CG</span><span class="gmap-persoon">WERF LEAD</span>
-                    <div class="gmap-tst-item-freq">📅 Elke 2 maand, wordt gepland</div>
                   </div>
                 </div>
               </div>
@@ -639,6 +655,7 @@ async function showApp() {
   await ensureHealthCGProject();
   await Promise.all([loadBodies(), loadMeetings(), loadActions()]);
   renderOverview();
+  initGmapChips();
 }
 
 // ── PROJECT: zorg dat "Health CG" bestaat ──
@@ -1124,6 +1141,59 @@ function toggleGovMap() {
   const arrow = document.getElementById('gov-map-arrow');
   const isOpen = body.classList.toggle('open');
   arrow.classList.toggle('open', isOpen);
+}
+
+// ── GOV MAP EDITABLE CHIPS ──
+const gmapData = {
+  'tkr-cg-roles':  ["CEO CG","COO HEALTH","VERT. FOOD","DIR P&O","LEAD WERF","BUM's HV"],
+  'tkr-cg-names':  [],
+  'align-roles':   ["COO HEALTH","LEAD WERF","BUM's HV"],
+  'align-names':   [],
+  'tact-roles':    ["BUM's HV","BUM's FV","MKT & VAK","VERT. P&O"],
+  'tact-names':    [],
+  'bou-roles':     ["WERF LEAD","COO HEALTH","MGMT TEAM BOU"],
+  'bou-names':     [],
+  'tst-roles':     ["LEAD WERF","BUM's HV (×3)","BUM's FV","VERT. P&O","MKT & VAK"],
+  'tst-names':     [],
+  'wo-roles':      ["EBA","BA","VAK","Mrkt","Innov. Lead"],
+  'wo-names':      []
+};
+
+function renderChipList(id) {
+  const el = document.getElementById('gmap-chips-' + id);
+  if (!el) return;
+  const items = gmapData[id] || [];
+  el.innerHTML = items.map((v, i) =>
+    `<span class="gmap-editable-chip">
+      <span ondblclick="gmapEditChip('${id}',${i},this)" title="Dubbelklik om te bewerken">${v}</span>
+      <span class="gmap-chip-remove" onclick="gmapRemoveChip('${id}',${i})" title="Verwijder">×</span>
+    </span>`
+  ).join('') +
+    `<span class="gmap-chip-add" onclick="gmapAddChip('${id}')" title="Toevoegen">+</span>`;
+}
+
+function gmapAddChip(id) {
+  const val = prompt('Nieuwe deelnemer:');
+  if (val && val.trim()) { gmapData[id].push(val.trim()); renderChipList(id); }
+}
+
+function gmapRemoveChip(id, idx) {
+  gmapData[id].splice(idx, 1); renderChipList(id);
+}
+
+function gmapEditChip(id, idx, span) {
+  const inp = document.createElement('input');
+  inp.className = 'gmap-chip-input';
+  inp.value = gmapData[id][idx];
+  span.replaceWith(inp);
+  inp.focus(); inp.select();
+  const save = () => { const v = inp.value.trim(); if (v) gmapData[id][idx] = v; renderChipList(id); };
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') renderChipList(id); });
+}
+
+function initGmapChips() {
+  Object.keys(gmapData).forEach(renderChipList);
 }
 
 // ── MODAL HELPERS ──
