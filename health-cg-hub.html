@@ -336,6 +336,66 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .empty{text-align:center;padding:48px 20px;color:var(--gy500);}
 .empty-icon{font-size:36px;margin-bottom:10px;}
 .empty-text{font-size:14px;}
+
+/* ── VIEW / EDIT MODE ── */
+.mode-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:3px 11px;font-size:11px;font-weight:600;cursor:pointer;color:white;transition:all .15s;}
+.mode-badge:hover{background:rgba(255,255,255,.28);}
+.mode-badge.view{background:rgba(249,210,100,.25);border-color:rgba(249,210,100,.5);}
+/* Hide edit controls in view mode */
+.view-mode .gmap-row-actions,
+.view-mode .gmap-v2-col-actions,
+.view-mode .gmap-v2-card-actions,
+.view-mode .gmap-add-row,
+.view-mode .gmap-add-col,
+.view-mode .gov-palette,
+.view-mode .smm-toolbar,
+.view-mode .smm-cluster-add,
+.view-mode .smm-cluster-ph,
+.view-mode .smm-cluster-hd-actions,
+.view-mode .smm-entity-actions,
+.view-mode .smm-root-actions,
+.view-mode .smm-unassigned{display:none!important;}
+.view-mode .gmap-v2-card{cursor:default;}
+
+/* ── FILTER BAR ── */
+.gmap-filter{background:white;border-radius:8px;margin:12px 16px 4px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.gmap-filter-hd{display:flex;align-items:center;gap:6px;padding:8px 14px;cursor:pointer;background:#f8faf9;}
+.gmap-filter-hd:hover{background:#f0f6f3;}
+.gmap-filter-hd-label{font-size:11px;font-weight:700;color:var(--gy700);flex:1;}
+.gmap-filter-hd-arrow{font-size:10px;color:var(--gy500);}
+.gmap-filter-chips{padding:10px 14px;border-top:1px solid var(--gy200);display:flex;flex-wrap:wrap;gap:6px;}
+.gmap-fchip{display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:16px;border:1px solid var(--gy300);font-size:11px;font-weight:600;cursor:pointer;background:var(--gy100);color:var(--gy500);transition:all .15s;}
+.gmap-fchip.on{background:var(--teal);color:white;border-color:var(--teal);}
+.gmap-fchip:hover{opacity:.85;}
+
+/* ── GOV MAP ROWS ── */
+.gmap-rows{display:flex;flex-direction:column;gap:6px;padding:10px 16px 6px;}
+.gmap-row{border-radius:8px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.08);}
+.gmap-row-hd{display:flex;align-items:center;gap:8px;padding:8px 12px;color:white;min-height:42px;}
+.gmap-row-icon{font-size:14px;flex-shrink:0;}
+.gmap-row-label{font-size:10px;font-weight:700;letter-spacing:.6px;flex:1;text-transform:uppercase;}
+.gmap-row-actions{display:flex;gap:2px;}
+.gmap-row-btn{background:rgba(255,255,255,.2);border:none;color:white;border-radius:4px;padding:2px 7px;font-size:10px;cursor:pointer;line-height:1.4;}
+.gmap-row-btn:hover{background:rgba(255,255,255,.4);}
+.gmap-row-toggle{background:rgba(255,255,255,.15);border:none;color:white;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;flex-shrink:0;line-height:1.4;}
+.gmap-row-toggle:hover{background:rgba(255,255,255,.3);}
+.gmap-row.row-collapsed .gmap-row-body{display:none;}
+.gmap-row-body{background:#f8fafb;}
+.gmap-row-cols{display:flex;align-items:stretch;gap:3px;padding:10px;}
+.gmap-row-fwbody{padding:10px;min-height:80px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;transition:background .15s;}
+.gmap-row-fwbody.dz-over{background:#e0f5f2;}
+/* Add col/row buttons */
+.gmap-add-col{display:flex;align-items:center;justify-content:center;padding:0 12px;border:2px dashed #cdd5db;border-radius:8px;cursor:pointer;color:#bbb;font-size:20px;min-width:40px;min-height:80px;transition:all .15s;flex-shrink:0;}
+.gmap-add-col:hover{border-color:var(--teal);color:var(--teal);background:#f0fdf9;}
+.gmap-add-row{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border:2px dashed var(--gy300);border-radius:8px;margin:0 0 6px;cursor:pointer;color:var(--gy500);font-size:11px;font-weight:600;transition:all .15s;background:transparent;}
+.gmap-add-row:hover{border-color:var(--teal);color:var(--teal);background:#f0fdf9;}
+/* Column action buttons (edit/delete) */
+.gmap-v2-col-actions{display:flex;gap:2px;opacity:0;transition:opacity .15s;}
+.gmap-v2-col:hover .gmap-v2-col-actions{opacity:1;}
+.gmap-v2-col-action-btn{background:rgba(255,255,255,.2);border:none;color:white;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;}
+.gmap-v2-col-action-btn:hover{background:rgba(255,255,255,.4);}
+/* Layout modal */
+.gmap-lm-icon-input{font-size:22px;width:54px!important;text-align:center;padding:4px!important;}
 </style>
 </head>
 <body>
@@ -364,6 +424,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <span class="hdr-logo">Project Hub</span>
     <div class="hdr-right">
       <a href="roadmap-studio.html" class="hdr-btn" target="_blank">📍 Roadmap Studio</a>
+      <button class="hdr-btn mode-badge" id="mode-toggle-btn" onclick="toggleEditMode()">✏️ Bewerken</button>
       <button class="hdr-btn" id="btn-logout">Afmelden</button>
     </div>
   </div>
@@ -436,10 +497,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <span class="gov-map-toggle-arrow open" id="gov-map-arrow">▼</span>
         </div>
         <div class="gov-map-body open" id="gov-map-body">
-          <div class="gmap-v2" style="padding:14px 16px 0;">
-            <div class="gmap-v2-cols" id="gmap-v2-cols"></div>
-            <div id="gmap-v2-support"></div>
-          </div>
+          <div id="gmap-canvas"></div>
         </div><!-- end gov-map-body -->
         <div class="gov-palette" id="gov-palette">
           <div class="gov-palette-header">
@@ -525,6 +583,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
   </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- ── MODAL: GOVERNANCE LAYOUT (rij / kolom) ── -->
+<div class="modal-bg" id="gmap-layout-modal">
+  <div class="modal" style="width:min(420px,100%);">
+    <div class="modal-title" id="gmap-lm-title">Rij toevoegen</div>
+    <div class="field">
+      <label class="label">Naam</label>
+      <input class="input" id="gmap-lm-naam" placeholder="bv. Strategisch" />
+    </div>
+    <div class="field">
+      <label class="label">Icoon</label>
+      <input class="input gmap-lm-icon-input" id="gmap-lm-icon" placeholder="🏢" maxlength="2" />
+    </div>
+    <div id="gmap-lm-row-extra">
+      <div class="field">
+        <label class="label">Kleur</label>
+        <div class="smap-color-swatches" id="gmap-lm-swatches"></div>
+      </div>
+      <div class="field" style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+        <input type="checkbox" id="gmap-lm-fullwidth" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;" />
+        <label class="label" style="cursor:pointer;margin:0;" for="gmap-lm-fullwidth">Volledige breedte (geen kolommen)</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-s" onclick="closeModal('gmap-layout-modal')">Annuleren</button>
+      <button class="btn btn-p" onclick="govLayoutSave()">Opslaan</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── MODAL: STAKEHOLDER (root / cluster / entiteit) ── -->
 <div class="modal-bg" id="smap-modal">
@@ -985,12 +1072,14 @@ async function seedGovernance() {
 
 // ── DATA LOADING ──
 async function loadBodies() {
+  govLoadFilter();
   const {data} = await sb.from('gov_bodies').select(`
     *,
     gov_participants(*),
     gov_agenda_items(*)
   `).eq('project_id', projectId).order('sort_order');
   allBodies = data || [];
+  await govLoadLayout();
   renderBodies();
   renderBodyFilters();
   renderBodySelects();
@@ -1847,107 +1936,207 @@ async function initSmap() {
   renderSmap();
 }
 
-// ── GOVERNANCE BODY KAART V2 ──
+// ── GOVERNANCE KAART — DYNAMISCHE RIJEN & KOLOMMEN ──
 let draggedBodyId = null;
-const GOV_COLS = [
-  {id:'strategic', label:'Strategische werking Health', icon:'🏢'},
-  {id:'tactical',  label:'Tactische werking Vertical & Werf', icon:'⚡'},
-  {id:'bous',      label:"Werking Health BOU's", icon:'🏬'},
-];
-const govCollapseState = {strategic:false, tactical:false, bous:false};
+let govRows = [];
+let govCols = [];
+let govFilter = { freq: true, deelnemers: true, focus: true, status: true };
+let govFilterOpen = false;
+let appEditMode = true;
+let govLayoutEditId = null;
+let govLayoutType = 'row';
+let govLayoutRowId = null;
 
-function toggleGovCol(col) {
-  govCollapseState[col] = !govCollapseState[col];
-  govRenderMap();
+// ── Load / Seed layout ──
+async function govLoadLayout() {
+  const [{ data: rows }, { data: cols }] = await Promise.all([
+    sb.from('gov_map_rows').select('*').eq('project_id', projectId).eq('user_id', currentUser.id).order('volgorde'),
+    sb.from('gov_map_cols').select('*').eq('project_id', projectId).eq('user_id', currentUser.id).order('volgorde'),
+  ]);
+  if (!rows || rows.length === 0) {
+    await govSeedLayout();
+    return govLoadLayout();
+  }
+  govRows = rows;
+  govCols = cols || [];
 }
 
-function govCardHTML(b) {
+async function govSeedLayout() {
+  // Main row with 3 cols
+  const { data: row1 } = await sb.from('gov_map_rows').insert({
+    naam: 'Overlegstructuur', icon: '🏢', kleur: '#0D9488',
+    volgorde: 0, is_full_width: false,
+    project_id: projectId, user_id: currentUser.id
+  }).select('*').single();
+
+  const colDefs = [
+    { naam: 'Strategische werking Health', icon: '🏢', volgorde: 0, key: 'strategic' },
+    { naam: 'Tactische werking Vertical & Werf', icon: '⚡', volgorde: 1, key: 'tactical' },
+    { naam: "Werking Health BOU's", icon: '🏬', volgorde: 2, key: 'bous' },
+  ];
+  const colMap = {};
+  if (row1) {
+    for (const c of colDefs) {
+      const { data: col } = await sb.from('gov_map_cols').insert({
+        naam: c.naam, icon: c.icon, volgorde: c.volgorde,
+        row_id: row1.id, project_id: projectId, user_id: currentUser.id
+      }).select('id').single();
+      if (col) colMap[c.key] = col.id;
+    }
+    // Migrate existing bodies (old map_col string → new col_id)
+    for (const b of allBodies) {
+      if (b.map_col && colMap[b.map_col]) {
+        await sb.from('gov_bodies').update({ row_id: row1.id, col_id: colMap[b.map_col] }).eq('id', b.id);
+        b.row_id = row1.id; b.col_id = colMap[b.map_col];
+      }
+    }
+  }
+
+  // Support row (full-width)
+  const { data: row2 } = await sb.from('gov_map_rows').insert({
+    naam: 'Support', icon: '🛟', kleur: '#2e8b6a',
+    volgorde: 1, is_full_width: true,
+    project_id: projectId, user_id: currentUser.id
+  }).select('*').single();
+  if (row2) {
+    for (const b of allBodies) {
+      if (b.map_col === 'support') {
+        await sb.from('gov_bodies').update({ row_id: row2.id, col_id: null }).eq('id', b.id);
+        b.row_id = row2.id; b.col_id = null;
+      }
+    }
+  }
+}
+
+// ── Render map ──
+function govCardHTML(b, fullWidth) {
   const status = b.map_status || 'gepland';
   const isPlanned = status === 'gepland';
   const clr = b.kleur || '#1a5f7a';
   const core = (b.gov_participants||[]).filter(p=>p.participant_type==='core').sort((a,x)=>a.sort_order-x.sort_order);
-  const chips = core.slice(0,8).map(p => {
-    const lbl = [p.person_name, p.role_name].filter(Boolean).join(' · ');
-    return `<span class="gmap-v2-chip">${lbl}</span>`;
-  }).join('');
-  const more = core.length > 8 ? `<span class="gmap-v2-chip gmap-chip-more">+${core.length-8}</span>` : '';
-  return `<div class="gmap-v2-card${isPlanned?'':' te-plannen'}" draggable="true" ondragstart="govDragStart(event,'${b.id}')">
+  const chips = govFilter.deelnemers ? core.slice(0,8).map(p =>
+    `<span class="gmap-v2-chip">${[p.person_name,p.role_name].filter(Boolean).join(' · ')}</span>`
+  ).join('') : '';
+  const more = govFilter.deelnemers && core.length > 8 ? `<span class="gmap-v2-chip gmap-chip-more">+${core.length-8}</span>` : '';
+  const dragAttr = appEditMode ? `draggable="true" ondragstart="govDragStart(event,'${b.id}')"` : '';
+  const fw = fullWidth ? 'display:inline-flex;flex-direction:column;max-width:260px;min-width:180px;vertical-align:top;' : '';
+  return `<div class="gmap-v2-card${isPlanned?'':' te-plannen'}" ${dragAttr} style="${fw}">
     <div class="gmap-v2-card-hd" style="background:${clr}">
       <span class="gmap-v2-card-name">${b.name}</span>
-      <span class="gmap-v2-card-focus">${b.focus||''}</span>
+      ${govFilter.focus && b.focus ? `<span class="gmap-v2-card-focus">${b.focus}</span>` : ''}
     </div>
     <div class="gmap-v2-card-body">
-      ${b.frequency ? `<div class="gmap-v2-freq">📅 ${b.frequency}</div>` : ''}
+      ${govFilter.freq && b.frequency ? `<div class="gmap-v2-freq">📅 ${b.frequency}</div>` : ''}
       ${chips||more ? `<div class="gmap-v2-chips">${chips}${more}</div>` : ''}
     </div>
     <div class="gmap-v2-card-footer">
-      <button class="gmap-v2-status-btn ${isPlanned?'gmap-v2-status-gepland':'gmap-v2-status-tepland'}"
-              onclick="govToggleStatus('${b.id}');event.stopPropagation()">
+      ${govFilter.status ? `<button class="gmap-v2-status-btn ${isPlanned?'gmap-v2-status-gepland':'gmap-v2-status-tepland'}"
+        onclick="govToggleStatus('${b.id}');event.stopPropagation()">
         ${isPlanned ? '✅ Gepland' : '⏳ Te plannen'}
-      </button>
-      <div class="gmap-v2-card-actions">
+      </button>` : '<span></span>'}
+      ${appEditMode ? `<div class="gmap-v2-card-actions">
         <button class="gmap-body-pill-btn" onclick="govOpenEdit('${b.id}');event.stopPropagation()" title="Bewerken">✏️</button>
-        <button class="gmap-body-pill-btn" onclick="govDragToNone('${b.id}');event.stopPropagation()" title="Verwijder van kaart">↩</button>
-      </div>
+        <button class="gmap-body-pill-btn" onclick="govDragToNone('${b.id}');event.stopPropagation()" title="Losmaken">↩</button>
+      </div>` : ''}
     </div>
   </div>`;
 }
 
-function govRenderMap() {
-  // Deduplicate allBodies by id
-  const seen = new Set();
-  const bodies = allBodies.filter(b => { if(seen.has(b.id)) return false; seen.add(b.id); return true; });
-
-  // Columns
-  const colsEl = document.getElementById('gmap-v2-cols');
-  if (colsEl) {
-    colsEl.innerHTML = GOV_COLS.map(col => {
-      const colBodies = bodies.filter(b => b.map_col === col.id).sort((a,b) => a.map_row - b.map_row);
-      const collapsed = govCollapseState[col.id];
-      if (collapsed) {
-        return `<div class="gmap-v2-col collapsed" id="gmap-v2-col-${col.id}" title="${col.label}" onclick="toggleGovCol('${col.id}')">
-          <div class="gmap-v2-col-hd">
-            <span class="gmap-v2-col-icon">${col.icon}</span>
-            <span class="gmap-v2-col-label">${col.label}</span>
-            <span class="gmap-v2-col-toggle">▶</span>
-          </div>
-        </div>`;
-      }
-      return `<div class="gmap-v2-col" id="gmap-v2-col-${col.id}">
-        <div class="gmap-v2-col-hd">
-          <span class="gmap-v2-col-icon">${col.icon}</span>
-          <span class="gmap-v2-col-label">${col.label}</span>
-          <button class="gmap-v2-col-toggle" onclick="toggleGovCol('${col.id}');event.stopPropagation()" title="Inklappen">◀</button>
-        </div>
-        <div class="gmap-v2-col-body" id="gmap-v2-body-${col.id}"
-             ondragover="event.preventDefault();this.classList.add('dz-over')"
-             ondragleave="this.classList.remove('dz-over')"
-             ondrop="govDrop(event,'${col.id}')">
-          ${colBodies.length ? colBodies.map(b => govCardHTML(b)).join('') : '<div class="gmap-v2-empty">↓ Sleep hier</div>'}
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  // Support row
-  const supportEl = document.getElementById('gmap-v2-support');
-  if (supportEl) {
-    const supportBodies = bodies.filter(b => b.map_col === 'support').sort((a,b) => a.map_row - b.map_row);
-    supportEl.innerHTML = `<div class="gmap-v2-support">
-      <span class="gmap-v2-support-label">Support</span>
-      <div class="gmap-v2-support-cards" id="gmap-v2-support-cards"
-           ondragover="event.preventDefault();this.classList.add('dz-over')"
-           ondragleave="this.classList.remove('dz-over')"
-           ondrop="govDrop(event,'support')" style="min-height:80px;">
-        ${supportBodies.length ? supportBodies.map(b => govCardHTML(b)).join('') : '<div class="gmap-v2-empty">↓ Sleep hier</div>'}
+function govRenderCol(col, bodies, rowClr) {
+  const colBodies = bodies.filter(b => b.col_id === col.id).sort((a,b) => (a.map_row||0)-(b.map_row||0));
+  if (col.is_collapsed) {
+    return `<div class="gmap-v2-col collapsed" id="gmap-col-${col.id}" title="${col.naam}" onclick="govToggleCol('${col.id}')">
+      <div class="gmap-v2-col-hd" style="background:${rowClr}">
+        <span class="gmap-v2-col-icon">${col.icon||'📋'}</span>
+        <span class="gmap-v2-col-label">${col.naam}</span>
+        <span class="gmap-v2-col-toggle">▶</span>
       </div>
     </div>`;
   }
+  return `<div class="gmap-v2-col" id="gmap-col-${col.id}">
+    <div class="gmap-v2-col-hd" style="background:${rowClr}">
+      <span class="gmap-v2-col-icon">${col.icon||'📋'}</span>
+      <span class="gmap-v2-col-label">${col.naam}</span>
+      <div class="gmap-v2-col-actions">
+        <button class="gmap-v2-col-action-btn" onclick="govOpenEditCol('${col.id}');event.stopPropagation()" title="Naam wijzigen">✏️</button>
+        <button class="gmap-v2-col-action-btn" onclick="govDeleteCol('${col.id}');event.stopPropagation()" title="Verwijderen">✕</button>
+      </div>
+      <button class="gmap-v2-col-toggle" onclick="govToggleCol('${col.id}');event.stopPropagation()" title="Inklappen">◀</button>
+    </div>
+    <div class="gmap-v2-col-body" id="gmap-colbody-${col.id}"
+         ondragover="event.preventDefault();this.classList.add('dz-over')"
+         ondragleave="this.classList.remove('dz-over')"
+         ondrop="govDrop(event,'${col.row_id}','${col.id}')">
+      ${colBodies.length ? colBodies.map(b => govCardHTML(b,false)).join('') : '<div class="gmap-v2-empty">↓ Sleep hier</div>'}
+    </div>
+  </div>`;
+}
 
-  // Palette: unplaced bodies
+function govRenderRow(row, bodies) {
+  const clr = row.kleur || '#0D9488';
+  const actionsHTML = appEditMode ? `<div class="gmap-row-actions">
+      <button class="gmap-row-btn" onclick="govToggleRowLayout('${row.id}')" title="${row.is_full_width?'Kolommen':'Breedte'}">${row.is_full_width?'⊡':'⊟'}</button>
+      ${!row.is_full_width ? `<button class="gmap-row-btn" onclick="govOpenNewCol('${row.id}')" title="Kolom toevoegen">＋ kolom</button>` : ''}
+      <button class="gmap-row-btn" onclick="govOpenEditRow('${row.id}')" title="Bewerken">✏️</button>
+      <button class="gmap-row-btn" onclick="govDeleteRow('${row.id}')" title="Verwijderen">✕</button>
+    </div>` : '';
+  const hd = `<div class="gmap-row-hd" style="background:${clr}">
+    <span class="gmap-row-icon">${row.icon||'📋'}</span>
+    <span class="gmap-row-label">${row.naam}</span>
+    ${actionsHTML}
+    <button class="gmap-row-toggle" onclick="govToggleRow('${row.id}')">${row.is_collapsed?'▶':'▼'}</button>
+  </div>`;
+  if (row.is_collapsed) return `<div class="gmap-row row-collapsed" id="gmap-row-${row.id}">${hd}</div>`;
+
+  let body;
+  if (row.is_full_width) {
+    const rb = bodies.filter(b => b.row_id === row.id);
+    const fw = rb.map(b => govCardHTML(b, true)).join('');
+    body = `<div class="gmap-row-body"><div class="gmap-row-fwbody"
+      ondragover="event.preventDefault();this.classList.add('dz-over')"
+      ondragleave="this.classList.remove('dz-over')"
+      ondrop="govDrop(event,'${row.id}',null)">
+      ${fw || '<div class="gmap-v2-empty" style="width:100%">↓ Sleep hier</div>'}
+    </div></div>`;
+  } else {
+    const rowCols = govCols.filter(c => c.row_id === row.id).sort((a,b) => a.volgorde - b.volgorde);
+    const addBtn = appEditMode ? `<div class="gmap-add-col" onclick="govOpenNewCol('${row.id}')" title="Kolom toevoegen">＋</div>` : '';
+    body = `<div class="gmap-row-body"><div class="gmap-row-cols">
+      ${rowCols.map(c => govRenderCol(c, bodies, clr)).join('')}
+      ${addBtn}
+    </div></div>`;
+  }
+  return `<div class="gmap-row" id="gmap-row-${row.id}">${hd}${body}</div>`;
+}
+
+function govRenderMap() {
+  const canvas = document.getElementById('gmap-canvas');
+  if (!canvas) return;
+  const seen = new Set();
+  const bodies = allBodies.filter(b => { if(seen.has(b.id)) return false; seen.add(b.id); return true; });
+
+  // Filter bar
+  const filterChips = govFilterOpen ? `<div class="gmap-filter-chips">
+    ${[{k:'freq',l:'📅 Frequentie'},{k:'deelnemers',l:'👥 Deelnemers'},{k:'focus',l:'🎯 Focus'},{k:'status',l:'✅ Status'}]
+      .map(f=>`<div class="gmap-fchip${govFilter[f.k]?' on':''}" onclick="govToggleFilter('${f.k}')">${f.l}</div>`).join('')}
+  </div>` : '';
+  const filterBar = `<div class="gmap-filter">
+    <div class="gmap-filter-hd" onclick="govToggleFilterBar()">
+      <span class="gmap-filter-hd-label">🔍 Kaartinhoud filteren</span>
+      <span class="gmap-filter-hd-arrow">${govFilterOpen?'▲':'▼'}</span>
+    </div>${filterChips}
+  </div>`;
+
+  // Rows
+  const rowsHTML = govRows.map(r => govRenderRow(r, bodies)).join('');
+  const addRow = appEditMode ? `<div class="gmap-add-row" onclick="govOpenNewRow()">＋ Rij toevoegen</div>` : '';
+
+  canvas.innerHTML = filterBar + `<div class="gmap-rows">${rowsHTML}${addRow}</div>`;
+
+  // Palette (outside canvas)
   const palette = document.getElementById('gov-palette-items');
   if (palette) {
-    const unplaced = bodies.filter(b => !b.map_col);
+    const unplaced = bodies.filter(b => !b.row_id);
     palette.innerHTML = unplaced.length === 0
       ? '<span style="font-size:12px;color:#aaa;font-style:italic;">Alle organen staan op de kaart</span>'
       : unplaced.map(b => `
@@ -1962,40 +2151,213 @@ function govRenderMap() {
   }
 }
 
-async function govToggleStatus(id) {
-  const b = allBodies.find(x => x.id === id);
-  if (!b) return;
-  const newStatus = (b.map_status || 'gepland') === 'gepland' ? 'te_plannen' : 'gepland';
-  b.map_status = newStatus;
-  await sb.from('gov_bodies').update({map_status: newStatus}).eq('id', id);
+// ── Row CRUD ──
+async function govToggleRow(id) {
+  const row = govRows.find(r => r.id === id);
+  if (!row) return;
+  row.is_collapsed = !row.is_collapsed;
+  await sb.from('gov_map_rows').update({ is_collapsed: row.is_collapsed }).eq('id', id);
   govRenderMap();
 }
 
+async function govToggleRowLayout(id) {
+  const row = govRows.find(r => r.id === id);
+  if (!row) return;
+  row.is_full_width = !row.is_full_width;
+  await sb.from('gov_map_rows').update({ is_full_width: row.is_full_width }).eq('id', id);
+  govRenderMap();
+}
+
+async function govDeleteRow(id) {
+  const row = govRows.find(r => r.id === id);
+  if (!row || !confirm(`Rij "${row.naam}" verwijderen? Organen worden losgekoppeld.`)) return;
+  await sb.from('gov_bodies').update({ row_id: null, col_id: null }).eq('row_id', id);
+  await sb.from('gov_map_rows').delete().eq('id', id);
+  govRows = govRows.filter(r => r.id !== id);
+  govCols = govCols.filter(c => c.row_id !== id);
+  allBodies.forEach(b => { if (b.row_id === id) { b.row_id = null; b.col_id = null; }});
+  govRenderMap();
+  toast('Rij verwijderd');
+}
+
+// ── Col CRUD ──
+async function govToggleCol(id) {
+  const col = govCols.find(c => c.id === id);
+  if (!col) return;
+  col.is_collapsed = !col.is_collapsed;
+  await sb.from('gov_map_cols').update({ is_collapsed: col.is_collapsed }).eq('id', id);
+  govRenderMap();
+}
+
+async function govDeleteCol(id) {
+  const col = govCols.find(c => c.id === id);
+  if (!col || !confirm(`Kolom "${col.naam}" verwijderen? Organen worden losgekoppeld.`)) return;
+  await sb.from('gov_bodies').update({ col_id: null }).eq('col_id', id);
+  await sb.from('gov_map_cols').delete().eq('id', id);
+  govCols = govCols.filter(c => c.id !== id);
+  allBodies.forEach(b => { if (b.col_id === id) b.col_id = null; });
+  govRenderMap();
+  toast('Kolom verwijderd');
+}
+
+// ── Layout modal ──
+function govLmRenderSwatches(selected) {
+  const el = document.getElementById('gmap-lm-swatches');
+  if (!el) return;
+  el.innerHTML = SMAP_COLORS.map(c =>
+    `<div class="smap-swatch${c===selected?' selected':''}" style="background:${c}" data-color="${c}" onclick="govLmSelectColor('${c}')" title="${c}"></div>`
+  ).join('');
+}
+function govLmSelectColor(c) { govLmRenderSwatches(c); }
+function govLmGetColor() {
+  const sel = document.querySelector('#gmap-lm-swatches .smap-swatch.selected');
+  return sel ? (sel.dataset.color || '#0D9488') : '#0D9488';
+}
+
+function govOpenNewRow() {
+  govLayoutEditId = null; govLayoutType = 'row'; govLayoutRowId = null;
+  document.getElementById('gmap-lm-title').textContent = 'Rij toevoegen';
+  document.getElementById('gmap-lm-naam').value = '';
+  document.getElementById('gmap-lm-icon').value = '📋';
+  document.getElementById('gmap-lm-fullwidth').checked = false;
+  document.getElementById('gmap-lm-row-extra').style.display = 'block';
+  govLmRenderSwatches('#0D9488');
+  openModal('gmap-layout-modal');
+}
+
+function govOpenEditRow(id) {
+  const row = govRows.find(r => r.id === id);
+  if (!row) return;
+  govLayoutEditId = id; govLayoutType = 'row';
+  document.getElementById('gmap-lm-title').textContent = 'Rij bewerken';
+  document.getElementById('gmap-lm-naam').value = row.naam;
+  document.getElementById('gmap-lm-icon').value = row.icon || '📋';
+  document.getElementById('gmap-lm-fullwidth').checked = row.is_full_width || false;
+  document.getElementById('gmap-lm-row-extra').style.display = 'block';
+  govLmRenderSwatches(row.kleur || '#0D9488');
+  openModal('gmap-layout-modal');
+}
+
+function govOpenNewCol(rowId) {
+  govLayoutEditId = null; govLayoutType = 'col'; govLayoutRowId = rowId;
+  document.getElementById('gmap-lm-title').textContent = 'Kolom toevoegen';
+  document.getElementById('gmap-lm-naam').value = '';
+  document.getElementById('gmap-lm-icon').value = '📋';
+  document.getElementById('gmap-lm-row-extra').style.display = 'none';
+  openModal('gmap-layout-modal');
+}
+
+function govOpenEditCol(id) {
+  const col = govCols.find(c => c.id === id);
+  if (!col) return;
+  govLayoutEditId = id; govLayoutType = 'col';
+  document.getElementById('gmap-lm-title').textContent = 'Kolom bewerken';
+  document.getElementById('gmap-lm-naam').value = col.naam;
+  document.getElementById('gmap-lm-icon').value = col.icon || '📋';
+  document.getElementById('gmap-lm-row-extra').style.display = 'none';
+  openModal('gmap-layout-modal');
+}
+
+async function govLayoutSave() {
+  const naam = document.getElementById('gmap-lm-naam').value.trim();
+  if (!naam) { document.getElementById('gmap-lm-naam').focus(); return; }
+  const icon = document.getElementById('gmap-lm-icon').value.trim() || '📋';
+  const btn = document.querySelector('#gmap-layout-modal .btn-p');
+  btn.textContent = 'Opslaan…'; btn.disabled = true;
+  let error;
+  if (govLayoutType === 'row') {
+    const kleur = govLmGetColor();
+    const is_full_width = document.getElementById('gmap-lm-fullwidth').checked;
+    if (govLayoutEditId) {
+      const row = govRows.find(r => r.id === govLayoutEditId);
+      Object.assign(row, { naam, icon, kleur, is_full_width });
+      ({ error } = await sb.from('gov_map_rows').update({ naam, icon, kleur, is_full_width }).eq('id', govLayoutEditId));
+    } else {
+      const { data, error: e } = await sb.from('gov_map_rows').insert({
+        naam, icon, kleur, is_full_width, volgorde: govRows.length,
+        project_id: projectId, user_id: currentUser.id
+      }).select('*').single();
+      error = e;
+      if (data) govRows.push(data);
+    }
+  } else {
+    if (govLayoutEditId) {
+      const col = govCols.find(c => c.id === govLayoutEditId);
+      Object.assign(col, { naam, icon });
+      ({ error } = await sb.from('gov_map_cols').update({ naam, icon }).eq('id', govLayoutEditId));
+    } else {
+      const volgorde = govCols.filter(c => c.row_id === govLayoutRowId).length;
+      const { data, error: e } = await sb.from('gov_map_cols').insert({
+        naam, icon, volgorde, row_id: govLayoutRowId,
+        project_id: projectId, user_id: currentUser.id
+      }).select('*').single();
+      error = e;
+      if (data) govCols.push(data);
+    }
+  }
+  btn.textContent = 'Opslaan'; btn.disabled = false;
+  if (error) { alert('Fout: ' + error.message); return; }
+  closeModal('gmap-layout-modal');
+  govRenderMap();
+  toast('Opgeslagen');
+}
+
+// ── Filter ──
+function govToggleFilterBar() { govFilterOpen = !govFilterOpen; govRenderMap(); }
+function govToggleFilter(key) {
+  govFilter[key] = !govFilter[key];
+  try { localStorage.setItem('govFilter', JSON.stringify(govFilter)); } catch(e){}
+  govRenderMap();
+}
+function govLoadFilter() {
+  try { const s = localStorage.getItem('govFilter'); if(s) govFilter = {...govFilter,...JSON.parse(s)}; } catch(e){}
+}
+
+// ── Edit/View mode ──
+function toggleEditMode() {
+  appEditMode = !appEditMode;
+  document.body.classList.toggle('view-mode', !appEditMode);
+  const btn = document.getElementById('mode-toggle-btn');
+  if (btn) { btn.textContent = appEditMode ? '✏️ Bewerken' : '👁 Bekijken'; btn.classList.toggle('view', !appEditMode); }
+  govRenderMap();
+  renderSmap();
+}
+
+// ── Drag/Drop ──
 function govDragStart(e, id) {
+  if (!appEditMode) return;
   draggedBodyId = id;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', id);
 }
 
-async function govDrop(e, col) {
+async function govDrop(e, rowId, colId) {
   e.preventDefault();
-  document.querySelectorAll('.gmap-v2-col-body,.gmap-v2-support-cards').forEach(z => z.classList.remove('dz-over'));
+  document.querySelectorAll('.gmap-v2-col-body,.gmap-row-fwbody').forEach(z => z.classList.remove('dz-over'));
   const id = e.dataTransfer.getData('text/plain') || draggedBodyId;
   if (!id) return;
   const body = allBodies.find(b => b.id === id);
   if (!body) return;
-  const siblings = allBodies.filter(b => b.map_col === col);
-  body.map_col = col;
-  body.map_row = siblings.length;
-  await sb.from('gov_bodies').update({map_col: col, map_row: body.map_row}).eq('id', id);
+  body.row_id = rowId; body.col_id = colId || null;
+  body.map_row = allBodies.filter(b => b.col_id === colId && b.row_id === rowId).length;
+  await sb.from('gov_bodies').update({ row_id: rowId, col_id: colId || null, map_row: body.map_row }).eq('id', id);
   govRenderMap();
 }
 
 async function govDragToNone(id) {
   const body = allBodies.find(b => b.id === id);
   if (!body) return;
-  body.map_col = null;
-  await sb.from('gov_bodies').update({map_col: null}).eq('id', id);
+  body.row_id = null; body.col_id = null;
+  await sb.from('gov_bodies').update({ row_id: null, col_id: null }).eq('id', id);
+  govRenderMap();
+}
+
+async function govToggleStatus(id) {
+  const b = allBodies.find(x => x.id === id);
+  if (!b) return;
+  const newStatus = (b.map_status || 'gepland') === 'gepland' ? 'te_plannen' : 'gepland';
+  b.map_status = newStatus;
+  await sb.from('gov_bodies').update({map_status: newStatus}).eq('id', id);
   govRenderMap();
 }
 
