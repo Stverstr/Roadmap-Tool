@@ -396,6 +396,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gmap-v2-col-action-btn:hover{background:rgba(255,255,255,.4);}
 /* Layout modal */
 .gmap-lm-icon-input{font-size:22px;width:54px!important;text-align:center;padding:4px!important;}
+/* ── ICON PICKER ── */
+.ipicker-wrap{display:flex;align-items:center;gap:10px;}
+.ipicker-btn{font-size:26px;background:var(--gy100);border:2px solid var(--gy200);border-radius:8px;width:52px;height:52px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s;flex-shrink:0;line-height:1;}
+.ipicker-btn:hover{border-color:var(--teal);}
+.ipicker-hint{font-size:11px;color:var(--gy500);}
+#icon-picker{position:fixed;z-index:99999;background:white;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.22);width:300px;overflow:hidden;display:none;}
+.ipicker-top{padding:8px 10px;border-bottom:1px solid var(--gy200);}
+.ipicker-top input{width:100%;border:1px solid var(--gy200);border-radius:6px;padding:5px 10px;font-size:12px;outline:none;font-family:inherit;}
+.ipicker-top input:focus{border-color:var(--teal);}
+.ipicker-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:1px;padding:7px;max-height:240px;overflow-y:auto;}
+.ipicker-cell{font-size:22px;text-align:center;cursor:pointer;border-radius:5px;padding:3px 0;transition:background .1s;user-select:none;}
+.ipicker-cell:hover{background:var(--gy100);}
 </style>
 </head>
 <body>
@@ -594,7 +606,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <div class="field">
       <label class="label">Icoon</label>
-      <input class="input gmap-lm-icon-input" id="gmap-lm-icon" placeholder="🏢" maxlength="2" />
+      <div class="ipicker-wrap">
+        <button type="button" class="ipicker-btn" id="gmap-lm-icon-btn" onclick="showIconPicker('gmap-lm-icon','gmap-lm-icon-btn',event)">📋</button>
+        <span class="ipicker-hint">Klik om een icoon te kiezen</span>
+        <input type="hidden" id="gmap-lm-icon" value="📋" />
+      </div>
     </div>
     <div id="gmap-lm-row-extra">
       <div class="field">
@@ -625,6 +641,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="field">
         <label class="label">Naam</label>
         <input class="input" id="smap-f-naam" placeholder="bv. Intern" />
+      </div>
+      <div class="field">
+        <label class="label">Icoon</label>
+        <div class="ipicker-wrap">
+          <button type="button" class="ipicker-btn" id="smap-icon-btn" onclick="showIconPicker('smap-f-icon','smap-icon-btn',event)">🏢</button>
+          <span class="ipicker-hint">Klik om een icoon te kiezen</span>
+          <input type="hidden" id="smap-f-icon" value="🏢" />
+        </div>
       </div>
       <div class="field">
         <label class="label">Kleur</label>
@@ -1732,11 +1756,20 @@ function smapSetModalType(type) {
     type === 'root' ? 'Root' : type === 'cluster' ? 'Cluster' : 'Entiteit';
 }
 
+function smapSetIconField(icon) {
+  const v = icon || '🏢';
+  const inp = document.getElementById('smap-f-icon');
+  const btn = document.getElementById('smap-icon-btn');
+  if (inp) inp.value = v;
+  if (btn) btn.textContent = v;
+}
+
 function smapOpenNewRoot() {
   smapEditId = null;
   document.getElementById('smap-modal-title').textContent = 'Root instellen';
   document.getElementById('smap-f-naam').value = '';
   smapSetModalType('root');
+  smapSetIconField('🏥');
   smapRenderSwatches('#1a5f7a');
   openModal('smap-modal');
 }
@@ -1748,6 +1781,7 @@ function smapOpenEditRoot() {
   document.getElementById('smap-modal-title').textContent = 'Root bewerken';
   document.getElementById('smap-f-naam').value = root.naam;
   smapSetModalType('root');
+  smapSetIconField(root.icon || '🏥');
   smapRenderSwatches(root.kleur);
   openModal('smap-modal');
 }
@@ -1759,6 +1793,7 @@ function smapOpenNewCluster(pos) {
   smapSetModalType('cluster');
   const sel = document.getElementById('smap-f-position');
   if (sel && pos) sel.value = pos;
+  smapSetIconField('📁');
   smapRenderSwatches(SMAP_COLORS[smapEntities.filter(e=>e.is_cluster).length % SMAP_COLORS.length]);
   openModal('smap-modal');
 }
@@ -1775,6 +1810,7 @@ function smapOpenNewEntity(clusterId) {
   smapSetModalType('entity');
   smapRenderClusterOptions(null);
   if (clusterId) document.getElementById('smap-f-cluster').value = clusterId;
+  smapSetIconField('🏢');
   smapRenderSwatches(SMAP_COLORS[smapEntities.filter(e=>!e.is_root&&!e.is_cluster).length % SMAP_COLORS.length]);
   smapRenderModalMeds();
   openModal('smap-modal');
@@ -1792,6 +1828,7 @@ function smapOpenEdit(id) {
     document.getElementById('smap-modal-title').textContent = 'Root bewerken';
     document.getElementById('smap-f-naam').value = e.naam;
     smapSetModalType('root');
+    smapSetIconField(e.icon || '🏥');
     smapRenderSwatches(e.kleur);
   } else if (e.is_cluster) {
     document.getElementById('smap-modal-title').textContent = 'Cluster bewerken';
@@ -1799,6 +1836,7 @@ function smapOpenEdit(id) {
     smapSetModalType('cluster');
     const sel = document.getElementById('smap-f-position');
     if (sel) sel.value = e.map_position || 'top';
+    smapSetIconField(e.icon || '📁');
     smapRenderSwatches(e.kleur);
   } else {
     document.getElementById('smap-modal-title').textContent = 'Entiteit bewerken';
@@ -1810,6 +1848,7 @@ function smapOpenEdit(id) {
     smapSetModalType('entity');
     smapRenderClusterOptions(id);
     document.getElementById('smap-f-cluster').value = e.parent_id || '';
+    smapSetIconField(e.icon || '🏢');
     smapRenderSwatches(e.kleur);
     smapRenderModalMeds();
   }
@@ -1881,8 +1920,9 @@ async function smapModalSave() {
 
   const type  = document.getElementById('smap-f-type').value;
   const kleur = smapGetSelectedColor();
+  const icon  = document.getElementById('smap-f-icon')?.value || '🏢';
   const root  = smapEntities.find(e => e.is_root);
-  let row = { naam, kleur, project_id: projectId, user_id: currentUser.id };
+  let row = { naam, kleur, icon, project_id: projectId, user_id: currentUser.id };
 
   if (type === 'root') {
     row.is_root = true; row.is_cluster = false; row.parent_id = null;
@@ -2214,11 +2254,17 @@ function govLmGetColor() {
   return sel ? (sel.dataset.color || '#0D9488') : '#0D9488';
 }
 
+function _setGovIcon(icon) {
+  const v = icon || '📋';
+  document.getElementById('gmap-lm-icon').value = v;
+  document.getElementById('gmap-lm-icon-btn').textContent = v;
+}
+
 function govOpenNewRow() {
   govLayoutEditId = null; govLayoutType = 'row'; govLayoutRowId = null;
   document.getElementById('gmap-lm-title').textContent = 'Rij toevoegen';
   document.getElementById('gmap-lm-naam').value = '';
-  document.getElementById('gmap-lm-icon').value = '📋';
+  _setGovIcon('📋');
   document.getElementById('gmap-lm-fullwidth').checked = false;
   document.getElementById('gmap-lm-row-extra').style.display = 'block';
   govLmRenderSwatches('#0D9488');
@@ -2231,7 +2277,7 @@ function govOpenEditRow(id) {
   govLayoutEditId = id; govLayoutType = 'row';
   document.getElementById('gmap-lm-title').textContent = 'Rij bewerken';
   document.getElementById('gmap-lm-naam').value = row.naam;
-  document.getElementById('gmap-lm-icon').value = row.icon || '📋';
+  _setGovIcon(row.icon || '📋');
   document.getElementById('gmap-lm-fullwidth').checked = row.is_full_width || false;
   document.getElementById('gmap-lm-row-extra').style.display = 'block';
   govLmRenderSwatches(row.kleur || '#0D9488');
@@ -2242,7 +2288,7 @@ function govOpenNewCol(rowId) {
   govLayoutEditId = null; govLayoutType = 'col'; govLayoutRowId = rowId;
   document.getElementById('gmap-lm-title').textContent = 'Kolom toevoegen';
   document.getElementById('gmap-lm-naam').value = '';
-  document.getElementById('gmap-lm-icon').value = '📋';
+  _setGovIcon('📋');
   document.getElementById('gmap-lm-row-extra').style.display = 'none';
   openModal('gmap-layout-modal');
 }
@@ -2253,7 +2299,7 @@ function govOpenEditCol(id) {
   govLayoutEditId = id; govLayoutType = 'col';
   document.getElementById('gmap-lm-title').textContent = 'Kolom bewerken';
   document.getElementById('gmap-lm-naam').value = col.naam;
-  document.getElementById('gmap-lm-icon').value = col.icon || '📋';
+  _setGovIcon(col.icon || '📋');
   document.getElementById('gmap-lm-row-extra').style.display = 'none';
   openModal('gmap-layout-modal');
 }
@@ -2516,6 +2562,93 @@ function toast(msg) {
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
+
+// ── ICON PICKER ──
+const ICON_LIST = [
+  // Mensen & Rollen
+  '👤','👥','👑','🤝','🙋','🎓','🏃','🕵️','🦸','💂','🤴','👸','🎩','🧑‍💼','👩‍💼',
+  '🧑‍⚕️','👨‍🏫','🧑‍🔬','🧑‍💻','🧑‍🚒',
+  // Gebouwen & Plaatsen
+  '🏢','🏥','🏬','🏪','🏛️','🏗️','🏭','🏠','🏡','🏦','🏰','🗼','🏟️','⛪','🕌',
+  // Documenten & Kantoor
+  '📋','📌','📍','📎','📁','📂','📊','📈','📉','📆','📅','📇','📒','📓','📔',
+  '📕','📗','📘','📙','📚','📖','📝','🗒️','🗓️','🗃️',
+  // Technologie
+  '💻','🖥️','📱','⌨️','🖨️','🖱️','💾','💿','📀','📺','📷','🎥','📡','🔌','🔋',
+  '🤖','📲','💡','📻','🎮',
+  // Tools
+  '🔧','🔨','⚙️','🛠️','🔑','🗝️','🔒','🔓','🔍','🔎','🔬','🔭','🔦','🕯️','🧲',
+  '⚒️','🪛','🪚','🗜️','⛏️',
+  // Sterren & Awards
+  '⭐','🌟','💫','✨','🎯','🏆','🥇','🥈','🥉','🎖️','🏅','⚜️','🔰','🎗️','🌈',
+  '❤️','💚','💙','💜','🖤',
+  // Natuur & Wetenschap
+  '🌱','🌿','🍀','🌳','🌻','🌺','🌸','🌍','⚡','🌊','🔥','💧','❄️','🌙','☀️',
+  '🌤️','🧬','🧪','🧫','🌵',
+  // Transport
+  '🚀','✈️','🚗','🏎️','🚁','⛵','🛸','🚂','🚌','🏍️','🛩️','🛶','🚒','🚑','🚕',
+  // Communicatie
+  '📞','☎️','📧','✉️','📨','📩','💬','💭','🗨️','📣','📢','🔔','🗣️','💌','📯',
+  '🎤','🎙️','📠','📟','🔕',
+  // Financiën
+  '💰','💵','💶','💴','💸','💳','💹','🤑','💱','⚖️','📊','📈','📉','🏦','💲',
+  // Gezondheid
+  '💊','💉','🩺','🩻','🩹','🫀','🫁','🧬','🏃','🧘','🏋️','🥗','😷','🌡️','🧴',
+  // Pijlen & Flow
+  '⬆️','⬇️','➡️','⬅️','🔄','♻️','🔁','⏩','⏪','🔃',
+  // Overig
+  '🎭','🎨','🎬','🎵','🎶','🎸','🎹','🎁','🎀','🎊','🎉','🎈','🎂','🦁','🦊',
+  '🐻','🦋','🐝','🦅','🐉'
+];
+
+let _ipTarget = null; // hidden input id
+let _ipBtn    = null; // trigger button id
+
+function showIconPicker(inputId, btnId, event) {
+  event.stopPropagation();
+  _ipTarget = inputId;
+  _ipBtn    = btnId;
+  const picker = document.getElementById('icon-picker');
+  picker.style.display = 'block';
+  const rect = event.currentTarget.getBoundingClientRect();
+  const top  = rect.bottom + 6;
+  const left = Math.min(rect.left, window.innerWidth - 310);
+  picker.style.top  = top  + 'px';
+  picker.style.left = left + 'px';
+  document.getElementById('ipicker-search-input').value = '';
+  _renderIconGrid('');
+  setTimeout(() => document.getElementById('ipicker-search-input').focus(), 40);
+}
+
+function _renderIconGrid(filter) {
+  const lc = filter.toLowerCase();
+  const icons = lc ? ICON_LIST.filter(i => i.includes(lc)) : ICON_LIST;
+  document.getElementById('ipicker-grid').innerHTML = icons.map(i =>
+    `<div class="ipicker-cell" onclick="pickIcon('${i}')" title="${i}">${i}</div>`
+  ).join('');
+}
+
+function pickIcon(icon) {
+  if (_ipTarget) document.getElementById(_ipTarget).value = icon;
+  if (_ipBtn)    document.getElementById(_ipBtn).textContent = icon;
+  document.getElementById('icon-picker').style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+  const picker = document.getElementById('icon-picker');
+  if (picker && picker.style.display !== 'none' && !picker.contains(e.target) && !e.target.classList.contains('ipicker-btn')) {
+    picker.style.display = 'none';
+  }
+});
 </script>
+
+<!-- ── GLOBAL ICON PICKER ── -->
+<div id="icon-picker">
+  <div class="ipicker-top">
+    <input type="text" id="ipicker-search-input" placeholder="🔍 Zoeken…" oninput="_renderIconGrid(this.value)" />
+  </div>
+  <div class="ipicker-grid" id="ipicker-grid"></div>
+</div>
+
 </body>
 </html>
