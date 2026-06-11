@@ -396,18 +396,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gmap-v2-col-action-btn:hover{background:rgba(255,255,255,.4);}
 /* Layout modal */
 .gmap-lm-icon-input{font-size:22px;width:54px!important;text-align:center;padding:4px!important;}
-/* ── ICON PICKER ── */
-.ipicker-wrap{display:flex;align-items:center;gap:10px;}
-.ipicker-btn{font-size:26px;background:var(--gy100);border:2px solid var(--gy200);border-radius:8px;width:52px;height:52px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s;flex-shrink:0;line-height:1;}
-.ipicker-btn:hover{border-color:var(--teal);}
-.ipicker-hint{font-size:11px;color:var(--gy500);}
-#icon-picker{position:fixed;z-index:99999;background:white;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.22);width:300px;overflow:hidden;display:none;}
-.ipicker-top{padding:8px 10px;border-bottom:1px solid var(--gy200);}
-.ipicker-top input{width:100%;border:1px solid var(--gy200);border-radius:6px;padding:5px 10px;font-size:12px;outline:none;font-family:inherit;}
-.ipicker-top input:focus{border-color:var(--teal);}
-.ipicker-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:1px;padding:7px;max-height:240px;overflow-y:auto;}
-.ipicker-cell{font-size:22px;text-align:center;cursor:pointer;border-radius:5px;padding:3px 0;transition:background .1s;user-select:none;}
-.ipicker-cell:hover{background:var(--gy100);}
+/* ── ICON PICKER (zelfde stijl als Roadmap Studio) ── */
+.icon-pick-wrap{display:flex;align-items:center;gap:8px;}
+.icon-pick-btn{font-size:22px;width:44px;height:36px;background:var(--gy100);border:1px solid var(--gy300);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
+.icon-pick-btn:hover{background:var(--g100);}
+.icon-pick-btn.empty{font-size:14px;color:var(--gy500);}
+.icon-pick-hint{font-size:11px;color:var(--gy500);}
+#icon-picker-popup{position:fixed;z-index:99999;background:white;border:1px solid var(--gy300);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);width:340px;display:none;flex-direction:column;overflow:hidden;}
+#icon-picker-popup.open{display:flex;}
+.ip-cats{display:flex;flex-wrap:wrap;gap:2px;padding:6px 6px 4px;border-bottom:1px solid var(--gy100);flex-shrink:0;}
+.ip-cat{background:none;border:none;font-size:15px;cursor:pointer;padding:4px 6px;border-radius:6px;opacity:.5;transition:all .12s;flex-shrink:0;}
+.ip-cat:hover,.ip-cat.active{opacity:1;background:var(--g100);}
+.ip-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;padding:8px;max-height:240px;overflow-y:auto;}
+.ip-em{font-size:20px;cursor:pointer;text-align:center;padding:5px 2px;border-radius:5px;line-height:1;transition:background .1s;}
+.ip-em:hover{background:var(--g100);}
+/* ── GOVERNANCE SUB-TABS ── */
+.gov-subtabs{display:flex;gap:2px;padding:0 0 14px;border-bottom:2px solid var(--gy200);margin-bottom:18px;}
+.gov-stab{padding:7px 18px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--gy500);border-radius:7px;transition:all .15s;white-space:nowrap;}
+.gov-stab:hover{background:var(--gy100);color:var(--gy700);}
+.gov-stab.active{background:var(--teal);color:white;font-weight:700;}
+.gov-subpanel{display:none;}.gov-subpanel.active{display:block;}
+/* ── SMAP GOVERNANCE LINK ── */
+.smm-gov-link-btn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:white;border-radius:4px;padding:2px 7px;font-size:10px;cursor:pointer;margin-left:4px;white-space:nowrap;}
+.smm-gov-link-btn:hover{background:rgba(255,255,255,.3);}
+.gov-link-modal-body{border:1px solid var(--gy200);border-radius:8px;max-height:240px;overflow-y:auto;}
+.gov-link-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--gy100);cursor:pointer;transition:background .12s;}
+.gov-link-row:last-child{border-bottom:none;}
+.gov-link-row:hover{background:var(--gy100);}
+.gov-link-row-icon{font-size:16px;flex-shrink:0;}
+.gov-link-row-name{flex:1;font-size:13px;font-weight:500;color:var(--gy700);}
+.gov-link-row-added{font-size:10px;color:var(--teal);font-weight:700;}
+.gov-link-person-rows{padding:10px 12px;border-top:1px solid var(--gy100);background:#f8fafb;}
+.gov-link-person-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;}
+.gov-link-person-chk{flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -612,9 +633,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <div class="field">
       <label class="label">Icoon</label>
-      <div class="ipicker-wrap">
-        <button type="button" class="ipicker-btn" id="gmap-lm-icon-btn" onclick="showIconPicker('gmap-lm-icon','gmap-lm-icon-btn',event)">📋</button>
-        <span class="ipicker-hint">Klik om een icoon te kiezen</span>
+      <div class="icon-pick-wrap">
+        <button type="button" class="icon-pick-btn" id="gmap-lm-icon-btn" onclick="openIconPicker('gmap-lm-icon','gmap-lm-icon-btn')">📋</button>
+        <span class="icon-pick-hint">Klik om een icoon te kiezen</span>
         <input type="hidden" id="gmap-lm-icon" value="📋" />
       </div>
     </div>
@@ -651,8 +672,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="field">
         <label class="label">Icoon</label>
         <div class="ipicker-wrap">
-          <button type="button" class="ipicker-btn" id="smap-icon-btn" onclick="showIconPicker('smap-f-icon','smap-icon-btn',event)">🏢</button>
-          <span class="ipicker-hint">Klik om een icoon te kiezen</span>
+          <button type="button" class="icon-pick-btn" id="smap-icon-btn" onclick="openIconPicker('smap-f-icon','smap-icon-btn')">🏢</button>
+          <span class="icon-pick-hint">Klik om een icoon te kiezen</span>
           <input type="hidden" id="smap-f-icon" value="🏢" />
         </div>
       </div>
