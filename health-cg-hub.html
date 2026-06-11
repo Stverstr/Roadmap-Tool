@@ -429,6 +429,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gov-link-person-rows{padding:10px 12px;border-top:1px solid var(--gy100);background:#f8fafb;}
 .gov-link-person-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;}
 .gov-link-person-chk{flex-shrink:0;}
+.hidden{display:none!important;}
 </style>
 </head>
 <body>
@@ -522,54 +523,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <!-- ── GOVERNANCE ── -->
     <div class="panel" id="panel-governance">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div>
-          <h2 style="font-size:18px;font-weight:700;color:var(--gy900)">Governance Structuur</h2>
+          <h2 style="font-size:18px;font-weight:700;color:var(--gy900)">Governance</h2>
           <p style="font-size:13px;color:var(--gy500);margin-top:3px">Colruyt Group Health — Steer &amp; Govern</p>
         </div>
       </div>
 
-      <!-- ── VISUELE KAART ── -->
-      <div class="gov-map-wrapper">
-        <div class="gov-map-toggle" onclick="toggleGovMap()">
-          <span class="gov-map-toggle-label">🗺️ Visuele overzichtskaart — Korte termijn</span>
-          <span class="gov-map-toggle-arrow open" id="gov-map-arrow">▼</span>
-        </div>
-        <div class="gov-map-body open" id="gov-map-body">
-          <div id="gmap-canvas"></div>
-        </div><!-- end gov-map-body -->
-        <div class="gov-palette" id="gov-palette">
-          <div class="gov-palette-header">
-            <span class="gov-palette-title">📋 Overlegorganen</span>
-            <button class="btn btn-teal btn-sm" onclick="govOpenNew()">+ Nieuw orgaan</button>
+      <!-- ── SUB-TABS ── -->
+      <div class="gov-subtabs">
+        <button class="gov-stab active" data-stab="governance" onclick="switchGovSubTab('governance')">🏛️ Governance Structuur</button>
+        <button class="gov-stab" data-stab="stakeholder" onclick="switchGovSubTab('stakeholder')">🤝 Stakeholderkaart</button>
+      </div>
+
+      <!-- ── SUB-PANEL: GOVERNANCE STRUCTUUR ── -->
+      <div class="gov-subpanel active" id="gov-sub-governance">
+        <div class="gov-map-wrapper">
+          <div class="gov-map-toggle" onclick="toggleGovMap()">
+            <span class="gov-map-toggle-label">🗺️ Visuele overzichtskaart</span>
+            <span class="gov-map-toggle-arrow open" id="gov-map-arrow">▼</span>
           </div>
-          <div id="gov-palette-items" class="gov-palette-grid"></div>
-        </div>
-      </div><!-- end gov-map-wrapper -->
-
-      <!-- ── STAKEHOLDERKAART MINDMAP ── -->
-      <div class="smap-wrapper">
-        <div class="smap-toggle" onclick="toggleSmap()">
-          <span class="smap-toggle-label">🤝 Stakeholderkaart — Betrokken entiteiten</span>
-          <span class="smap-toggle-arrow open" id="smap-arrow">▼</span>
-        </div>
-        <div class="smap-body open" id="smap-body">
-          <div id="smap-mindmap" class="smap-mindmap"></div>
+          <div class="gov-map-body open" id="gov-map-body">
+            <div id="gmap-canvas"></div>
+          </div>
+          <div class="gov-palette" id="gov-palette">
+            <div class="gov-palette-header">
+              <span class="gov-palette-title">📋 Overlegorganen</span>
+              <button class="btn btn-teal btn-sm" onclick="govOpenNew()">+ Nieuw orgaan</button>
+            </div>
+            <div id="gov-palette-items" class="gov-palette-grid"></div>
+          </div>
         </div>
       </div>
 
-      <div id="gov-strategic" class="gov-level">
-        <div class="gov-level-title">🔵 Strategisch niveau</div>
-        <div class="gov-bodies-grid" id="bodies-strategic"></div>
+      <!-- ── SUB-PANEL: STAKEHOLDERKAART ── -->
+      <div class="gov-subpanel" id="gov-sub-stakeholder">
+        <div id="smap-mindmap" class="smap-mindmap"></div>
       </div>
-      <div id="gov-tactical" class="gov-level">
-        <div class="gov-level-title">🟡 Tactisch niveau</div>
-        <div class="gov-bodies-grid" id="bodies-tactical"></div>
-      </div>
-      <div id="gov-operational" class="gov-level">
-        <div class="gov-level-title">🟢 Operationeel niveau</div>
-        <div class="gov-bodies-grid" id="bodies-operational"></div>
-      </div>
+
     </div>
 
     <!-- ── VERGADERINGEN ── -->
@@ -671,7 +662,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
       <div class="field">
         <label class="label">Icoon</label>
-        <div class="ipicker-wrap">
+        <div class="icon-pick-wrap">
           <button type="button" class="icon-pick-btn" id="smap-icon-btn" onclick="openIconPicker('smap-f-icon','smap-icon-btn')">🏢</button>
           <span class="icon-pick-hint">Klik om een icoon te kiezen</span>
           <input type="hidden" id="smap-f-icon" value="🏢" />
@@ -1633,10 +1624,7 @@ async function smapSeedDefault() {
   ]);
 }
 
-function toggleSmap() {
-  const b = document.getElementById('smap-body'), a = document.getElementById('smap-arrow');
-  const open = b.classList.toggle('open'); a.classList.toggle('open', open);
-}
+function toggleSmap() { /* vervangen door sub-tab systeem */ }
 
 // ── render cluster mindmap ──
 function smapEntityNodeHTML(entity) {
@@ -1655,6 +1643,7 @@ function smapEntityNodeHTML(entity) {
       <span class="smm-entity-name">${entity.naam}</span>
       <div class="smm-entity-actions">
         <button class="smm-entity-btn" onclick="smapOpenEdit('${entity.id}');event.stopPropagation()" title="Bewerken">✏️</button>
+        <button class="smm-entity-btn" onclick="smapOpenGovLink('${entity.id}');event.stopPropagation()" title="Koppel aan governance orgaan">🏛️</button>
         <button class="smm-entity-btn" onclick="smapDelete('${entity.id}');event.stopPropagation()" title="Verwijderen">✕</button>
       </div>
     </div>
@@ -1788,13 +1777,7 @@ function smapSetModalType(type) {
     type === 'root' ? 'Root' : type === 'cluster' ? 'Cluster' : 'Entiteit';
 }
 
-function smapSetIconField(icon) {
-  const v = icon || '🏢';
-  const inp = document.getElementById('smap-f-icon');
-  const btn = document.getElementById('smap-icon-btn');
-  if (inp) inp.value = v;
-  if (btn) btn.textContent = v;
-}
+function smapSetIconField(icon) { setIconBtn('smap-f-icon','smap-icon-btn', icon||'🏢'); }
 
 function smapOpenNewRoot() {
   smapEditId = null;
@@ -1925,8 +1908,8 @@ function smapRenderModalMeds() {
   if (!el) return;
   el.innerHTML = smapModalMeds.map((m,i) =>
     `<div class="smap-med-row">
-      <input class="input" placeholder="Naam" value="${m.naam||''}" oninput="smapModalMeds[${i}].naam=this.value" />
       <input class="input" placeholder="Rol" value="${m.rol||''}" oninput="smapModalMeds[${i}].rol=this.value" />
+      <input class="input" placeholder="Naam" value="${m.naam||''}" oninput="smapModalMeds[${i}].naam=this.value" />
       <button class="smap-med-remove" onclick="smapModalRemoveMed(${i})" type="button">×</button>
     </div>`
   ).join('');
@@ -2286,11 +2269,7 @@ function govLmGetColor() {
   return sel ? (sel.dataset.color || '#0D9488') : '#0D9488';
 }
 
-function _setGovIcon(icon) {
-  const v = icon || '📋';
-  document.getElementById('gmap-lm-icon').value = v;
-  document.getElementById('gmap-lm-icon-btn').textContent = v;
-}
+function _setGovIcon(icon) { setIconBtn('gmap-lm-icon','gmap-lm-icon-btn', icon||'📋'); }
 
 function govOpenNewRow() {
   govLayoutEditId = null; govLayoutType = 'row'; govLayoutRowId = null;
@@ -2595,91 +2574,179 @@ function toast(msg) {
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
-// ── ICON PICKER ──
-const ICON_LIST = [
-  // Mensen & Rollen
-  '👤','👥','👑','🤝','🙋','🎓','🏃','🕵️','🦸','💂','🤴','👸','🎩','🧑‍💼','👩‍💼',
-  '🧑‍⚕️','👨‍🏫','🧑‍🔬','🧑‍💻','🧑‍🚒',
-  // Gebouwen & Plaatsen
-  '🏢','🏥','🏬','🏪','🏛️','🏗️','🏭','🏠','🏡','🏦','🏰','🗼','🏟️','⛪','🕌',
-  // Documenten & Kantoor
-  '📋','📌','📍','📎','📁','📂','📊','📈','📉','📆','📅','📇','📒','📓','📔',
-  '📕','📗','📘','📙','📚','📖','📝','🗒️','🗓️','🗃️',
-  // Technologie
-  '💻','🖥️','📱','⌨️','🖨️','🖱️','💾','💿','📀','📺','📷','🎥','📡','🔌','🔋',
-  '🤖','📲','💡','📻','🎮',
-  // Tools
-  '🔧','🔨','⚙️','🛠️','🔑','🗝️','🔒','🔓','🔍','🔎','🔬','🔭','🔦','🕯️','🧲',
-  '⚒️','🪛','🪚','🗜️','⛏️',
-  // Sterren & Awards
-  '⭐','🌟','💫','✨','🎯','🏆','🥇','🥈','🥉','🎖️','🏅','⚜️','🔰','🎗️','🌈',
-  '❤️','💚','💙','💜','🖤',
-  // Natuur & Wetenschap
-  '🌱','🌿','🍀','🌳','🌻','🌺','🌸','🌍','⚡','🌊','🔥','💧','❄️','🌙','☀️',
-  '🌤️','🧬','🧪','🧫','🌵',
-  // Transport
-  '🚀','✈️','🚗','🏎️','🚁','⛵','🛸','🚂','🚌','🏍️','🛩️','🛶','🚒','🚑','🚕',
-  // Communicatie
-  '📞','☎️','📧','✉️','📨','📩','💬','💭','🗨️','📣','📢','🔔','🗣️','💌','📯',
-  '🎤','🎙️','📠','📟','🔕',
-  // Financiën
-  '💰','💵','💶','💴','💸','💳','💹','🤑','💱','⚖️','📊','📈','📉','🏦','💲',
-  // Gezondheid
-  '💊','💉','🩺','🩻','🩹','🫀','🫁','🧬','🏃','🧘','🏋️','🥗','😷','🌡️','🧴',
-  // Pijlen & Flow
-  '⬆️','⬇️','➡️','⬅️','🔄','♻️','🔁','⏩','⏪','🔃',
-  // Overig
-  '🎭','🎨','🎬','🎵','🎶','🎸','🎹','🎁','🎀','🎊','🎉','🎈','🎂','🦁','🦊',
-  '🐻','🦋','🐝','🦅','🐉'
+// ── ICON PICKER (zelfde systeem als Roadmap Studio) ──
+const ICON_CATS = [
+  { label: '⚙️', name: 'Werk & Proces', icons: ['⚙️','🔧','🔨','🛠️','🔩','⛏️','🪛','🪚','🔄','🔀','🔁','🔃','➡️','⬆️','⬇️','↩️','↪️','🔗','📋','📌','📍','🗂️','📁','📂','🗃️','📦','📫','📬','📭','📮','🗳️','🗄️','🗑️','📇','🗒️','🗓️','📅','📆','📐','📏','✂️','🖇️','📎','🖊️','✒️','🖋️','📝','✏️','🖍️','📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🏷️'] },
+  { label: '👥', name: 'Mensen & Teams', icons: ['👥','👤','🤝','💼','🎓','🧑‍💼','👩‍💼','👨‍💼','🧑‍🏫','👩‍🏫','👨‍🏫','🧑‍🔬','👩‍🔬','👨‍🔬','🧑‍💻','👩‍💻','👨‍💻','🧑‍🎨','👩‍🎨','👨‍🎨','🧑‍🔧','👩‍🔧','👨‍🔧','💬','📣','📢','🗣️','✍️','🙋','🙌','👏','🤜','🤛','💪','🫱','🫲','🫶','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','🫂','🫀','🧠','👑','🎩','🕵️','🦸','💂'] },
+  { label: '📊', name: 'Data & Tech', icons: ['📊','📈','📉','🔍','🔎','💡','🧠','🗺️','🌐','💾','🖥️','🖨️','⌨️','🖱️','💻','📱','☎️','📞','📟','📠','📡','🔋','🔌','💿','📀','🖲️','🕹️','📷','📸','📹','🎥','📽️','🎞️','📺','📻','🎙️','🎚️','🎛️','🧮','⌚','⏰','⏱️','⏲️','🔭','🔬','🧬','🧪','🧫','🧲','⚗️','🔦','💡','🕯️','🪔','🤖','📲'] },
+  { label: '🎯', name: 'Doelen & Succes', icons: ['🎯','🏆','🥇','🥈','🥉','🎖️','🏅','🎗️','✅','☑️','✔️','🚀','🌟','⭐','🌠','💫','✨','🎆','🎇','🎉','🎊','🎈','🎁','🎀','🪄','🔮','🎱','🎲','🃏','🀄','🎴','🧩','🪅','🎭','🎬','🎤','🎵','🎶','🎸','🎹','🥁','🎷','🎺','🎻','🪕','🪗','🎮','🕹️','👑','💎','🏵️','⚜️','🔰'] },
+  { label: '🌿', name: 'Natuur & Duurzaamheid', icons: ['🌿','🌍','🌎','🌏','🌱','💚','🍀','🌾','🌻','🌲','🌳','🌴','🌵','🎋','🎍','🍃','🍂','🍁','🌺','🌸','🌼','🌷','🌹','🥀','🌞','🌝','🌛','🌜','🌚','🌕','☀️','🌤️','⛅','🌥️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','☃️','⛄','🌬️','💨','🌈','☔','⚡','🌊','💧','🫧','♻️','🌡️','🌋','🏔️','⛰️','🗻','🏕️','🌄','🌅','🏖️','🏜️','🏝️'] },
+  { label: '🚦', name: 'Status & Signalen', icons: ['🚦','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔺','🔻','🔷','🔶','🔹','🔸','🔘','🔲','🔳','⬛','⬜','🟥','🟧','🟨','🟩','🟦','🟪','⚠️','❗','❕','❓','❔','‼️','⁉️','🔔','🔕','🔇','🔈','🔉','🔊','📢','📣','💬','💭','🗯️','📍','🚩','🏴','🏳️','🎌','🏁','🚧','⛔','🚫','📵','🔞','🆘','🆕','🆙','🆒','🆓','🆗','🆖','🔝','🔛','🔜'] },
+  { label: '🏗️', name: 'Gebouwen & Plaatsen', icons: ['🏗️','🏢','🏬','🏭','🏠','🏡','🏰','🏯','🕌','⛪','🛕','🗼','🗽','🗿','🏛️','⛲','⛺','🏕️','🛖','🧱','🪟','🚪','🛗','🪜','🧰','🪣','🧲','💡','🔦','🕯️','🪔','🧯','🛢️','💈','🔑','🗝️','🔐','🔒','🔓','🔏','🪪','🏷️','🎫','🎟️','🎪','🎠','🎡','🎢','🛝','⛱️','🎑','🗺️','🧭','🌉','🌃','🌆','🌇','🌁','🏦','🏥','🏟️'] },
+  { label: '🚀', name: 'Beweging & Energie', icons: ['🚀','✈️','🛸','🛩️','🚁','🚂','🚃','🚄','🚅','🚆','🚇','🚈','🚉','🚊','🚝','🚞','🚋','🚌','🚍','🚎','🚐','🚑','🚒','🚓','🚔','🚕','🚖','🚗','🚘','🚙','🚚','🛻','🚛','🚜','🏎️','🏍️','🛵','🚲','🛴','🛹','🛼','🚏','🛣️','🛤️','⛽','🚨','🚥','🚦','🛑','⚓','⛵','🚤','🛥️','🛳️','⛴️','🚢','🛶','🪂','🏋️','🤸','🧗','🏊','🚵','⛷️','🏂','🏄'] },
+  { label: '💊', name: 'Gezondheid', icons: ['💊','💉','🩺','🩻','🩹','🫀','🫁','🧬','🧪','🧫','🔬','🔭','🌡️','🧴','🧹','🧼','🪥','🧽','🛁','🚿','🪒','🪮','🛌','🧘','🏃','🏋️','🤸','🏊','🚴','🥗','🥦','🫐','🍎','🍋','🫚','🌿','🍀','☀️','🌬️','💧','🫧','❤️','💚','💙','💜','🤍','💛','🧡','💕','💞','💓','💗','💖','💝','💘','🫶','🤲','🙏','✌️','🤞','🫂'] },
+  { label: '😀', name: 'Expressie', icons: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','☺️','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🫢','🫣','🤫','🤔','🫡','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🥴','😵','💫','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿'] },
 ];
 
-let _ipTarget = null; // hidden input id
-let _ipBtn    = null; // trigger button id
+let ipTargetInput = null;
+let ipTargetBtn   = null;
+let ipActiveCat   = 0;
 
-function showIconPicker(inputId, btnId, event) {
-  event.stopPropagation();
-  _ipTarget = inputId;
-  _ipBtn    = btnId;
-  const picker = document.getElementById('icon-picker');
-  picker.style.display = 'block';
-  const rect = event.currentTarget.getBoundingClientRect();
-  const top  = rect.bottom + 6;
-  const left = Math.min(rect.left, window.innerWidth - 310);
-  picker.style.top  = top  + 'px';
-  picker.style.left = left + 'px';
-  document.getElementById('ipicker-search-input').value = '';
-  _renderIconGrid('');
-  setTimeout(() => document.getElementById('ipicker-search-input').focus(), 40);
+function openIconPicker(inputId, btnId) {
+  ipTargetInput = inputId;
+  ipTargetBtn   = btnId;
+  const btn   = document.getElementById(btnId);
+  const popup = document.getElementById('icon-picker-popup');
+  renderIpCats();
+  renderIpGrid(ipActiveCat);
+  const rect = btn.getBoundingClientRect();
+  popup.style.top  = (rect.bottom + 6) + 'px';
+  popup.style.left = Math.min(rect.left, window.innerWidth - 350) + 'px';
+  popup.classList.add('open');
 }
-
-function _renderIconGrid(filter) {
-  const lc = filter.toLowerCase();
-  const icons = lc ? ICON_LIST.filter(i => i.includes(lc)) : ICON_LIST;
-  document.getElementById('ipicker-grid').innerHTML = icons.map(i =>
-    `<div class="ipicker-cell" onclick="pickIcon('${i}')" title="${i}">${i}</div>`
+function renderIpCats() {
+  document.getElementById('ip-cats').innerHTML = ICON_CATS.map((c,i) =>
+    `<button class="ip-cat${i===ipActiveCat?' active':''}" onclick="renderIpGrid(${i})" title="${c.name}">${c.label}</button>`
   ).join('');
 }
-
-function pickIcon(icon) {
-  if (_ipTarget) document.getElementById(_ipTarget).value = icon;
-  if (_ipBtn)    document.getElementById(_ipBtn).textContent = icon;
-  document.getElementById('icon-picker').style.display = 'none';
+function renderIpGrid(catIdx) {
+  ipActiveCat = catIdx;
+  renderIpCats();
+  document.getElementById('ip-grid').innerHTML = ICON_CATS[catIdx].icons.map(em =>
+    `<div class="ip-em" onclick="selectIcon('${em}')">${em}</div>`
+  ).join('');
 }
-
-document.addEventListener('click', function(e) {
-  const picker = document.getElementById('icon-picker');
-  if (picker && picker.style.display !== 'none' && !picker.contains(e.target) && !e.target.classList.contains('ipicker-btn')) {
-    picker.style.display = 'none';
+function selectIcon(emoji) {
+  if (ipTargetInput) {
+    document.getElementById(ipTargetInput).value = emoji;
+    const btn = document.getElementById(ipTargetBtn);
+    if (btn) { btn.textContent = emoji; btn.classList.remove('empty'); }
+  }
+  document.getElementById('icon-picker-popup').classList.remove('open');
+}
+function setIconBtn(inputId, btnId, val) {
+  const v = val || '';
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  if (inp) inp.value = v;
+  if (btn) { btn.textContent = v || '＋'; btn.classList.toggle('empty', !v); }
+}
+document.getElementById('icon-picker-popup').addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', e => {
+  const popup = document.getElementById('icon-picker-popup');
+  if (popup && popup.classList.contains('open') && !e.target.classList.contains('icon-pick-btn')) {
+    popup.classList.remove('open');
   }
 });
+
+// ── GOVERNANCE SUB-TABS ──
+let govSubTab = 'governance';
+function switchGovSubTab(tab) {
+  govSubTab = tab;
+  document.querySelectorAll('.gov-stab').forEach(b => b.classList.toggle('active', b.dataset.stab === tab));
+  document.querySelectorAll('.gov-subpanel').forEach(p => p.classList.toggle('active', p.id === 'gov-sub-' + tab));
+  if (tab === 'governance') govRenderMap();
+  if (tab === 'stakeholder') renderSmap();
+}
+
+// ── STAKEHOLDER → GOVERNANCE LINK ──
+let govLinkSmapEntityId = null;
+
+function smapOpenGovLink(entityId) {
+  govLinkSmapEntityId = entityId;
+  const entity = smapEntities.find(e => e.id === entityId);
+  if (!entity) return;
+  const modal = document.getElementById('gov-link-modal');
+  document.getElementById('gov-link-title').textContent = `${entity.icon||'🏢'} ${entity.naam} — koppel aan orgaan`;
+  renderGovLinkBodies(entity);
+  openModal('gov-link-modal');
+}
+
+function renderGovLinkBodies(entity) {
+  const list = document.getElementById('gov-link-body-list');
+  if (!list) return;
+  // Collect people from this entity
+  const people = [];
+  if (entity.lead_naam) people.push({ naam: entity.lead_naam, rol: entity.lead_rol || 'Lead', type: 'lead' });
+  if (entity.spoc_naam) people.push({ naam: entity.spoc_naam, rol: entity.spoc_rol || 'SPOC', type: 'spoc' });
+  (entity.medewerkers || []).forEach(m => {
+    if (m.naam) people.push({ naam: m.naam, rol: m.rol || 'Medewerker', type: 'med' });
+  });
+
+  // Gather all bodies
+  const bodies = allBodies.slice().sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  list.innerHTML = bodies.map(b => {
+    const existing = (b.gov_participants||[]).filter(p =>
+      people.some(pe => pe.naam && p.person_name && p.person_name.toLowerCase() === pe.naam.toLowerCase())
+    );
+    const alreadyStr = existing.length ? `<span class="gov-link-row-added">✓ ${existing.length} gelinkt</span>` : '';
+    const clr = b.kleur || '#0D9488';
+    const personRows = people.map((p, pi) => {
+      const isLinked = (b.gov_participants||[]).some(gp =>
+        gp.person_name && p.naam && gp.person_name.toLowerCase() === p.naam.toLowerCase()
+      );
+      return `<div class="gov-link-person-row">
+        <input type="checkbox" class="gov-link-person-chk" id="glchk-${b.id}-${pi}" ${isLinked?'checked':''} onchange="govLinkTogglePerson('${b.id}',${pi},'${entityId||entity.id}',this.checked)" />
+        <label for="glchk-${b.id}-${pi}" style="cursor:pointer;flex:1;font-size:12px;">
+          <strong>${p.naam}</strong> <span style="color:var(--gy500)">${p.rol}</span>
+        </label>
+      </div>`;
+    }).join('');
+    return `<div class="gov-link-row" onclick="document.getElementById('gov-link-persons-${b.id}').classList.toggle('hidden')">
+      <span class="gov-link-row-icon" style="color:${clr}">${b.focus||'📋'}</span>
+      <span class="gov-link-row-name">${b.name}</span>
+      ${alreadyStr}
+      <span style="font-size:10px;color:var(--gy400)">▾</span>
+    </div>
+    <div class="gov-link-person-rows hidden" id="gov-link-persons-${b.id}">${personRows}</div>`;
+  }).join('');
+}
+
+async function govLinkTogglePerson(bodyId, personIdx, entityId, add) {
+  const entity = smapEntities.find(e => e.id === entityId);
+  if (!entity) return;
+  const people = [];
+  if (entity.lead_naam) people.push({ naam: entity.lead_naam, rol: entity.lead_rol || 'Lead' });
+  if (entity.spoc_naam) people.push({ naam: entity.spoc_naam, rol: entity.spoc_rol || 'SPOC' });
+  (entity.medewerkers || []).forEach(m => { if (m.naam) people.push({ naam: m.naam, rol: m.rol || 'Medewerker' }); });
+  const person = people[personIdx];
+  if (!person) return;
+  const body = allBodies.find(b => b.id === bodyId);
+  if (!body) return;
+  if (add) {
+    const { data } = await sb.from('gov_participants').insert({
+      body_id: bodyId, person_name: person.naam, role_name: person.rol,
+      participant_type: 'core', sort_order: (body.gov_participants||[]).length
+    }).select('*').single();
+    if (data) { body.gov_participants = [...(body.gov_participants||[]), data]; }
+  } else {
+    const existing = (body.gov_participants||[]).find(gp =>
+      gp.person_name && person.naam && gp.person_name.toLowerCase() === person.naam.toLowerCase()
+    );
+    if (existing) {
+      await sb.from('gov_participants').delete().eq('id', existing.id);
+      body.gov_participants = (body.gov_participants||[]).filter(p => p.id !== existing.id);
+    }
+  }
+}
 </script>
 
-<!-- ── GLOBAL ICON PICKER ── -->
-<div id="icon-picker">
-  <div class="ipicker-top">
-    <input type="text" id="ipicker-search-input" placeholder="🔍 Zoeken…" oninput="_renderIconGrid(this.value)" />
+<!-- ── GLOBAL ICON PICKER POPUP ── -->
+<div id="icon-picker-popup">
+  <div class="ip-cats" id="ip-cats"></div>
+  <div class="ip-grid" id="ip-grid"></div>
+</div>
+
+<!-- ── MODAL: GOVERNANCE LINK ── -->
+<div class="modal-bg" id="gov-link-modal">
+  <div class="modal" style="width:min(500px,100%);">
+    <div class="modal-title" id="gov-link-title">Koppel aan orgaan</div>
+    <p style="font-size:12px;color:var(--gy500);margin-bottom:10px;">Klik op een orgaan om de mensen te zien. Vink aan wie deelnemer wordt.</p>
+    <div class="gov-link-modal-body" id="gov-link-body-list"></div>
+    <div class="modal-footer">
+      <button class="btn btn-p" onclick="closeModal('gov-link-modal');govRenderMap()">Sluiten &amp; opslaan</button>
+    </div>
   </div>
-  <div class="ipicker-grid" id="ipicker-grid"></div>
 </div>
 
 </body>
