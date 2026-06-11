@@ -51,6 +51,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* ── MAIN ── */
 .main{padding:22px;max-width:1500px;margin:0 auto;}
 .panel{display:none;}.panel.active{display:block;}
+/* ── EMBED MODE (inside iframe in health-cg-hub) ── */
+body.embed-mode .hdr{display:none!important;}
+body.embed-mode .nav{top:0!important;}
+body.embed-mode .auth-screen{display:none!important;}
+body.embed-mode #app-screen{min-height:100vh;}
 
 /* ── CARDS ── */
 .card{background:white;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:20px 24px;margin-bottom:18px;}
@@ -599,6 +604,14 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ═══════════════════════════════════════════
+//  EMBED MODE (when loaded inside an iframe in health-cg-hub)
+// ═══════════════════════════════════════════
+const _urlP = new URLSearchParams(window.location.search);
+const embedMode     = _urlP.get('embed') === '1';
+const urlProjectId  = _urlP.get('project') || null;
+if (embedMode) document.body.classList.add('embed-mode');
+
+// ═══════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════
 let currentUser = null;
@@ -642,8 +655,33 @@ let saveTimer = null;
 function showApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app-screen').style.display = 'block';
-  document.getElementById('hdr-user').textContent = currentUser.email;
-  loadProjects();
+  if (!embedMode) document.getElementById('hdr-user').textContent = currentUser.email;
+  if (embedMode && urlProjectId) {
+    loadProjectEmbed(urlProjectId);
+  } else {
+    loadProjects();
+  }
+}
+
+async function loadProjectEmbed(pid) {
+  // Load one specific project by id (used when embedded in health-cg-hub)
+  const { data } = await sb.from('projects').select('*').eq('id', pid).single();
+  if (!data) return;
+  projects = [data];
+  currentProjectId = pid;
+  // Show all content areas
+  ['no-project-setup','no-project-sb','no-project-tl'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  ['setup-content','storyboard-content','timeline-content'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'block';
+  });
+  await loadProjectData();
+  fillSetupForm();
+  renderTracksList();
+  renderPhasesList();
+  renderStoryboard();
+  renderTimeline();
 }
 function showAuth() {
   document.getElementById('auth-screen').style.display = 'flex';
