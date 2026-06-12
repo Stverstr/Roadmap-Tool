@@ -161,7 +161,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .str-acts-sidebar.open{display:flex;}
 .str-acts-sb-head{padding:12px 14px;border-bottom:1px solid var(--gy100);display:flex;align-items:center;gap:8px;background:var(--gy50);border-radius:12px 12px 0 0;flex-shrink:0;}
 .str-acts-sb-body{flex:1;overflow-y:auto;padding:8px;}
-.str-act-card{display:flex;flex-direction:column;gap:3px;padding:9px 11px;background:white;border:1px solid rgba(0,0,0,.08);border-radius:7px;margin-bottom:6px;cursor:grab;transition:box-shadow .15s;user-select:none;position:relative;}
+.str-act-card{display:flex;flex-direction:column;gap:3px;padding:9px 11px 9px 13px;background:white;border:1px solid rgba(0,0,0,.08);border-left:3px solid var(--gy300);border-radius:7px;margin-bottom:6px;cursor:grab;transition:box-shadow .15s;user-select:none;position:relative;}
 .str-act-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.12);}
 .str-act-card.dragging{opacity:.35;cursor:grabbing;}
 .str-act-card-title{font-size:12px;font-weight:700;color:var(--gy900);line-height:1.3;padding-right:4px;}
@@ -3799,6 +3799,7 @@ function renderStrategie() {
           : `<span class="sb-card-status" style="background:#F3F4F6;color:#6B7280;">○ Gepland</span>`;
         const phaseName = it.phase_id ? (phases_map[it.phase_id]||'') : '';
         viewsHtml += `<div class="str-act-card" draggable="true"
+            style="border-left-color:${sub.color||'var(--gy300)'};"
             ondragstart="strDragStart(event,'${it.id}')"
             ondragend="this.classList.remove('dragging')">
           <div class="str-act-card-title" onclick="openItemModal('${it.id}','edit')" style="cursor:pointer;">${it.title}</div>
