@@ -3589,9 +3589,10 @@ function renderStrategie() {
     return;
   }
 
-  // Default to first subcategory
+  // Default to first subcategory that has strategic changes; fall back to first
   if (!activeStrSubcatId || !allSubs.find(s => s.id === activeStrSubcatId)) {
-    activeStrSubcatId = allSubs[0].id;
+    const firstWithData = allSubs.find(s => strategicChanges.some(sc => sc.subcategory_id === s.id));
+    activeStrSubcatId = (firstWithData || allSubs[0]).id;
   }
 
   // Nav tabs — styled like storyboard headers
