@@ -172,6 +172,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .metro-stop-lbl{position:absolute;top:14px;font-size:9px;font-weight:600;white-space:nowrap;color:var(--gy600);}
 .hb-modal-field{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
 .hb-modal-field input,.hb-modal-field textarea{flex:1;}
+/* Doelstelling cards in hefboom modal */
+.dst-card{background:var(--gy50);border:1px solid var(--gy200);border-radius:9px;padding:12px 12px 10px;margin-bottom:10px;position:relative;}
+.dst-card-main{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.dst-card-row{display:flex;gap:6px;align-items:center;}
+.dst-card-del{position:absolute;top:8px;right:8px;}
+.dst-tgt-section{border-top:1px solid var(--gy200);padding-top:8px;}
+.dst-tgt-label{font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
+.dst-tgt-table{width:100%;border-collapse:collapse;}
+.dst-tgt-table th{text-align:left;font-size:11px;font-weight:600;color:var(--gy400);padding:3px 8px 5px;border-bottom:1px solid var(--gy200);}
+.dst-tgt-table td{padding:3px 4px;vertical-align:middle;}
+.input-sm{padding:5px 8px!important;font-size:12px!important;}
 .phase-name{font-size:14px;font-weight:700;color:var(--gy900);flex:1;}
 .phase-dates{font-size:11px;color:var(--gy500);}
 
@@ -597,16 +608,10 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div class="field"><label class="label">Naam</label><input class="input" id="mhb-name" placeholder="bijv. Elektrificatie vrachtvervoer"></div>
       <hr class="sep">
       <div class="card-row" style="margin:0 0 8px">
-        <span style="font-size:13px;font-weight:700;">🏁 LT Doelstellingen</span>
-        <button class="btn btn-sm btn-p" onclick="addLtField()">＋ Voeg toe</button>
+        <span style="font-size:13px;font-weight:700;">🏁 Doelstellingen</span>
+        <button class="btn btn-sm btn-p" onclick="addDstField()">＋ Voeg toe</button>
       </div>
       <div id="mhb-lt-fields"></div>
-      <hr class="sep">
-      <div class="card-row" style="margin:0 0 8px">
-        <span style="font-size:13px;font-weight:700;">🎯 KT Targets</span>
-        <button class="btn btn-sm btn-p" onclick="addKtField()">＋ Voeg toe</button>
-      </div>
-      <div id="mhb-kt-fields"></div>
       <hr class="sep">
       <div class="card-row" style="margin:0 0 8px">
         <span style="font-size:13px;font-weight:700;">📝 Inspanningsverbintenissen</span>
@@ -3450,20 +3455,26 @@ function updateHefboomTabVisibility() {
 }
 
 function buildHbTimeline(lts, kts, insps) {
+  // lts = lt_doelstellingen, kts = kt_targets (linked via lt_doelstelling_id), insps = inspanningen
   const events = [];
   const undated = [];
-  const fmt = d => { const dt = new Date(d); return dt.toLocaleDateString('nl-BE',{month:'short',year:'2-digit'}); };
+  const fmt = d => new Date(d).toLocaleDateString('nl-BE',{month:'short',year:'2-digit'});
+
   lts.forEach(lt => {
-    if (lt.end_date) events.push({type:'lt',ts:new Date(lt.end_date).getTime(),lbl:fmt(lt.end_date),tip:lt.description,emoji:'🏁'});
-    else undated.push(`<span class="chip-lt">🏁 ${lt.description}</span>`);
-  });
-  kts.forEach(kt => {
-    const tip = kt.description + (kt.value?` · ${kt.value}${kt.unit||''}` :'');
-    if (kt.target_date) events.push({type:'kt',ts:new Date(kt.target_date).getTime(),lbl:fmt(kt.target_date),tip,emoji:'🎯'});
-    else undated.push(`<span class="chip-kt">🎯 ${tip}</span>`);
+    // Main doelstelling event (star marker)
+    if (lt.end_date) {
+      const lbl = (lt.goal_value!=null ? lt.goal_value+(lt.unit||'') : '') + (lt.description?' · '+lt.description:'');
+      events.push({type:'lt', ts:new Date(lt.end_date).getTime(), lbl:fmt(lt.end_date), tip:lbl||lt.description, emoji:'🏁', big:true});
+    } else {
+      undated.push(`<span class="chip-lt">🏁 ${lt.description}${lt.goal_value!=null?' · '+lt.goal_value+(lt.unit||''):''}</span>`);
+    }
+    // Nested targets for this doelstelling
+    kts.filter(kt => kt.lt_doelstelling_id === lt.id).forEach(kt => {
+      if (kt.target_date) events.push({type:'kt', ts:new Date(kt.target_date).getTime(), lbl:fmt(kt.target_date), tip:`${kt.value!=null?kt.value+(lt.unit||''):''} · ${lt.description}`, emoji:'🎯', big:false});
+    });
   });
   insps.forEach(i => {
-    if (i.end_date) events.push({type:'insp',ts:new Date(i.end_date).getTime(),lbl:fmt(i.end_date),tip:i.description,emoji:'📝'});
+    if (i.end_date) events.push({type:'insp', ts:new Date(i.end_date).getTime(), lbl:fmt(i.end_date), tip:i.description, emoji:'📝', big:false});
     else undated.push(`<span class="chip-insp">📝 ${i.description}</span>`);
   });
 
@@ -3474,16 +3485,18 @@ function buildHbTimeline(lts, kts, insps) {
     const span = maxTs - minTs || 1;
     html += '<div class="hb-tl-wrap"><div class="hb-tl-bar"></div>';
     events.forEach(ev => {
-      const pct = events.length === 1 ? 50 : 8 + (ev.ts - minTs) / span * 84;
+      const pct = events.length === 1 ? 50 : 6 + (ev.ts - minTs) / span * 88;
+      const size = ev.big ? '22px' : '18px';
+      const fontSize = ev.big ? '12px' : '10px';
       html += `<div class="hb-tl-dot tl-${ev.type}" style="left:${pct.toFixed(1)}%">
         <div class="hb-tl-lbl">${ev.lbl}</div>
-        <div class="hb-tl-ico">${ev.emoji}</div>
-        <div class="hb-tl-tooltip">${ev.tip.length>40?ev.tip.slice(0,37)+'…':ev.tip}</div>
+        <div class="hb-tl-ico" style="width:${size};height:${size};font-size:${fontSize};${ev.big?'box-shadow:0 0 0 2px var(--orange);':''}">${ev.emoji}</div>
+        <div class="hb-tl-tooltip">${(ev.tip||'').length>45?(ev.tip).slice(0,42)+'…':ev.tip}</div>
       </div>`;
     });
     html += '</div>';
   } else if (!undated.length) {
-    html += '<div class="hb-tl-none">Nog geen targets of inspanningen</div>';
+    html += '<div class="hb-tl-none">Nog geen doelstellingen of inspanningen</div>';
   }
   if (undated.length) html += `<div class="str-hb-chips">${undated.join('')}</div>`;
   html += '</div>';
@@ -3834,7 +3847,7 @@ async function deleteStrategicChange() {
 //  HEFBOOM MODAL
 // ═══════════════════════════════════════════
 let editingHbId = null, editingHbScId = null;
-let hbLtFields = [], hbKtFields = [], hbInspFields = [];
+let hbDstFields = [], hbInspFields = [];
 
 function openHefboomModal(id, scId) {
   editingHbId = id || null;
@@ -3843,33 +3856,45 @@ function openHefboomModal(id, scId) {
   document.getElementById('mhb-del-btn').style.display = id ? 'inline-flex' : 'none';
   const hb = id ? hefbomenData.find(x => x.id === id) : null;
   document.getElementById('mhb-name').value = hb ? hb.name : '';
-  hbLtFields = id ? ltDoelstellingen.filter(x => x.hefboom_id === id).map(x=>({...x})) : [];
-  hbKtFields = id ? ktTargets.filter(x => x.hefboom_id === id).map(x=>({...x})) : [];
+  hbDstFields = id ? ltDoelstellingen.filter(x => x.hefboom_id === id).map(lt => ({
+    ...lt,
+    targets: ktTargets.filter(kt => kt.lt_doelstelling_id === lt.id)
+      .map(kt => ({...kt}))
+      .sort((a,b) => (a.target_date||'').localeCompare(b.target_date||''))
+  })) : [];
   hbInspFields = id ? inspanningsverbintenissen.filter(x => x.hefboom_id === id).map(x=>({...x})) : [];
   renderHbFields();
   document.getElementById('modal-hefboom').classList.add('open');
 }
+
 function renderHbFields() {
-  document.getElementById('mhb-lt-fields').innerHTML = hbLtFields.map((f,i) => `
-    <div class="hb-modal-field">
-      <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
-        <input class="input" placeholder="Beschrijving LT doelstelling…" value="${f.description||''}" oninput="hbLtFields[${i}].description=this.value">
-        <input class="input" type="date" value="${f.end_date||''}" title="Einddatum" oninput="hbLtFields[${i}].end_date=this.value">
-      </div>
-      <button class="btn btn-danger btn-sm" onclick="hbLtFields.splice(${i},1);renderHbFields()">✕</button>
-    </div>`).join('');
-  document.getElementById('mhb-kt-fields').innerHTML = hbKtFields.map((f,i) => `
-    <div class="hb-modal-field">
-      <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
-        <input class="input" placeholder="Beschrijving KT target…" value="${f.description||''}" oninput="hbKtFields[${i}].description=this.value">
-        <div style="display:flex;gap:6px;">
-          <input class="input" placeholder="Waarde (bijv. 80)" value="${f.value||''}" style="flex:1" oninput="hbKtFields[${i}].value=this.value">
-          <input class="input" placeholder="Eenheid (%, €…)" value="${f.unit||''}" style="width:80px" oninput="hbKtFields[${i}].unit=this.value">
-          <input class="input" type="date" value="${f.target_date||''}" title="Doeldatum" oninput="hbKtFields[${i}].target_date=this.value">
+  document.getElementById('mhb-lt-fields').innerHTML = hbDstFields.map((f,i) => `
+    <div class="dst-card">
+      <button class="btn btn-danger btn-sm dst-card-del" onclick="hbDstFields.splice(${i},1);renderHbFields()">✕</button>
+      <div class="dst-card-main">
+        <input class="input" placeholder="Beschrijving doelstelling…" value="${f.description||''}" oninput="hbDstFields[${i}].description=this.value">
+        <div class="dst-card-row">
+          <input class="input" type="number" placeholder="Einddoel" value="${f.goal_value??''}" style="width:90px;flex-shrink:0;" step="any" oninput="hbDstFields[${i}].goal_value=this.value">
+          <input class="input" placeholder="Eenheid (%, €, ton…)" value="${f.unit||''}" style="flex:1;" oninput="hbDstFields[${i}].unit=this.value">
+          <input class="input" type="date" value="${f.end_date||''}" title="Einddatum" style="width:145px;flex-shrink:0;" oninput="hbDstFields[${i}].end_date=this.value">
         </div>
       </div>
-      <button class="btn btn-danger btn-sm" onclick="hbKtFields.splice(${i},1);renderHbFields()">✕</button>
+      <div class="dst-tgt-section">
+        <div class="dst-tgt-label">Tussentijdse targets ${f.unit?'('+f.unit+')':''}</div>
+        <table class="dst-tgt-table">
+          <thead><tr><th>Waarde</th><th>Datum</th><th></th></tr></thead>
+          <tbody>
+            ${(f.targets||[]).map((t,j) => `<tr>
+              <td><input class="input input-sm" type="number" value="${t.value??''}" step="any" placeholder="bijv. 20" oninput="hbDstFields[${i}].targets[${j}].value=this.value"></td>
+              <td><input class="input input-sm" type="date" value="${t.target_date||''}" oninput="hbDstFields[${i}].targets[${j}].target_date=this.value"></td>
+              <td style="width:32px;"><button class="btn btn-danger btn-sm" style="padding:2px 6px;" onclick="hbDstFields[${i}].targets.splice(${j},1);renderHbFields()">✕</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <button class="btn btn-sm btn-s" style="margin-top:6px;font-size:11px;" onclick="hbDstFields[${i}].targets.push({value:'',target_date:''});renderHbFields()">＋ Target toevoegen</button>
+      </div>
     </div>`).join('');
+
   document.getElementById('mhb-insp-fields').innerHTML = hbInspFields.map((f,i) => `
     <div class="hb-modal-field">
       <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
@@ -3879,8 +3904,8 @@ function renderHbFields() {
       <button class="btn btn-danger btn-sm" onclick="hbInspFields.splice(${i},1);renderHbFields()">✕</button>
     </div>`).join('');
 }
-function addLtField() { hbLtFields.push({description:'',end_date:''}); renderHbFields(); }
-function addKtField() { hbKtFields.push({description:'',value:'',unit:'',target_date:''}); renderHbFields(); }
+function addDstField() { hbDstFields.push({description:'',unit:'',end_date:'',goal_value:'',targets:[]}); renderHbFields(); }
+function addLtField() { addDstField(); } // backward compat alias
 function addInspField() { hbInspFields.push({description:'',end_date:''}); renderHbFields(); }
 
 async function saveHefboom() {
@@ -3895,22 +3920,31 @@ async function saveHefboom() {
     if (!data) return;
     hefbomenData.push(data); hbId = data.id;
   }
-  // Sync LT
-  const existingLt = ltDoelstellingen.filter(x => x.hefboom_id === hbId);
-  for (const f of hbLtFields) {
-    if (!f.description.trim()) continue;
-    if (f.id) { await sb.from('lt_doelstellingen').update({description:f.description,end_date:f.end_date||null}).eq('id',f.id); const x=ltDoelstellingen.find(y=>y.id===f.id); if(x) Object.assign(x,f); }
-    else { const {data} = await sb.from('lt_doelstellingen').insert({hefboom_id:hbId,description:f.description,end_date:f.end_date||null}).select().single(); if(data) ltDoelstellingen.push(data); }
+  // Sync Doelstellingen (lt_doelstellingen) + nested targets (kt_targets)
+  const existingDst = ltDoelstellingen.filter(x => x.hefboom_id === hbId);
+  for (const f of hbDstFields) {
+    if (!f.description?.trim()) continue;
+    let dstId = f.id;
+    const dstPayload = {description: f.description, unit: f.unit||null, end_date: f.end_date||null, goal_value: f.goal_value!==''&&f.goal_value!=null ? parseFloat(f.goal_value) : null};
+    if (dstId) {
+      await sb.from('lt_doelstellingen').update(dstPayload).eq('id', dstId);
+      const x = ltDoelstellingen.find(y => y.id === dstId); if (x) Object.assign(x, dstPayload);
+    } else {
+      const {data} = await sb.from('lt_doelstellingen').insert({hefboom_id: hbId, ...dstPayload}).select().single();
+      if (!data) continue;
+      ltDoelstellingen.push(data); dstId = data.id;
+    }
+    // Sync nested targets
+    const existingTgts = ktTargets.filter(kt => kt.lt_doelstelling_id === dstId);
+    for (const t of (f.targets||[])) {
+      if (t.value===''&&!t.target_date) continue;
+      const tPayload = {value: t.value!==''&&t.value!=null ? parseFloat(t.value) : null, target_date: t.target_date||null, lt_doelstelling_id: dstId, hefboom_id: hbId, unit: f.unit||null, description: f.description};
+      if (t.id) { await sb.from('kt_targets').update(tPayload).eq('id', t.id); const x=ktTargets.find(y=>y.id===t.id); if(x) Object.assign(x,tPayload); }
+      else { const {data} = await sb.from('kt_targets').insert(tPayload).select().single(); if(data) ktTargets.push(data); }
+    }
+    for (const ex of existingTgts) { if (!(f.targets||[]).find(t => t.id===ex.id)) { await sb.from('kt_targets').delete().eq('id',ex.id); ktTargets=ktTargets.filter(x=>x.id!==ex.id); } }
   }
-  for (const ex of existingLt) { if (!hbLtFields.find(f=>f.id===ex.id)) { await sb.from('lt_doelstellingen').delete().eq('id',ex.id); ltDoelstellingen=ltDoelstellingen.filter(x=>x.id!==ex.id); } }
-  // Sync KT
-  const existingKt = ktTargets.filter(x => x.hefboom_id === hbId);
-  for (const f of hbKtFields) {
-    if (!f.description.trim()) continue;
-    if (f.id) { await sb.from('kt_targets').update({description:f.description,value:f.value||null,unit:f.unit||null,target_date:f.target_date||null}).eq('id',f.id); const x=ktTargets.find(y=>y.id===f.id); if(x) Object.assign(x,f); }
-    else { const {data} = await sb.from('kt_targets').insert({hefboom_id:hbId,description:f.description,value:f.value||null,unit:f.unit||null,target_date:f.target_date||null}).select().single(); if(data) ktTargets.push(data); }
-  }
-  for (const ex of existingKt) { if (!hbKtFields.find(f=>f.id===ex.id)) { await sb.from('kt_targets').delete().eq('id',ex.id); ktTargets=ktTargets.filter(x=>x.id!==ex.id); } }
+  for (const ex of existingDst) { if (!hbDstFields.find(f => f.id===ex.id)) { await sb.from('lt_doelstellingen').delete().eq('id',ex.id); ltDoelstellingen=ltDoelstellingen.filter(x=>x.id!==ex.id); } }
   // Sync Inspanning
   const existingInsp = inspanningsverbintenissen.filter(x => x.hefboom_id === hbId);
   for (const f of hbInspFields) {
