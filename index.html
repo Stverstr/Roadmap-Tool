@@ -1897,30 +1897,69 @@ function renderHbCheckboxes(itemId) {
     return;
   }
   const checkedIds = new Set(itemHefbomenLinks.filter(l => l.roadmap_item_id === itemId).map(l => l.hefboom_id));
-  // Group by strategic change
-  const groups = {};
-  hefbomenData.forEach(hb => {
+  // Find item's subcategory for primary/secondary split
+  const it = itemId ? items.find(x => x.id === itemId) : null;
+  const itemSubcatId = it ? it.subcategory_id : null;
+
+  function hbCheckbox(hb, isPrimary) {
     const sc = strategicChanges.find(x => x.id === hb.strategic_change_id);
     const sub = sc ? subcategories.find(x => x.id === sc.subcategory_id) : null;
-    const key = hb.strategic_change_id || '__none';
-    if (!groups[key]) groups[key] = { label: (sub ? sub.name + ' › ' : '') + (sc ? sc.name : '—'), hbs: [] };
-    groups[key].hbs.push(hb);
-  });
-  let html = '';
-  Object.values(groups).forEach(g => {
-    html += `<div style="margin-bottom:10px;">
-      <div style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">${g.label}</div>`;
-    g.hbs.forEach(hb => {
-      const checked = checkedIds.has(hb.id) ? 'checked' : '';
-      html += `<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid ${checked ? 'var(--orange)' : 'var(--gy200)'};background:${checked ? '#FFFBF0' : 'white'};cursor:pointer;margin-bottom:4px;transition:all .1s;"
-        onclick="this.querySelector('input').click();event.preventDefault();">
-        <input type="checkbox" value="${hb.id}" ${checked} style="accent-color:var(--orange);width:15px;height:15px;cursor:pointer;"
-          onchange="this.closest('label').style.borderColor=this.checked?'var(--orange)':'var(--gy200)';this.closest('label').style.background=this.checked?'#FFFBF0':'white'">
+    const groupLabel = (sub ? sub.name + ' › ' : '') + (sc ? sc.name : '—');
+    const checked = checkedIds.has(hb.id) ? 'checked' : '';
+    const bg = checked ? '#FFFBF0' : 'white';
+    const border = checked ? 'var(--orange)' : 'var(--gy200)';
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid ${border};background:${bg};cursor:pointer;margin-bottom:4px;transition:all .1s;"
+      onclick="this.querySelector('input').click();event.preventDefault();">
+      <input type="checkbox" value="${hb.id}" ${checked} style="accent-color:var(--orange);width:15px;height:15px;cursor:pointer;"
+        onchange="this.closest('label').style.borderColor=this.checked?'var(--orange)':'var(--gy200)';this.closest('label').style.background=this.checked?'#FFFBF0':'white'">
+      <div style="flex:1;">
         <span style="font-size:13px;font-weight:600;color:var(--gy800);">⚙️ ${hb.name}</span>
-      </label>`;
-    });
-    html += '</div>';
+        ${!isPrimary ? `<span style="font-size:11px;color:var(--gy400);margin-left:6px;">${groupLabel}</span>` : ''}
+      </div>
+    </label>`;
+  }
+
+  // Split hefbomen: primary = same subcategory, secondary = other
+  const primaryGroups = {};
+  const secondaryHbs = [];
+  hefbomenData.forEach(hb => {
+    const sc = strategicChanges.find(x => x.id === hb.strategic_change_id);
+    const isSameSub = sc && sc.subcategory_id === itemSubcatId;
+    if (isSameSub) {
+      const key = hb.strategic_change_id;
+      if (!primaryGroups[key]) { primaryGroups[key] = { label: sc.name, hbs: [] }; }
+      primaryGroups[key].hbs.push(hb);
+    } else {
+      secondaryHbs.push(hb);
+    }
   });
+
+  let html = '';
+
+  // Primary section
+  if (Object.keys(primaryGroups).length) {
+    html += `<div style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Hefbomen van deze subcategorie</div>`;
+    Object.values(primaryGroups).forEach(g => {
+      html += `<div style="font-size:11px;font-weight:600;color:var(--gy600);margin-bottom:4px;">${g.label}</div>`;
+      g.hbs.forEach(hb => { html += hbCheckbox(hb, true); });
+      html += '<div style="margin-bottom:8px;"></div>';
+    });
+  }
+
+  // Secondary section (collapsed by default, expandable)
+  if (secondaryHbs.length) {
+    const secChecked = secondaryHbs.filter(hb => checkedIds.has(hb.id)).length;
+    const secLabel = secChecked ? `Andere subcategorieën <span style="background:#FEF3C7;color:#92400E;border-radius:10px;padding:1px 6px;font-size:10px;">${secChecked} gekoppeld</span>` : 'Andere subcategorieën';
+    html += `<details style="margin-top:6px;" ${secChecked ? 'open' : ''}>
+      <summary style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:4px 0;">
+        <span>▶</span> ${secLabel}
+      </summary>
+      <div style="margin-top:6px;padding-left:4px;border-left:2px solid var(--gy200);">
+        <p style="font-size:11px;color:var(--gy400);margin-bottom:8px;">Secundaire koppelingen — alleen via dit scherm, niet via slepen.</p>`;
+    secondaryHbs.forEach(hb => { html += hbCheckbox(hb, false); });
+    html += `</div></details>`;
+  }
+
   container.innerHTML = html;
 }
 
