@@ -95,9 +95,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* ── STRATEGY TAB ── */
 .str-subnav{display:flex;gap:0;overflow-x:auto;margin-bottom:20px;border-bottom:2px solid var(--gy200);scrollbar-width:none;}
 .str-subnav::-webkit-scrollbar{display:none;}
-.str-subtab{padding:8px 16px;border:none;background:none;cursor:pointer;font-size:12px;font-weight:500;color:var(--gy500);border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;transition:all .15s;min-width:100px;}
-.str-subtab:hover{color:var(--g700);}
-.str-subtab.active{color:var(--gy900);border-bottom-color:var(--orange);font-weight:700;}
+.str-subtab{padding:10px 16px 8px;border:none;background:white;cursor:pointer;font-size:12px;font-weight:500;color:var(--gy500);border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;transition:all .15s;min-width:110px;border-top:3px solid transparent;}
+.str-subtab:hover{background:var(--gy50);color:var(--gy700);}
+.str-subtab.active{background:white;color:var(--gy900);font-weight:700;}
 .str-subcat-view{display:none;}.str-subcat-view.active{display:block;}
 .str-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gy500);margin:0 0 10px;}
 /* Strategic change cards — vertical stack */
@@ -158,12 +158,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .str-acts-sidebar.open{display:flex;}
 .str-acts-sb-head{padding:12px 14px;border-bottom:1px solid var(--gy100);display:flex;align-items:center;gap:8px;background:var(--gy50);border-radius:12px 12px 0 0;flex-shrink:0;}
 .str-acts-sb-body{flex:1;overflow-y:auto;padding:8px;}
-.str-act-card{display:flex;flex-direction:column;gap:4px;padding:10px 12px;background:white;border:1px solid var(--gy200);border-radius:8px;margin-bottom:6px;cursor:grab;transition:all .15s;user-select:none;border-left:3px solid transparent;}
-.str-act-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);border-color:var(--gy300);}
+.str-act-card{display:flex;flex-direction:column;gap:3px;padding:9px 11px;background:white;border:1px solid rgba(0,0,0,.08);border-radius:7px;margin-bottom:6px;cursor:grab;transition:box-shadow .15s;user-select:none;position:relative;}
+.str-act-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.12);}
 .str-act-card.dragging{opacity:.35;cursor:grabbing;}
-.str-act-card-title{font-size:13px;font-weight:600;color:var(--gy900);display:flex;align-items:center;gap:5px;}
-.str-act-card-meta{font-size:11px;color:var(--gy400);}
-.str-act-hb-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+.str-act-card-title{font-size:12px;font-weight:700;color:var(--gy900);line-height:1.3;padding-right:4px;}
+.str-act-card-meta{display:flex;align-items:center;gap:5px;margin-top:3px;}
+.str-act-hb-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
 .str-act-hb-chips{display:inline-flex;gap:3px;}
 /* Drag-over state on hefboom cards */
 .str-hb-card.hb-drag-over{border-color:var(--orange)!important;background:#FFF7ED!important;box-shadow:0 0 0 2px rgba(251,146,60,.3);}
@@ -1926,11 +1926,14 @@ function renderHbCheckboxes(itemId) {
 
 // ── ITEM DETAIL HELPERS ──────────────────────────────────────
 function switchItemTab(tab) {
-  ['general','status','aanpak'].forEach(t => {
-    document.getElementById(`itab-${t}`).classList.toggle('active', t === tab);
-    document.getElementById(`itab-btn-${t}`).classList.toggle('active', t === tab);
+  ['general','status','aanpak','hefboom'].forEach(t => {
+    const panel = document.getElementById(`itab-${t}`);
+    const btn = document.getElementById(`itab-btn-${t}`);
+    if (panel) panel.classList.toggle('active', t === tab);
+    if (btn) btn.classList.toggle('active', t === tab);
   });
   if (tab === 'aanpak') renderDepsMultiselect();
+  if (tab === 'hefboom') renderHbCheckboxes(editingItemId);
 }
 function toggleOtherRoadmap() {
   document.getElementById('mi-other-roadmap-wrap').style.display =
@@ -3591,13 +3594,20 @@ function renderStrategie() {
     activeStrSubcatId = allSubs[0].id;
   }
 
-  // Nav tabs — clean: just track name + subcat name, colored border
+  // Nav tabs — styled like storyboard headers
   let navHtml = '<div class="str-subnav">';
   allSubs.forEach(s => {
-    const active = s.id === activeStrSubcatId ? ' active' : '';
-    navHtml += `<button class="str-subtab${active}" onclick="switchStrSubcat('${s.id}')" style="${active ? 'border-bottom-color:'+s.color+';' : ''}">
-      <span style="font-size:10px;font-weight:700;color:${s.trackColor};text-transform:uppercase;letter-spacing:.4px;">${s.trackName}</span>
-      <span style="font-weight:${active?'800':'600'};color:var(--gy${active?'900':'600'});">${s.name}</span>
+    const isActive = s.id === activeStrSubcatId;
+    const active = isActive ? ' active' : '';
+    // Top bar uses track color; active bottom bar uses sub color (like storyboard row2 uses sub.color)
+    const topStyle = `border-top-color:${s.trackColor};`;
+    const botStyle = isActive ? `border-bottom-color:${s.color||s.trackColor};` : '';
+    navHtml += `<button class="str-subtab${active}" onclick="switchStrSubcat('${s.id}')" style="${topStyle}${botStyle}">
+      <span style="display:inline-flex;align-items:center;gap:4px;">
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${s.trackColor};flex-shrink:0;"></span>
+        <span style="font-size:10px;font-weight:700;color:${s.trackColor};text-transform:uppercase;letter-spacing:.4px;">${s.trackName}</span>
+      </span>
+      <span style="font-size:12px;font-weight:${isActive?'800':'600'};color:var(--gy${isActive?'900':'600'});">${s.name}</span>
     </button>`;
   });
   navHtml += '</div>';
@@ -3743,19 +3753,23 @@ function renderStrategie() {
     } else {
       subcatItems.forEach(it => {
         const linkedHbs = itemHefbomenLinks.filter(l => l.roadmap_item_id === it.id).map(l => hefbomenData.find(h => h.id === l.hefboom_id)).filter(Boolean);
-        const sColor = it.status === 'done' ? '#10B981' : it.status === 'active' ? '#3B82F6' : '#9CA3AF';
-        const sLabel = it.status === 'done' ? 'Gedaan' : it.status === 'active' ? 'Actief' : 'Gepland';
+        const stChip = it.status === 'done'
+          ? `<span class="sb-card-status" style="background:#D1FAE5;color:#065F46;">✓ Gedaan</span>`
+          : it.status === 'active'
+          ? `<span class="sb-card-status" style="background:#DBEAFE;color:#1E40AF;">▶ Actief</span>`
+          : `<span class="sb-card-status" style="background:#F3F4F6;color:#6B7280;">○ Gepland</span>`;
         const phaseName = it.phase_id ? (phases_map[it.phase_id]||'') : '';
         viewsHtml += `<div class="str-act-card" draggable="true"
-            style="border-left-color:${sub.color||'#6B7280'};"
             ondragstart="strDragStart(event,'${it.id}')"
             ondragend="this.classList.remove('dragging')">
-          <div class="str-act-card-title" onclick="openItemModal('${it.id}','edit')">
-            <span style="width:8px;height:8px;border-radius:50%;background:${sColor};flex-shrink:0;display:inline-block;"></span>
-            ${it.title}
+          <div class="str-act-card-title" onclick="openItemModal('${it.id}','edit')" style="cursor:pointer;">${it.title}</div>
+          <div class="str-act-card-meta">
+            ${stChip}
+            ${phaseName ? `<span style="font-size:11px;color:var(--gy400);">${phaseName}</span>` : ''}
           </div>
-          <div class="str-act-card-meta">${sLabel}${phaseName?' · '+phaseName:''}</div>
-          ${linkedHbs.length ? `<div class="str-act-hb-chips">${linkedHbs.map(h=>`<span style="background:#FEF3C7;color:#92400E;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:600;">⚙️ ${h.name}</span>`).join('')}</div>` : `<div style="font-size:10px;color:var(--gy300);font-style:italic;">Nog niet gekoppeld</div>`}
+          ${linkedHbs.length
+            ? `<div class="str-act-hb-chips">${linkedHbs.map(h=>`<span style="background:#FEF3C7;color:#92400E;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:600;">⚙️ ${h.name}</span>`).join('')}</div>`
+            : `<div style="font-size:10px;color:var(--gy300);font-style:italic;margin-top:2px;">Nog niet gekoppeld</div>`}
         </div>`;
       });
     }
