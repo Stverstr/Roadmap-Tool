@@ -3708,7 +3708,16 @@ function renderStrategie() {
     </div></div>`;
   });
 
+  // Remember which sidebars were open before re-render
+  const openSidebars = new Set([...document.querySelectorAll('.str-acts-sidebar.open')].map(el => el.id));
+
   el.innerHTML = navHtml + viewsHtml;
+
+  // Restore open sidebars after re-render
+  openSidebars.forEach(id => {
+    const sb = document.getElementById(id);
+    if (sb) sb.classList.add('open');
+  });
 }
 
 function switchStrSubcat(id) {
