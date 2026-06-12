@@ -93,14 +93,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .sortable-ghost{opacity:.4;background:var(--g50)!important;}
 .sortable-chosen{box-shadow:0 4px 12px rgba(0,0,0,.15)!important;}
 /* ── STRATEGY TAB ── */
-.str-subnav{display:flex;gap:4px;overflow-x:auto;margin-bottom:20px;padding-bottom:2px;scrollbar-width:none;border-bottom:2px solid var(--gy200);}
+.str-subnav{overflow-x:auto;margin-bottom:20px;scrollbar-width:none;border-radius:8px 8px 0 0;border:1px solid var(--gy300);border-bottom:2px solid var(--gy200);}
 .str-subnav::-webkit-scrollbar{display:none;}
-.str-subtab{padding:0;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:stretch;border-radius:8px 8px 0 0;overflow:hidden;min-width:110px;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;box-shadow:none;}
-.str-subtab:hover{box-shadow:0 2px 6px rgba(0,0,0,.1);}
-.str-subtab.active{box-shadow:0 2px 8px rgba(0,0,0,.12);}
-.str-subtab-track{padding:4px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px;color:white;}
-.str-subtab-name{padding:6px 12px 7px;font-size:12px;font-weight:600;color:var(--gy600);background:white;text-align:left;}
-.str-subtab.active .str-subtab-name{font-weight:800;color:var(--gy900);}
+.str-subnav-grid{display:grid;min-width:max-content;}
+.str-subnav-track{padding:6px 12px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;border-right:1px solid rgba(255,255,255,.25);}
+.str-subnav-sub{padding:6px 12px;font-size:12px;font-weight:600;border:none;cursor:pointer;border-right:1px solid var(--gy200);border-bottom:3px solid transparent;transition:all .12s;text-align:left;white-space:nowrap;}
+.str-subnav-sub:hover{background:var(--gy100)!important;}
+.str-subnav-sub.active{font-weight:700;}
 .str-subcat-view{display:none;}.str-subcat-view.active{display:block;}
 .str-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gy500);margin:0 0 10px;}
 /* Strategic change cards — vertical stack */
@@ -3637,19 +3636,40 @@ function renderStrategie() {
     activeStrSubcatId = (firstWithData || allSubs[0]).id;
   }
 
-  // Nav tabs — styled like storyboard headers (colored track bar + white subcat area)
-  let navHtml = '<div class="str-subnav">';
+  // Nav: two-row grid like storyboard (row1 = track spanning N subs, row2 = sub buttons)
+  const totalCols = allSubs.length;
+  // Build track groups in order
+  const navTrackGroups = [];
+  tracks.forEach(tr => {
+    const trSubs = allSubs.filter(s => s.track_id === tr.id);
+    if (trSubs.length) navTrackGroups.push({ tr, subs: trSubs });
+  });
+  const gridCols = `repeat(${totalCols}, minmax(110px, 1fr))`;
+  let navHtml = `<div class="str-subnav"><div class="str-subnav-grid" style="grid-template-columns:${gridCols};">`;
+
+  // Row 1: track headers spanning their subcategories
+  let colStart = 1;
+  navTrackGroups.forEach(g => {
+    const span = g.subs.length;
+    const tc = textColor(g.tr.color);
+    const ico = g.tr.icon ? `<span style="font-size:13px;">${g.tr.icon}</span>` : `<span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);display:inline-block;flex-shrink:0;"></span>`;
+    navHtml += `<div class="str-subnav-track" style="grid-column:${colStart}/span ${span};background:${g.tr.color};color:${tc};">${ico}${g.tr.name}</div>`;
+    colStart += span;
+  });
+
+  // Row 2: subcategory buttons
   allSubs.forEach(s => {
     const isActive = s.id === activeStrSubcatId;
-    const active = isActive ? ' active' : '';
-    const botStyle = isActive ? `border-bottom-color:${s.color||s.trackColor};` : '';
-    const trackIcon = s.trackIcon ? `<span style="font-size:11px;">${s.trackIcon}</span>` : '';
-    navHtml += `<button class="str-subtab${active}" onclick="switchStrSubcat('${s.id}')" style="${botStyle}">
-      <span class="str-subtab-track" style="background:${s.trackColor};">${trackIcon}${s.trackName}</span>
-      <span class="str-subtab-name">${s.name}</span>
+    const sc = strategicChanges.filter(x => x.subcategory_id === s.id).length;
+    const badge = sc ? `<span style="background:${s.color||s.trackColor};color:${textColor(s.color||s.trackColor)};border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px;">${sc}</span>` : '';
+    navHtml += `<button class="str-subnav-sub${isActive?' active':''}" onclick="switchStrSubcat('${s.id}')"
+      data-sub-color="${s.color||s.trackColor}"
+      style="background:${isActive?'white':'var(--gy50)'};color:${isActive?'var(--gy900)':'var(--gy600)'};border-bottom-color:${isActive?(s.color||s.trackColor):'transparent'};">
+      ${s.name}${badge}
     </button>`;
   });
-  navHtml += '</div>';
+
+  navHtml += '</div></div>';
 
   // Views per subcategory
   let viewsHtml = '';
@@ -3832,10 +3852,14 @@ function renderStrategie() {
 
 function switchStrSubcat(id) {
   activeStrSubcatId = id;
-  document.querySelectorAll('.str-subtab').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.str-subnav-sub').forEach(btn => {
+    const isActive = btn.getAttribute('onclick')?.includes(`'${id}'`);
+    btn.classList.toggle('active', isActive);
+    btn.style.background = isActive ? 'white' : 'var(--gy50)';
+    btn.style.color = isActive ? 'var(--gy900)' : 'var(--gy600)';
+    btn.style.borderBottomColor = isActive ? (btn.dataset.subColor || 'var(--orange)') : 'transparent';
+  });
   document.querySelectorAll('.str-subcat-view').forEach(v => v.classList.remove('active'));
-  const btn = [...document.querySelectorAll('.str-subtab')].find(b => b.getAttribute('onclick')?.includes(id));
-  if (btn) btn.classList.add('active');
   const view = document.getElementById('str-view-' + id);
   if (view) view.classList.add('active');
 }
