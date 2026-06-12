@@ -3901,11 +3901,24 @@ function renderStrategischTijdslijn() {
       </div>`;
       scs.forEach(sc => {
         const goalBadge = sc.goal_value != null ? ` <span style="font-size:10px;color:#D97706;font-weight:700;margin-left:4px;">🎯 ${sc.goal_value}${sc.goal_unit||''}</span>` : '';
-        html += `<div style="display:flex;border-bottom:1px solid var(--gy100);min-height:24px;background:var(--gy50);align-items:center;">
+        // 🎯 goal marker on the timeline if goal_date exists
+        let scGoalMarker = '';
+        if (sc.goal_date) {
+          const gp = dateToPercent(sc.goal_date);
+          if (gp !== null && gp >= 0 && gp <= 100) {
+            const val = sc.goal_value != null ? `${sc.goal_value}${sc.goal_unit||''}` : '';
+            const safeLabel = (sc.name||'').replace(/"/g,'&quot;');
+            scGoalMarker = `<div style="position:absolute;left:${gp}%;top:50%;transform:translate(-50%,-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:default;" title="🎯 ${safeLabel}${val?' — '+val:''}">
+              <span style="font-size:15px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));">🎯</span>
+              ${val?`<span style="font-size:9px;font-weight:700;color:#D97706;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);">${val}</span>`:''}
+            </div>`;
+          }
+        }
+        html += `<div style="display:flex;border-bottom:1px solid var(--gy100);min-height:${sc.goal_date?'36':'24'}px;background:var(--gy50);align-items:center;">
           <div style="width:${LABEL_W}px;flex-shrink:0;padding:4px 12px 4px 28px;border-right:1px solid var(--gy200);display:flex;align-items:center;gap:5px;">
             <span style="font-size:11px;font-weight:700;color:var(--gy600);">${sc.name}</span>${goalBadge}
           </div>
-          <div style="flex:1;background:var(--gy50);position:relative;">${colGridLines()}</div>
+          <div style="flex:1;background:var(--gy50);position:relative;min-height:${sc.goal_date?'36':'24'}px;">${colGridLines()}${scGoalMarker}</div>
         </div>`;
         const hbs = hefbomenData.filter(hb => hb.strategic_change_id === sc.id);
         hbs.forEach(hb => {
@@ -3943,6 +3956,12 @@ function renderStrategischTijdslijn() {
 //  STRATEGIE RENDER
 // ═══════════════════════════════════════════
 let activeStrSubcatId = null;
+let collapsedScIds = new Set();
+
+function toggleScCollapse(scId) {
+  collapsedScIds.has(scId) ? collapsedScIds.delete(scId) : collapsedScIds.add(scId);
+  renderStrategie();
+}
 
 function updateHefboomTabVisibility() {
   const proj = projects.find(p => p.id === currentProjectId);
@@ -4093,24 +4112,26 @@ function renderStrategie() {
       viewsHtml += `<div class="str-sc-grid">`;
       scs.forEach(sc => {
         const hbs = hefbomenData.filter(h => h.strategic_change_id === sc.id);
+        const isCollapsed = collapsedScIds.has(sc.id);
         viewsHtml += `<div class="str-sc-card">
-          <div class="str-sc-head" style="border-left:4px solid ${sub.color||'#6B7280'}">
+          <div class="str-sc-head" style="border-left:4px solid ${sub.color||'#6B7280'};cursor:pointer;" onclick="toggleScCollapse('${sc.id}')">
             <div class="str-sc-icon">🔄</div>
             <div class="str-sc-info">
               <div class="str-sc-title">${sc.name}</div>
-              ${sc.description ? `<div class="str-sc-desc">${sc.description}</div>` : ''}
-              ${(sc.goal_value != null || sc.goal_label) ? `<div style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:20px;padding:3px 10px;">
+              ${!isCollapsed && sc.description ? `<div class="str-sc-desc">${sc.description}</div>` : ''}
+              ${!isCollapsed && (sc.goal_value != null || sc.goal_label) ? `<div style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:20px;padding:3px 10px;">
                 <span style="font-size:13px;">🎯</span>
                 <span style="font-size:12px;font-weight:700;color:#166534;">${sc.goal_value != null ? sc.goal_value+(sc.goal_unit||'') : ''}${sc.goal_label ? (sc.goal_value != null ? ' · ' : '')+sc.goal_label : ''}</span>
                 ${sc.goal_date ? `<span style="font-size:11px;color:#4ADE80;font-weight:600;">· ${new Date(sc.goal_date).toLocaleDateString('nl-BE',{month:'short',year:'numeric'})}</span>` : ''}
               </div>` : ''}
             </div>
-            <div style="display:flex;gap:4px;flex-shrink:0;">
+            <div style="display:flex;gap:4px;flex-shrink:0;" onclick="event.stopPropagation()">
               <button class="btn btn-sm btn-s" style="padding:2px 7px;" title="Metro tijdslijn" onclick="openMetroTimeline('${sc.id}')">🚇</button>
               <button class="btn btn-sm btn-s" style="padding:2px 8px;" onclick="openStrategicChangeModal('${sc.id}','${sub.id}')">✏️</button>
+              <button class="btn btn-sm btn-s" style="padding:2px 8px;font-size:12px;" title="${isCollapsed?'Uitklappen':'Inklappen'}">${isCollapsed?'▸':'▾'}</button>
             </div>
           </div>
-          <div class="str-sc-body">
+          ${isCollapsed ? '' : `<div class="str-sc-body">`}
             <div class="str-section-label" style="margin-bottom:8px;">⚙️ Hefbomen <span style="font-weight:400;color:var(--gy400);font-size:10px;">— sleep activiteit hierop om te koppelen</span></div>
             <div class="str-hb-grid">`;
 
@@ -4175,7 +4196,7 @@ function renderStrategie() {
         viewsHtml += `</div>
             <button class="str-add-btn" onclick="openHefboomModal(null,'${sc.id}')">＋ Hefboom toevoegen</button>
           </div>
-        </div>`;
+        </div>` : '</div>';
       });
       viewsHtml += `</div>`;
     }
