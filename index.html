@@ -16,7 +16,7 @@
   --blue:#3B82F6;--purple:#7C3AED;--orange:#F59E0B;--red:#EF4444;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#EFF3F1;color:var(--gy700);min-height:100vh;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#EFF3F1;color:var(--gy700);min-height:100vh;overflow-x:clip;}
 
 /* ── AUTH ── */
 #auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--g900),var(--g700));}
@@ -641,16 +641,16 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="msc-desc" placeholder="Context en achtergrond…" style="min-height:60px;"></textarea></div>
       <hr class="sep">
       <div class="card-row" style="margin:0 0 8px">
-        <span style="font-size:13px;font-weight:700;">🏁 Doelstellingen</span>
-        <button class="btn btn-sm btn-p" onclick="addScDstField()">＋ Voeg toe</button>
-      </div>
-      <div id="msc-dst-fields"></div>
-      <hr class="sep">
-      <div class="card-row" style="margin:0 0 8px">
         <span style="font-size:13px;font-weight:700;">📝 Inspanningsverbintenissen</span>
         <button class="btn btn-sm btn-p" onclick="addScInspField()">＋ Voeg toe</button>
       </div>
       <div id="msc-insp-fields"></div>
+      <hr class="sep">
+      <div class="card-row" style="margin:0 0 8px">
+        <span style="font-size:13px;font-weight:700;">🏁 Doelstellingen</span>
+        <button class="btn btn-sm btn-p" onclick="addScDstField()">＋ Voeg toe</button>
+      </div>
+      <div id="msc-dst-fields"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger btn-sm" id="msc-del-btn" onclick="deleteStrategicChange()" style="margin-right:auto;display:none">🗑 Verwijder</button>
@@ -4181,27 +4181,51 @@ function renderStrategie() {
           </div>`;  // close str-sc-head only — str-sc-card stays open
 
         if (!isCollapsed) {
+          const scInsps = inspanningsverbintenissen.filter(x => x.strategic_change_id === sc.id && !x.hefboom_id && !x.lt_doelstelling_id);
           const scDsts = ltDoelstellingen.filter(x => x.strategic_change_id === sc.id && !x.hefboom_id);
+
+          // SC-level inspanningsverbintenissen
+          let scInspSection = '';
+          if (scInsps.length) {
+            scInspSection = `<div style="margin-bottom:12px;">
+              <div class="str-section-label" style="margin-bottom:6px;">📝 Inspanningsverbintenissen</div>
+              <div style="display:flex;flex-direction:column;gap:4px;">`;
+            scInsps.forEach(ins => {
+              const dateStr = ins.end_date ? new Date(ins.end_date).toLocaleDateString('nl-BE',{month:'short',year:'numeric'}) : '';
+              scInspSection += `<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:7px;padding:6px 10px;font-size:12px;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;flex-shrink:0;">📝</span>
+                <span style="flex:1;color:var(--gy800);">${ins.description||'—'}</span>
+                ${dateStr?`<span style="font-size:11px;color:#92400E;font-weight:600;white-space:nowrap;">${dateStr}</span>`:''}
+              </div>`;
+            });
+            scInspSection += `</div></div>`;
+          }
+
+          // SC-level doelstellingen
           let scDstSection = '';
           if (scDsts.length) {
             scDstSection = `<div style="margin-bottom:12px;">
-              <div class="str-section-label" style="margin-bottom:6px;">🏁 Doelstellingen SC</div>
+              <div class="str-section-label" style="margin-bottom:6px;">🏁 Doelstellingen</div>
               <div style="display:flex;flex-direction:column;gap:5px;">`;
             scDsts.forEach(d => {
               const tgts = ktTargets.filter(kt => kt.lt_doelstelling_id === d.id);
+              const dInsps = inspanningsverbintenissen.filter(x => x.lt_doelstelling_id === d.id);
               const goalStr = d.goal_value != null ? `${d.goal_value}${d.unit ? ' '+d.unit : ''}` : '';
               const dateStr = d.end_date ? new Date(d.end_date).toLocaleDateString('nl-BE',{month:'short',year:'numeric'}) : '';
-              scDstSection += `<div style="background:var(--gy50);border:1px solid var(--gy200);border-radius:8px;padding:7px 10px;font-size:12px;display:flex;align-items:flex-start;gap:8px;">
-                <span style="font-size:14px;flex-shrink:0;">🏁</span>
-                <div style="flex:1;">
-                  <div style="font-weight:600;color:var(--gy800);">${d.description||'—'}</div>
-                  ${goalStr||dateStr?`<div style="color:var(--gy500);margin-top:2px;font-size:11px;">${[goalStr,dateStr].filter(Boolean).join(' · ')}${tgts.length?' · ◆ '+tgts.length+' target'+(tgts.length>1?'s':''):''}</div>`:''}
+              scDstSection += `<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:7px 10px;font-size:12px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:13px;flex-shrink:0;">🏁</span>
+                  <span style="flex:1;font-weight:600;color:var(--gy800);">${d.description||'—'}</span>
+                  <span style="font-size:11px;color:#166534;font-weight:600;">${[goalStr,dateStr].filter(Boolean).join(' · ')}</span>
                 </div>
+                ${tgts.length?`<div style="margin-top:4px;padding-left:22px;display:flex;flex-wrap:wrap;gap:4px;">${tgts.map(t=>`<span style="background:#DCFCE7;color:#166534;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:600;">◆ ${t.target_date?new Date(t.target_date).toLocaleDateString('nl-BE',{month:'short',year:'2-digit'})+' ':''} ${t.value!=null?t.value+(d.unit?' '+d.unit:''):''}</span>`).join('')}</div>`:''}
+                ${dInsps.length?`<div style="margin-top:4px;padding-left:22px;display:flex;flex-direction:column;gap:2px;">${dInsps.map(ins=>`<span style="font-size:11px;color:#92400E;">📝 ${ins.description||''}${ins.end_date?' — '+new Date(ins.end_date).toLocaleDateString('nl-BE',{month:'short',year:'2-digit'}):''}</span>`).join('')}</div>`:''}
               </div>`;
             });
             scDstSection += `</div></div>`;
           }
-          viewsHtml += `<div class="str-sc-body">${scDstSection}
+
+          viewsHtml += `<div class="str-sc-body">${scInspSection}${scDstSection}
             <div class="str-section-label" style="margin-bottom:8px;">⚙️ Hefbomen <span style="font-weight:400;color:var(--gy400);font-size:10px;">— sleep activiteit hierop om te koppelen</span></div>
             <div class="str-hb-grid">`;
 
@@ -4420,102 +4444,108 @@ function closeMetro() {
   document.getElementById('metro-overlay').classList.remove('open');
 }
 function buildMetroHtml(scId) {
-  const hbs = hefbomenData.filter(h => h.strategic_change_id === scId);
-  const scDsts = ltDoelstellingen.filter(x => x.strategic_change_id === scId && !x.hefboom_id);
-
-  // Collect all timestamps across SC-level doelstellingen + hefbomen
-  const allTs = [];
-  scDsts.forEach(d => {
-    if (d.end_date) allTs.push(new Date(d.end_date).getTime());
-    ktTargets.filter(kt => kt.lt_doelstelling_id === d.id && kt.target_date).forEach(kt => allTs.push(new Date(kt.target_date).getTime()));
-    inspanningsverbintenissen.filter(ins => ins.lt_doelstelling_id === d.id && ins.end_date).forEach(ins => allTs.push(new Date(ins.end_date).getTime()));
-  });
-  hbs.forEach(hb => {
-    ltDoelstellingen.filter(x => x.hefboom_id === hb.id && x.end_date).forEach(x => allTs.push(new Date(x.end_date).getTime()));
-    ktTargets.filter(x => x.hefboom_id === hb.id && x.target_date).forEach(x => allTs.push(new Date(x.target_date).getTime()));
-    inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id && x.end_date).forEach(x => allTs.push(new Date(x.end_date).getTime()));
-  });
-
-  if (!allTs.length) return '<p style="color:var(--gy400);text-align:center;padding:20px;">Voeg datums toe aan doelstellingen en targets om de tijdslijn te zien.</p>';
-
-  const minTs = Math.min(...allTs), maxTs = Math.max(...allTs);
-  const span = maxTs - minTs || 1;
-  const pct = ts => 4 + (ts - minTs) / span * 92;
-  const fmt2 = ts => new Date(ts).toLocaleDateString('nl-BE',{month:'short',year:'2-digit'});
-
-  // Axis ticks
-  const tickCount = 5;
-  let axisHtml = '<div style="position:relative;height:16px;margin:0 0 4px;padding-left:140px;">';
-  for (let i = 0; i <= tickCount; i++) {
-    const ts = minTs + (span / tickCount) * i;
-    axisHtml += `<span style="position:absolute;left:calc(${4 + i/tickCount*92}%);transform:translateX(-50%);font-size:9px;color:var(--gy400);">${fmt2(ts)}</span>`;
-  }
-  axisHtml += '</div>';
-
-  const addStop = (stopsArr, ts, emoji, label, bgColor) => {
-    stopsArr.push(`<div class="metro-stop" style="left:${pct(ts)}%" title="${(label||'').replace(/"/g,'&quot;')}">
-      <div class="metro-dot" style="background:${bgColor};width:16px;height:16px;">${emoji}</div>
-      <div class="metro-stop-lbl">${fmt2(ts)}</div>
-    </div>`);
+  const fmt = ds => {
+    if (!ds) return '';
+    const d = new Date(ds);
+    return d.toLocaleDateString('nl-BE', {month:'short', year:'2-digit'});
   };
 
-  let lanesHtml = '';
+  const hbs    = hefbomenData.filter(h => h.strategic_change_id === scId);
+  const scDsts = ltDoelstellingen.filter(x => x.strategic_change_id === scId && !x.hefboom_id);
+  const scInsps= inspanningsverbintenissen.filter(x => x.strategic_change_id === scId && !x.hefboom_id && !x.lt_doelstelling_id);
 
-  // SC-level inspanningsverbintenissen lane (top level, no doelstelling)
-  const scInsps = inspanningsverbintenissen.filter(x => x.strategic_change_id === scId && !x.hefboom_id && !x.lt_doelstelling_id);
-  if (scInsps.length) {
-    const stops = [];
-    scInsps.forEach(ins => { if (ins.end_date) addStop(stops, new Date(ins.end_date).getTime(), '📝', ins.description, '#FEF9C3'); });
-    if (stops.length) {
-      lanesHtml += `<div class="metro-lane" style="border-left:3px solid #D97706;">
-        <div class="metro-lane-label" title="Inspanningen" style="font-weight:700;color:#D97706;">📝 Inspanningen</div>
-        <div class="metro-track">
-          <div class="metro-line" style="background:#D97706;opacity:.4;"></div>
-          ${stops.join('')}
-        </div>
-      </div>`;
-    }
-  }
+  let hasContent = false;
+  let html = '';
 
-  // SC-level doelstellingen lane (shown first if present)
-  if (scDsts.length) {
-    const stops = [];
-    scDsts.forEach(d => {
-      if (d.end_date) addStop(stops, new Date(d.end_date).getTime(), '🏁', d.description, '#DCFCE7');
-      ktTargets.filter(kt => kt.lt_doelstelling_id === d.id && kt.target_date)
-        .forEach(kt => addStop(stops, new Date(kt.target_date).getTime(), '◆', `${d.description}${kt.value != null ? ' — '+kt.value+(d.unit?' '+d.unit:'') : ''}`, '#EDE9FE'));
-      inspanningsverbintenissen.filter(ins => ins.lt_doelstelling_id === d.id && ins.end_date)
-        .forEach(ins => addStop(stops, new Date(ins.end_date).getTime(), '📝', ins.description, '#FEF9C3'));
-    });
-    lanesHtml += `<div class="metro-lane" style="border-left:3px solid #059669;">
-      <div class="metro-lane-label" title="SC Doelstellingen" style="font-weight:700;color:#059669;">🏁 Doelstellingen</div>
-      <div class="metro-track">
-        <div class="metro-line" style="background:#059669;opacity:.4;"></div>
-        ${stops.join('')}
-      </div>
+  // ── helpers ──────────────────────────────────────────────────────────────
+  const row = (icon, dateStr, desc, indent=0, color='var(--gy700)') => {
+    const pad = indent ? `padding-left:${indent}px;` : '';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;${pad}">
+      <span style="font-size:12px;flex-shrink:0;line-height:1.5;">${icon}</span>
+      <span style="font-size:11px;font-weight:700;color:var(--gy400);white-space:nowrap;min-width:48px;line-height:1.5;">${dateStr||''}</span>
+      <span style="font-size:12px;color:${color};line-height:1.5;flex:1;">${desc}</span>
     </div>`;
+  };
+
+  const section = (headerHtml, bodyHtml) => {
+    if (!bodyHtml) return '';
+    hasContent = true;
+    return `<div style="margin-bottom:16px;">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--gy600);margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid var(--gy100);">${headerHtml}</div>
+      ${bodyHtml}
+    </div>`;
+  };
+
+  // ── SC-level inspanningsverbintenissen ────────────────────────────────────
+  if (scInsps.length) {
+    const sorted = [...scInsps].sort((a,b)=>(a.end_date||'').localeCompare(b.end_date||''));
+    const body = sorted.map(ins => row('📝', fmt(ins.end_date), ins.description||'—', 0, '#92400E')).join('');
+    html += section('📝 Inspanningsverbintenissen', body);
   }
 
-  // Hefboom lanes
+  // ── SC-level doelstellingen ───────────────────────────────────────────────
+  if (scDsts.length) {
+    const sorted = [...scDsts].sort((a,b)=>(a.end_date||'').localeCompare(b.end_date||''));
+    let body = '';
+    sorted.forEach(d => {
+      const goalStr = d.goal_value != null ? `${d.goal_value}${d.unit ? ' '+d.unit : ''}` : '';
+      const desc = `<strong>${d.description||'—'}</strong>${goalStr ? ` <span style="color:#059669;font-weight:700;">— ${goalStr}</span>` : ''}`;
+      body += row('🏁', fmt(d.end_date), desc, 0, 'var(--gy800)');
+      // kt_targets nested under this doelstelling
+      ktTargets.filter(kt => kt.lt_doelstelling_id === d.id)
+        .sort((a,b)=>(a.target_date||'').localeCompare(b.target_date||''))
+        .forEach(kt => {
+          const val = kt.value != null ? `${kt.value}${d.unit ? ' '+d.unit : ''}` : '—';
+          body += row('◆', fmt(kt.target_date), val, 22, '#D97706');
+        });
+      // lt-level inspanningen nested under this doelstelling
+      inspanningsverbintenissen.filter(ins => ins.lt_doelstelling_id === d.id)
+        .sort((a,b)=>(a.end_date||'').localeCompare(b.end_date||''))
+        .forEach(ins => body += row('📝', fmt(ins.end_date), ins.description||'—', 22, '#92400E'));
+    });
+    html += section('🏁 Doelstellingen', body);
+  }
+
+  // ── Hefbomen ──────────────────────────────────────────────────────────────
   const hbColors = ['#F97316','#3B82F6','#10B981','#8B5CF6','#EC4899','#F59E0B','#06B6D4','#EF4444'];
   hbs.forEach((hb, idx) => {
-    const color = hbColors[idx % hbColors.length];
-    const stops = [];
-    ltDoelstellingen.filter(x => x.hefboom_id === hb.id).forEach(lt => { if (lt.end_date) addStop(stops, new Date(lt.end_date).getTime(), '🏁', lt.description, '#DCFCE7'); });
-    ktTargets.filter(x => x.hefboom_id === hb.id).forEach(kt => { if (kt.target_date) addStop(stops, new Date(kt.target_date).getTime(), '🎯', kt.description, '#FEF3C7'); });
-    inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id).forEach(i => { if (i.end_date) addStop(stops, new Date(i.end_date).getTime(), '📝', i.description, '#EDE9FE'); });
-    lanesHtml += `<div class="metro-lane">
-      <div class="metro-lane-label" title="${hb.name}">${hb.name}</div>
-      <div class="metro-track">
-        <div class="metro-line" style="background:${color};opacity:.4;"></div>
-        ${stops.join('')}
-      </div>
-    </div>`;
+    const col = hbColors[idx % hbColors.length];
+    const hbLts  = ltDoelstellingen.filter(x => x.hefboom_id === hb.id)
+                     .sort((a,b)=>(a.end_date||'').localeCompare(b.end_date||''));
+    const hbInsps= inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id)
+                     .sort((a,b)=>(a.end_date||'').localeCompare(b.end_date||''));
+
+    let body = '';
+    hbLts.forEach(lt => {
+      const goalStr = lt.goal_value != null ? `${lt.goal_value}${lt.unit ? ' '+lt.unit : ''}` : '';
+      const desc = `<strong>${lt.description||'—'}</strong>${goalStr ? ` <span style="color:#059669;font-weight:700;">— ${goalStr}</span>` : ''}`;
+      body += row('🏁', fmt(lt.end_date), desc, 0, 'var(--gy800)');
+      // targets nested under this lt
+      ktTargets.filter(kt => kt.lt_doelstelling_id === lt.id)
+        .sort((a,b)=>(a.target_date||'').localeCompare(b.target_date||''))
+        .forEach(kt => {
+          const val = kt.value != null ? `${kt.value}${lt.unit ? ' '+lt.unit : ''}` : '—';
+          body += row('◆', fmt(kt.target_date), val, 22, col);
+        });
+      // lt-level inspanningen
+      inspanningsverbintenissen.filter(ins => ins.lt_doelstelling_id === lt.id)
+        .sort((a,b)=>(a.end_date||'').localeCompare(b.end_date||''))
+        .forEach(ins => body += row('📝', fmt(ins.end_date), ins.description||'—', 22, '#92400E'));
+    });
+    hbInsps.forEach(ins => body += row('📝', fmt(ins.end_date), ins.description||'—', 0, '#92400E'));
+
+    if (!body) body = `<div style="font-size:12px;color:var(--gy400);font-style:italic;padding:4px 0;">Geen datums ingevoerd.</div>`;
+    const hdr = `<span style="border-left:3px solid ${col};padding-left:6px;color:${col};">⚙️ ${hb.name}</span>`;
+    html += section(hdr, body);
   });
 
-  return `<div class="metro-tl">${axisHtml}${lanesHtml}</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--gy100);">
-      <span style="font-size:11px;color:var(--gy500);">🏁 Doelstelling &nbsp; ◆ Target &nbsp; 🎯 KT target &nbsp; 📝 Inspanningsverbintenis</span>
+  if (!hasContent) {
+    return '<p style="color:var(--gy400);text-align:center;padding:20px;">Voeg datums toe aan doelstellingen en targets om de tijdslijn te zien.</p>';
+  }
+
+  return `<div>${html}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--gy100);font-size:11px;color:var(--gy500);">
+      🏁 Doelstelling &nbsp;·&nbsp; ◆ Target &nbsp;·&nbsp; 📝 Inspanningsverbintenis
     </div>`;
 }
 
