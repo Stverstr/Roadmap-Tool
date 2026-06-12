@@ -752,9 +752,9 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <!-- TAB 4: HEFBOOM -->
       <div id="itab-hefboom" class="itab-panel">
         <div class="field">
-          <label class="label">⚙️ Koppel aan hefboom</label>
-          <p style="font-size:12px;color:var(--gy500);margin-bottom:10px;">Kies de hefboom waaraan deze activiteit bijdraagt.</p>
-          <select class="select" id="mi-hefboom"><option value="">— Geen koppeling —</option></select>
+          <label class="label">⚙️ Gekoppelde hefbomen</label>
+          <p style="font-size:12px;color:var(--gy500);margin-bottom:10px;">Selecteer de hefbomen waaraan deze activiteit bijdraagt. Meerdere zijn mogelijk.</p>
+          <div id="mi-hefboom-list" style="display:flex;flex-direction:column;gap:6px;"></div>
         </div>
       </div>
 
@@ -1739,21 +1739,11 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
   psel.innerHTML = '<option value="">— Geen fase —</option>';
   phases.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = (p.icon ? p.icon+' ' : '') + p.name; psel.appendChild(o); });
 
-  // Hefboom tab & dropdown
+  // Hefboom tab — multi-select checkboxes
   const proj = projects.find(p => p.id === currentProjectId);
   const hbTab = document.getElementById('itab-btn-hefboom');
   const showHbTab = proj && proj.strategic_mode && hefbomenData.length > 0;
   if (hbTab) hbTab.style.display = showHbTab ? '' : 'none';
-  const hbSel = document.getElementById('mi-hefboom');
-  hbSel.innerHTML = '<option value="">— Geen koppeling —</option>';
-  hefbomenData.forEach(hb => {
-    const sc = strategicChanges.find(x => x.id === hb.strategic_change_id);
-    const sub = sc ? subcategories.find(x => x.id === sc.subcategory_id) : null;
-    const o = document.createElement('option');
-    o.value = hb.id;
-    o.textContent = (sub ? sub.name + ' → ' : '') + (sc ? sc.name + ' → ' : '') + hb.name;
-    hbSel.appendChild(o);
-  });
 
   if (mode === 'edit' && editingItemId) {
     const it = items.find(x => x.id === editingItemId);
@@ -1774,7 +1764,7 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     document.getElementById('mi-status-desc').value = '';
     // Tab 3
     document.getElementById('mi-owner').value = it.owner || '';
-    hbSel.value = it.hefboom_id || '';
+    renderHbCheckboxes(editingItemId);
     document.getElementById('mi-other-roadmap').checked = !!it.managed_in_other_roadmap;
     document.getElementById('mi-other-roadmap-name').value = it.other_roadmap_name || '';
     document.getElementById('mi-other-roadmap-wrap').style.display = it.managed_in_other_roadmap ? 'block' : 'none';
@@ -1799,6 +1789,7 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     document.getElementById('mi-other-roadmap-wrap').style.display = 'none';
     itemPhasesTemp = [];
     itemStatusHistory = [];
+    renderHbCheckboxes(null);
   }
   renderItemPhasesBuilder();
   document.getElementById('modal-item').classList.add('open');
