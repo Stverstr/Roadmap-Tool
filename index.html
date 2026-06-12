@@ -640,16 +640,22 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div class="field"><label class="label">Naam</label><input class="input" id="msc-name" placeholder="bijv. CO2 reductie met 40% tegen 2030"></div>
       <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="msc-desc" placeholder="Context en achtergrond…" style="min-height:60px;"></textarea></div>
       <div class="field">
-        <label class="label">🎯 Doelstelling <span style="font-weight:400;color:var(--gy400);font-size:11px;">(meetbaar)</span></label>
+        <label class="label">🎯 Overkoepelende target <span style="font-weight:400;color:var(--gy400);font-size:11px;">(tijdslijn-marker)</span></label>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <input class="input" id="msc-goal-value" type="number" placeholder="Waarde" style="width:90px;" step="any">
           <input class="input" id="msc-goal-unit" placeholder="Eenheid (%, €, kg…)" style="flex:1;min-width:100px;">
           <input class="input" id="msc-goal-date" type="date" style="width:145px;" title="Streefdatum">
         </div>
         <div style="margin-top:6px;">
-          <input class="input" id="msc-goal-label" placeholder="Omschrijving doelstelling (optioneel)" style="width:100%;">
+          <input class="input" id="msc-goal-label" placeholder="Omschrijving (optioneel)" style="width:100%;">
         </div>
       </div>
+      <hr class="sep">
+      <div class="card-row" style="margin:0 0 8px">
+        <span style="font-size:13px;font-weight:700;">🏁 Doelstellingen</span>
+        <button class="btn btn-sm btn-p" onclick="addScDstField()">＋ Voeg toe</button>
+      </div>
+      <div id="msc-dst-fields"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger btn-sm" id="msc-del-btn" onclick="deleteStrategicChange()" style="margin-right:auto;display:none">🗑 Verwijder</button>
@@ -1140,22 +1146,33 @@ async function loadStrategicData(pid) {
   strategicChanges = sc.data || [];
   if (!strategicChanges.length) { hefbomenData = []; ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = []; itemHefbomenLinks = []; return; }
   const scIds = strategicChanges.map(x => x.id);
-  const [hb] = await Promise.all([
+  const [hb, scLtRes, ihl] = await Promise.all([
     sb.from('hefbomen').select('*').in('strategic_change_id', scIds).order('position'),
+    sb.from('lt_doelstellingen').select('*').in('strategic_change_id', scIds).is('hefboom_id', null),
+    sb.from('roadmap_item_hefbomen').select('*').eq('project_id', pid),
   ]);
   hefbomenData = hb.data || [];
-  if (!hefbomenData.length) { ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = []; itemHefbomenLinks = []; return; }
+  itemHefbomenLinks = ihl.data || [];
+  const scLtData = scLtRes.data || [];
+  // Load targets for SC-level doelstellingen
+  const scLtIds = scLtData.map(x => x.id);
+  const scKtRes = scLtIds.length ? await sb.from('kt_targets').select('*').in('lt_doelstelling_id', scLtIds) : {data:[]};
+
+  if (!hefbomenData.length) {
+    ltDoelstellingen = scLtData;
+    ktTargets = scKtRes.data || [];
+    inspanningsverbintenissen = [];
+    return;
+  }
   const hbIds = hefbomenData.map(x => x.id);
-  const [lt, kt, insp, ihl] = await Promise.all([
+  const [lt, kt, insp] = await Promise.all([
     sb.from('lt_doelstellingen').select('*').in('hefboom_id', hbIds),
     sb.from('kt_targets').select('*').in('hefboom_id', hbIds),
     sb.from('inspanningsverbintenissen').select('*').in('hefboom_id', hbIds),
-    sb.from('roadmap_item_hefbomen').select('*').eq('project_id', pid),
   ]);
-  ltDoelstellingen = lt.data || [];
-  ktTargets = kt.data || [];
+  ltDoelstellingen = [...(lt.data||[]), ...scLtData];
+  ktTargets = [...(kt.data||[]), ...(scKtRes.data||[])];
   inspanningsverbintenissen = insp.data || [];
-  itemHefbomenLinks = ihl.data || [];
 }
 
 function fillSetupForm() {
@@ -3914,11 +3931,37 @@ function renderStrategischTijdslijn() {
             </div>`;
           }
         }
-        html += `<div style="display:flex;border-bottom:1px solid var(--gy100);min-height:${sc.goal_date?'36':'24'}px;background:var(--gy50);align-items:center;">
+        // 🏁 SC-level doelstellingen markers
+        let scDstMarkers = '';
+        const scDstsForTl = ltDoelstellingen.filter(x => x.strategic_change_id === sc.id && !x.hefboom_id);
+        scDstsForTl.forEach(d => {
+          if (!d.end_date) return;
+          const dp = dateToPercent(d.end_date);
+          if (dp === null || dp < 0 || dp > 100) return;
+          const dVal = d.goal_value != null ? `${d.goal_value}${d.unit ? ' '+d.unit : ''}` : '';
+          const safeDesc = (d.description||'').replace(/"/g,'&quot;');
+          scDstMarkers += `<div style="position:absolute;left:${dp}%;top:50%;transform:translate(-50%,-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:default;" title="🏁 ${safeDesc}${dVal?' — '+dVal:''}">
+            <span style="font-size:13px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18));">🏁</span>
+            ${dVal?`<span style="font-size:9px;font-weight:700;color:#059669;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);">${dVal}</span>`:''}
+          </div>`;
+          // ◆ tussentijdse targets
+          ktTargets.filter(kt => kt.lt_doelstelling_id === d.id).forEach(t => {
+            if (!t.target_date) return;
+            const tp = dateToPercent(t.target_date);
+            if (tp === null || tp < 0 || tp > 100) return;
+            const tVal = t.value != null ? `${t.value}${d.unit ? ' '+d.unit : ''}` : '';
+            scDstMarkers += `<div style="position:absolute;left:${tp}%;top:50%;transform:translate(-50%,-50%);z-index:3;cursor:default;" title="◆ Target${tVal?' '+tVal:''}">
+              <span style="font-size:10px;color:#7C3AED;font-weight:900;filter:drop-shadow(0 1px 1px rgba(0,0,0,.15));">◆</span>
+              ${tVal?`<div style="font-size:8px;font-weight:700;color:#7C3AED;white-space:nowrap;text-align:center;margin-top:-1px;">${tVal}</div>`:''}
+            </div>`;
+          });
+        });
+        const hasScMarkers = sc.goal_date || scDstsForTl.length;
+        html += `<div style="display:flex;border-bottom:1px solid var(--gy100);min-height:${hasScMarkers?'36':'24'}px;background:var(--gy50);align-items:center;">
           <div style="width:${LABEL_W}px;flex-shrink:0;padding:4px 12px 4px 28px;border-right:1px solid var(--gy200);display:flex;align-items:center;gap:5px;">
             <span style="font-size:11px;font-weight:700;color:var(--gy600);">${sc.name}</span>${goalBadge}
           </div>
-          <div style="flex:1;background:var(--gy50);position:relative;min-height:${sc.goal_date?'36':'24'}px;">${colGridLines()}${scGoalMarker}</div>
+          <div style="flex:1;background:var(--gy50);position:relative;min-height:${hasScMarkers?'36':'24'}px;">${colGridLines()}${scGoalMarker}${scDstMarkers}</div>
         </div>`;
         const hbs = hefbomenData.filter(hb => hb.strategic_change_id === sc.id);
         hbs.forEach(hb => {
@@ -4133,7 +4176,27 @@ function renderStrategie() {
           </div>`;  // close str-sc-head only — str-sc-card stays open
 
         if (!isCollapsed) {
-          viewsHtml += `<div class="str-sc-body">
+          const scDsts = ltDoelstellingen.filter(x => x.strategic_change_id === sc.id && !x.hefboom_id);
+          let scDstSection = '';
+          if (scDsts.length) {
+            scDstSection = `<div style="margin-bottom:12px;">
+              <div class="str-section-label" style="margin-bottom:6px;">🏁 Doelstellingen SC</div>
+              <div style="display:flex;flex-direction:column;gap:5px;">`;
+            scDsts.forEach(d => {
+              const tgts = ktTargets.filter(kt => kt.lt_doelstelling_id === d.id);
+              const goalStr = d.goal_value != null ? `${d.goal_value}${d.unit ? ' '+d.unit : ''}` : '';
+              const dateStr = d.end_date ? new Date(d.end_date).toLocaleDateString('nl-BE',{month:'short',year:'numeric'}) : '';
+              scDstSection += `<div style="background:var(--gy50);border:1px solid var(--gy200);border-radius:8px;padding:7px 10px;font-size:12px;display:flex;align-items:flex-start;gap:8px;">
+                <span style="font-size:14px;flex-shrink:0;">🏁</span>
+                <div style="flex:1;">
+                  <div style="font-weight:600;color:var(--gy800);">${d.description||'—'}</div>
+                  ${goalStr||dateStr?`<div style="color:var(--gy500);margin-top:2px;font-size:11px;">${[goalStr,dateStr].filter(Boolean).join(' · ')}${tgts.length?' · ◆ '+tgts.length+' target'+(tgts.length>1?'s':''):''}</div>`:''}
+                </div>
+              </div>`;
+            });
+            scDstSection += `</div></div>`;
+          }
+          viewsHtml += `<div class="str-sc-body">${scDstSection}
             <div class="str-section-label" style="margin-bottom:8px;">⚙️ Hefbomen <span style="font-weight:400;color:var(--gy400);font-size:10px;">— sleep activiteit hierop om te koppelen</span></div>
             <div class="str-hb-grid">`;
 
@@ -4430,6 +4493,13 @@ function openStrategicChangeModal(id, subcatId) {
   document.getElementById('msc-goal-unit').value = sc?.goal_unit ?? '';
   document.getElementById('msc-goal-date').value = sc?.goal_date ?? '';
   document.getElementById('msc-goal-label').value = sc?.goal_label ?? '';
+  scDstFields = id ? ltDoelstellingen.filter(x => x.strategic_change_id === id && !x.hefboom_id).map(lt => ({
+    ...lt,
+    targets: ktTargets.filter(kt => kt.lt_doelstelling_id === lt.id)
+      .map(kt => ({...kt}))
+      .sort((a,b) => (a.target_date||'').localeCompare(b.target_date||''))
+  })) : [];
+  renderScDstFields();
   document.getElementById('modal-strategic-change').classList.add('open');
 }
 async function saveStrategicChange() {
@@ -4441,14 +4511,42 @@ async function saveStrategicChange() {
   const goal_date = document.getElementById('msc-goal-date').value || null;
   const goal_label = document.getElementById('msc-goal-label').value.trim() || null;
   const payload = {name, description: desc, goal_value, goal_unit, goal_date, goal_label};
+  let savedScId = editingScId;
   if (editingScId) {
     await sb.from('strategic_changes').update(payload).eq('id', editingScId);
     const sc = strategicChanges.find(x => x.id === editingScId);
     if (sc) Object.assign(sc, payload);
   } else {
     const {data} = await sb.from('strategic_changes').insert({project_id: currentProjectId, subcategory_id: editingScSubcatId, position: strategicChanges.filter(x=>x.subcategory_id===editingScSubcatId).length, ...payload}).select().single();
-    if (data) strategicChanges.push(data);
+    if (!data) { toast('Fout bij opslaan'); return; }
+    strategicChanges.push(data);
+    savedScId = data.id;
   }
+  // Sync SC-level doelstellingen
+  const existingScDst = ltDoelstellingen.filter(x => x.strategic_change_id === savedScId && !x.hefboom_id);
+  for (const f of scDstFields) {
+    if (!f.description?.trim()) continue;
+    let dstId = f.id;
+    const dstPayload = {description: f.description, unit: f.unit||null, end_date: f.end_date||null, goal_value: f.goal_value!==''&&f.goal_value!=null ? parseFloat(f.goal_value) : null};
+    if (dstId) {
+      await sb.from('lt_doelstellingen').update(dstPayload).eq('id', dstId);
+      const x = ltDoelstellingen.find(y => y.id === dstId); if (x) Object.assign(x, dstPayload);
+    } else {
+      const {data} = await sb.from('lt_doelstellingen').insert({strategic_change_id: savedScId, ...dstPayload}).select().single();
+      if (!data) continue;
+      ltDoelstellingen.push(data); dstId = data.id;
+    }
+    // Sync nested targets
+    const existingTgts = ktTargets.filter(kt => kt.lt_doelstelling_id === dstId);
+    for (const t of (f.targets||[])) {
+      if (t.value===''&&!t.target_date) continue;
+      const tPayload = {value: t.value!==''&&t.value!=null ? parseFloat(t.value) : null, target_date: t.target_date||null, lt_doelstelling_id: dstId, hefboom_id: null, unit: f.unit||null, description: f.description};
+      if (t.id) { await sb.from('kt_targets').update(tPayload).eq('id', t.id); const x=ktTargets.find(y=>y.id===t.id); if(x) Object.assign(x,tPayload); }
+      else { const {data} = await sb.from('kt_targets').insert(tPayload).select().single(); if(data) ktTargets.push(data); }
+    }
+    for (const ex of existingTgts) { if (!(f.targets||[]).find(t => t.id===ex.id)) { await sb.from('kt_targets').delete().eq('id',ex.id); ktTargets=ktTargets.filter(x=>x.id!==ex.id); } }
+  }
+  for (const ex of existingScDst) { if (!scDstFields.find(f => f.id===ex.id)) { await sb.from('lt_doelstellingen').delete().eq('id',ex.id); ltDoelstellingen=ltDoelstellingen.filter(x=>x.id!==ex.id); } }
   document.getElementById('modal-strategic-change').classList.remove('open');
   renderStrategie(); toast('Opgeslagen ✓');
 }
@@ -4457,6 +4555,10 @@ async function deleteStrategicChange() {
   await sb.from('strategic_changes').delete().eq('id', editingScId);
   strategicChanges = strategicChanges.filter(x => x.id !== editingScId);
   hefbomenData = hefbomenData.filter(x => x.strategic_change_id !== editingScId);
+  // Clean up SC-level doelstellingen from memory (CASCADE handles DB)
+  const scDstIds = ltDoelstellingen.filter(x => x.strategic_change_id === editingScId && !x.hefboom_id).map(x => x.id);
+  ltDoelstellingen = ltDoelstellingen.filter(x => x.strategic_change_id !== editingScId || x.hefboom_id);
+  ktTargets = ktTargets.filter(x => !scDstIds.includes(x.lt_doelstelling_id));
   document.getElementById('modal-strategic-change').classList.remove('open');
   renderStrategie(); toast('Verwijderd');
 }
@@ -4466,6 +4568,37 @@ async function deleteStrategicChange() {
 // ═══════════════════════════════════════════
 let editingHbId = null, editingHbScId = null;
 let hbDstFields = [], hbInspFields = [];
+let scDstFields = [];
+
+function renderScDstFields() {
+  document.getElementById('msc-dst-fields').innerHTML = scDstFields.map((f,i) => `
+    <div class="dst-card">
+      <button class="btn btn-danger btn-sm dst-card-del" onclick="scDstFields.splice(${i},1);renderScDstFields()">✕</button>
+      <div class="dst-card-main">
+        <input class="input" placeholder="Beschrijving doelstelling…" value="${(f.description||'').replace(/"/g,'&quot;')}" oninput="scDstFields[${i}].description=this.value">
+        <div class="dst-card-row">
+          <input class="input" type="number" placeholder="Einddoel" value="${f.goal_value??''}" style="width:90px;flex-shrink:0;" step="any" oninput="scDstFields[${i}].goal_value=this.value">
+          <input class="input" placeholder="Eenheid (%, €, ton…)" value="${(f.unit||'').replace(/"/g,'&quot;')}" style="flex:1;" oninput="scDstFields[${i}].unit=this.value">
+          <input class="input" type="date" value="${f.end_date||''}" title="Einddatum" style="width:145px;flex-shrink:0;" oninput="scDstFields[${i}].end_date=this.value">
+        </div>
+      </div>
+      <div class="dst-tgt-section">
+        <div class="dst-tgt-label">Tussentijdse targets ${f.unit?'('+f.unit+')':''}</div>
+        <table class="dst-tgt-table">
+          <thead><tr><th>Waarde</th><th>Datum</th><th></th></tr></thead>
+          <tbody>
+            ${(f.targets||[]).map((t,j) => `<tr>
+              <td><input class="input input-sm" type="number" value="${t.value??''}" step="any" placeholder="bijv. 20" oninput="scDstFields[${i}].targets[${j}].value=this.value"></td>
+              <td><input class="input input-sm" type="date" value="${t.target_date||''}" oninput="scDstFields[${i}].targets[${j}].target_date=this.value"></td>
+              <td style="width:32px;"><button class="btn btn-danger btn-sm" style="padding:2px 6px;" onclick="scDstFields[${i}].targets.splice(${j},1);renderScDstFields()">✕</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <button class="btn btn-sm btn-s" style="margin-top:6px;font-size:11px;" onclick="scDstFields[${i}].targets.push({value:'',target_date:''});renderScDstFields()">＋ Target toevoegen</button>
+      </div>
+    </div>`).join('');
+}
+function addScDstField() { scDstFields.push({description:'',unit:'',end_date:'',goal_value:'',targets:[]}); renderScDstFields(); }
 
 function openHefboomModal(id, scId) {
   editingHbId = id || null;
