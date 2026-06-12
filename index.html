@@ -252,10 +252,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .health-btn{font-size:20px;width:44px;height:40px;border-radius:8px;border:2px solid var(--gy300);background:var(--gy100);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;}
 
 /* ── TIMELINE ── */
-.tl-wrap{overflow-x:auto;position:relative;}
+.tl-wrap{overflow:auto;position:relative;max-height:calc(100vh - 180px);}
 [data-tl-grid].tl-dragging [data-tl-bar]{pointer-events:none;}
 .tl-container{min-width:0;}
-.tl-header-row{display:flex;border-bottom:2px solid var(--gy300);background:white;position:sticky;top:146px;z-index:50;}
+.tl-header-row{display:flex;border-bottom:2px solid var(--gy300);background:white;position:sticky;top:0;z-index:50;}
 .tl-lane-label-head{width:200px;flex-shrink:0;padding:8px 12px;font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;border-right:1px solid var(--gy300);}
 .tl-months{flex:1;display:flex;}
 .tl-month{flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);}
@@ -518,8 +518,8 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         </div>
       </div>
       <div id="stl-filter-bar" style="position:sticky;top:146px;z-index:60;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:0;border-radius:10px 10px 0 0;overflow:hidden;"></div>
-      <div class="card" style="padding:0;overflow:hidden;border-radius:0 0 10px 10px;margin-top:0;">
-        <div class="tl-wrap">
+      <div class="card" style="padding:0;overflow:visible;border-radius:0 0 10px 10px;margin-top:0;">
+        <div class="tl-wrap" style="border-radius:0 0 10px 10px;">
           <div id="stl-container" class="tl-container"></div>
         </div>
       </div>
