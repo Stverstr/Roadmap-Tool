@@ -379,9 +379,9 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
   <nav class="nav">
     <button class="ntab active" id="tab-setup-btn" onclick="switchTab('setup')">⚙️ Setup</button>
     <button class="ntab" id="tab-strategie-btn" onclick="switchTab('strategie')" style="display:none">🎯 Strategie</button>
+    <button class="ntab" id="tab-roadmap-btn" onclick="switchTab('roadmap')" style="display:none">📅 Strategisch Tijdslijn</button>
     <button class="ntab" id="tab-storyboard-btn" onclick="switchTab('storyboard')">📋 Storyboard</button>
-    <button class="ntab" id="tab-timeline-btn" onclick="switchTab('timeline')">📅 Tijdslijn</button>
-    <button class="ntab" id="tab-roadmap-btn" onclick="switchTab('roadmap')" style="display:none">🗺 Roadmap</button>
+    <button class="ntab" id="tab-timeline-btn" onclick="switchTab('timeline')">📅 Activiteiten Tijdslijn</button>
   </nav>
 
   <!-- ══ SETUP TAB ══ -->
@@ -495,12 +495,25 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     </div>
   </div>
 
-  <!-- ══ ROADMAP TAB ══ -->
+  <!-- ══ STRATEGISCH TIJDSLIJN TAB ══ -->
   <div id="tab-roadmap" class="panel main">
     <div id="no-project-roadmap" style="display:none">
-      <div class="empty"><div class="empty-icon">🗺</div><div class="empty-title">Geen project geselecteerd</div></div>
+      <div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Geen project geselecteerd</div></div>
     </div>
-    <div id="roadmap-content" style="display:none"></div>
+    <div id="roadmap-content" style="display:none">
+      <div class="card" style="padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:15px;font-weight:700;color:var(--gy900)">📅 Strategisch Tijdslijn</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-s btn-sm" id="stl-filter-toggle" onclick="stlToggleFilter()" title="Filters tonen/verbergen" style="background:var(--g100);">🔍 Filter</button>
+        </div>
+      </div>
+      <div id="stl-filter-bar" style="position:sticky;top:108px;z-index:60;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:0;border-radius:10px 10px 0 0;overflow:hidden;"></div>
+      <div class="card" style="padding:0;overflow:hidden;border-radius:0 0 10px 10px;margin-top:0;">
+        <div class="tl-wrap">
+          <div id="stl-container" class="tl-container"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ══ TIMELINE TAB ══ -->
@@ -510,7 +523,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     </div>
     <div id="timeline-content" style="display:none">
       <div class="card" style="padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-        <span style="font-size:15px;font-weight:700;color:var(--gy900)">📅 Tijdslijn</span>
+        <span style="font-size:15px;font-weight:700;color:var(--gy900)">📅 Activiteiten Tijdslijn</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn btn-s btn-sm" id="tl-filter-toggle" onclick="tlToggleFilter()" title="Filters tonen/verbergen" style="background:var(--g100);">🔍 Filter</button>
           <button class="btn btn-s btn-sm" onclick="exportToPptx()" title="Exporteer naar PowerPoint">📊 Export PPT</button>
@@ -897,6 +910,13 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         </div>
       </div>
       <div class="field"><label class="label">Kleur</label><input type="color" id="msub-color" value="#74C69D"></div>
+      <div class="field" style="margin-top:10px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gy700);">
+          <input type="checkbox" id="msub-strategic" style="width:16px;height:16px;cursor:pointer;">
+          🎯 Strategische doelstellingen
+        </label>
+        <p style="font-size:11px;color:var(--gy500);margin:4px 0 0 26px;">Verschijnt in Strategie- en Roadmap tab. Activiteiten blijven altijd koppelbaar.</p>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger btn-sm" id="msub-del-btn" onclick="deleteSubcat()" style="margin-right:auto;display:none">🗑 Verwijder</button>
@@ -1040,6 +1060,8 @@ function showNoProject() {
   const rmCnt = document.getElementById('roadmap-content');
   if (noRm) noRm.style.display = 'block';
   if (rmCnt) rmCnt.style.display = 'none';
+  const stlFb = document.getElementById('stl-filter-bar'); if (stlFb) stlFb.innerHTML = '';
+  const stlCt = document.getElementById('stl-container');  if (stlCt) stlCt.innerHTML = '';
 }
 
 async function onProjectChange(render = true) {
@@ -1239,6 +1261,7 @@ function renderTracksList() {
           <span class="drag-handle" title="Versleep om te sorteren">⠿</span>
           <div class="color-dot" style="background:${s.color};width:12px;height:12px;"></div>
           <span class="subcat-name">${s.name}</span>
+          ${s.strategic_mode ? `<span title="Strategische doelstellingen actief" style="font-size:11px;color:#059669;font-weight:700;">🎯</span>` : ''}
           <button class="btn btn-sm btn-s" style="padding:2px 7px;" onclick="openModal('modal-subcat','${s.id}','edit',null,'${tr.id}')">✏️</button>
         </div>`).join('')}</div>` : `<div class="subcat-list" data-track="${tr.id}"></div>`}
       <button class="btn btn-sm" style="margin-top:6px;background:var(--g50);color:var(--g700);border:1px dashed var(--g400);" onclick="openModal('modal-subcat','','new',null,'${tr.id}')">＋ Subcategorie</button>
@@ -1338,10 +1361,12 @@ function openModal(modalId, recordId, mode, extra, extra2) {
       document.getElementById('msub-name').value = s.name;
       setIconBtn('msub-icon','msub-icon-btn', s.icon);
       document.getElementById('msub-color').value = s.color || '#74C69D';
+      document.getElementById('msub-strategic').checked = !!s.strategic_mode;
     } else {
       document.getElementById('msub-name').value = '';
       setIconBtn('msub-icon','msub-icon-btn','');
       document.getElementById('msub-color').value = '#74C69D';
+      document.getElementById('msub-strategic').checked = false;
     }
   } else if (modalId === 'modal-project') {
     document.getElementById('mp-name').value = '';
@@ -1667,12 +1692,13 @@ async function saveSubcat() {
   if (!name) { alert('Naam verplicht'); return; }
   const color = document.getElementById('msub-color').value;
   const icon = document.getElementById('msub-icon').value || '';
+  const strategic_mode = document.getElementById('msub-strategic').checked;
   if (editingSubcatId) {
-    await sb.from('subcategories').update({name, color, icon}).eq('id', editingSubcatId);
+    await sb.from('subcategories').update({name, color, icon, strategic_mode}).eq('id', editingSubcatId);
     const s = subcategories.find(x => x.id === editingSubcatId);
-    if (s) Object.assign(s, {name, color, icon});
+    if (s) Object.assign(s, {name, color, icon, strategic_mode});
   } else {
-    const {data} = await sb.from('subcategories').insert({track_id: editingSubcatTrackId, project_id: currentProjectId, name, color, icon, position: subcategories.filter(s => s.track_id === editingSubcatTrackId).length}).select().single();
+    const {data} = await sb.from('subcategories').insert({track_id: editingSubcatTrackId, project_id: currentProjectId, name, color, icon, strategic_mode, position: subcategories.filter(s => s.track_id === editingSubcatTrackId).length}).select().single();
     if (data) subcategories.push(data);
   }
   closeModal('modal-subcat');
@@ -2420,6 +2446,27 @@ let tlFilterMeetingTypes = new Set();
 let tlFilterMilestoneTypes = new Set();
 let tlBarDrag = null;
 let tlBarDragged = false;
+
+// ── Strategisch Tijdslijn state ───────────────────────────────────────────
+// tlZoom / tlYearMode / tlFilterYears / tlFromDate / tlToDate are shared with activiteiten TL
+let stlFilterStreams  = new Set();
+let stlFilterSubcats  = new Set();
+let stlFilterStatuses = new Set();
+let stlFilterKeyOnly  = false;
+let stlFilterOpen     = true;
+
+function setStlZoom(z) { tlZoom = z; renderStrategischTijdslijn(); }
+function setStlYearMode(m) { tlYearMode = m; tlFilterYears = new Set(); renderStrategischTijdslijn(); }
+function toggleStlFilterYear(y) { tlFilterYears.has(y) ? tlFilterYears.delete(y) : tlFilterYears.add(y); tlFromDate=''; tlToDate=''; renderStrategischTijdslijn(); }
+function setStlFromDate(v) { tlFromDate = v; tlFilterYears = new Set(); renderStrategischTijdslijn(); }
+function setStlToDate(v) { tlToDate = v; tlFilterYears = new Set(); renderStrategischTijdslijn(); }
+function stlClearDateFilter() { tlFromDate=''; tlToDate=''; tlFilterYears = new Set(); renderStrategischTijdslijn(); }
+function toggleStlFilterStream(id) { stlFilterStreams.has(id) ? stlFilterStreams.delete(id) : stlFilterStreams.add(id); renderStrategischTijdslijn(); }
+function toggleStlFilterSubcat(id) { stlFilterSubcats.has(id) ? stlFilterSubcats.delete(id) : stlFilterSubcats.add(id); renderStrategischTijdslijn(); }
+function toggleStlFilterStatus(s) { stlFilterStatuses.has(s) ? stlFilterStatuses.delete(s) : stlFilterStatuses.add(s); renderStrategischTijdslijn(); }
+function setStlFilterKeyOnly(v) { stlFilterKeyOnly = v; renderStrategischTijdslijn(); }
+function stlClearFilters() { stlFilterStreams=new Set(); stlFilterSubcats=new Set(); stlFilterStatuses=new Set(); stlFilterKeyOnly=false; renderStrategischTijdslijn(); }
+function stlToggleFilter() { stlFilterOpen = !stlFilterOpen; document.getElementById('stl-filter-toggle')?.classList.toggle('active', stlFilterOpen); renderStrategischTijdslijn(); }
 
 function sbCardDragStart(e, itemId) {
   sbDragItemId = itemId;
@@ -3583,181 +3630,303 @@ function syncFiltersToStoryboard() {
   sbFilterNoBacklog      = tlFilterNoBacklog;
 }
 // ═══════════════════════════════════════════
-//  ROADMAP RENDER
+//  STRATEGISCH TIJDSLIJN RENDER
 // ═══════════════════════════════════════════
-function renderRoadmap() {
-  const el = document.getElementById('roadmap-content');
-  if (!el) return;
+function renderStrategischTijdslijn() {
+  const filterBarEl = document.getElementById('stl-filter-bar');
+  const el          = document.getElementById('stl-container');
+  if (!el || !filterBarEl) return;
   const proj = projects.find(p => p.id === currentProjectId);
-  if (!proj || !proj.strategic_mode || !hefbomenData.length) {
-    el.innerHTML = `<div class="empty" style="padding:40px;"><div class="empty-icon">🗺</div><div class="empty-title">Geen strategische data</div><div class="empty-sub">Activeer strategische modus en voeg hefbomen toe via de Strategie tab.</div></div>`;
-    return;
-  }
+  if (!proj || !proj.strategic_mode) { el.innerHTML = ''; filterBarEl.innerHTML = ''; return; }
 
-  // Build flat subcategory list (track order)
-  const allSubs = [];
-  tracks.forEach(tr => subcategories.filter(s => s.track_id === tr.id).forEach(s => allSubs.push({...s, trackName: tr.name, trackColor: tr.color})));
+  const LABEL_W = 220;
 
-  // Build hierarchy rows
-  const rows = [];
-  allSubs.forEach(sub => {
-    const scs = strategicChanges.filter(sc => sc.subcategory_id === sub.id);
-    if (!scs.length) return;
-    let subAdded = false;
-    scs.forEach(sc => {
-      const hbs = hefbomenData.filter(hb => hb.strategic_change_id === sc.id);
-      if (!hbs.length) return;
-      let scAdded = false;
-      hbs.forEach(hb => {
-        const lts  = ltDoelstellingen.filter(x => x.hefboom_id === hb.id);
-        const kts  = ktTargets.filter(x => x.hefboom_id === hb.id);
-        const insps = inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id);
-        const linkedIds = itemHefbomenLinks.filter(l => l.hefboom_id === hb.id).map(l => l.roadmap_item_id);
-        const acts = items.filter(it => linkedIds.includes(it.id));
-        if (!subAdded) { rows.push({type:'sub', sub}); subAdded = true; }
-        if (!scAdded)  { rows.push({type:'sc', sc, sub}); scAdded = true; }
-        rows.push({type:'hb', hb, lts, kts, insps, acts, sub});
-      });
-    });
+  // ── 1. Collect all strategic dates for range ──────────────────────────────
+  const allDateObjs = [new Date()];
+  if (proj.start_date) allDateObjs.push(new Date(proj.start_date));
+  if (proj.end_date)   allDateObjs.push(new Date(proj.end_date));
+  ltDoelstellingen.forEach(lt => { if (lt.end_date) allDateObjs.push(new Date(lt.end_date)); });
+  ktTargets.forEach(kt => { if (kt.target_date) allDateObjs.push(new Date(kt.target_date)); });
+  inspanningsverbintenissen.forEach(i => { if (i.end_date) allDateObjs.push(new Date(i.end_date)); });
+  items.forEach(it => {
+    const linkedHbIds = itemHefbomenLinks.filter(l => l.roadmap_item_id === it.id).map(l => l.hefboom_id);
+    if (!linkedHbIds.length) return;
+    if (it.start_date) allDateObjs.push(new Date(it.start_date));
+    if (it.end_date)   allDateObjs.push(new Date(it.end_date));
   });
+  let dataMin = new Date(Math.min(...allDateObjs.map(d => d.getTime())));
+  let dataMax = new Date(Math.max(...allDateObjs.map(d => d.getTime())));
+  dataMin = new Date(dataMin.getFullYear(), dataMin.getMonth(), 1);
+  dataMax = new Date(dataMax.getFullYear(), dataMax.getMonth() + 1, 0);
 
-  if (!rows.length) {
-    el.innerHTML = `<div class="empty" style="padding:40px;"><div class="empty-icon">🗺</div><div class="empty-title">Voeg doelstellingen of activiteiten toe</div><div class="empty-sub">Koppel activiteiten aan hefbomen via de Strategie tab.</div></div>`;
-    return;
+  // ── 2. Apply date / year filter (shared with activiteiten TL) ────────────
+  let minDate, maxDate;
+  if (tlFromDate || tlToDate) {
+    minDate = tlFromDate ? new Date(tlFromDate) : dataMin;
+    maxDate = tlToDate   ? new Date(tlToDate)   : dataMax;
+    minDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+    maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
+  } else if (tlFilterYears.size) {
+    const sy = [...tlFilterYears].sort((a,b)=>a-b);
+    if (tlYearMode === 'fiscal') { minDate = new Date(sy[0],3,1); maxDate = new Date(sy[sy.length-1]+1,2,31); }
+    else { minDate = new Date(sy[0],0,1); maxDate = new Date(sy[sy.length-1],11,31); }
+  } else { minDate = dataMin; maxDate = dataMax; }
+
+  // ── 3. Columns per zoom (shared tlZoom) ───────────────────────────────────
+  const cols = [];
+  if (tlZoom === 'week') {
+    let cur = new Date(minDate); const dow = cur.getDay(); cur.setDate(cur.getDate() - (dow===0?6:dow-1));
+    while (cur <= maxDate) { const d=new Date(cur); const wn=getWeekNumber(d); cols.push({date:d,label:`W${wn} '${String(d.getFullYear()).slice(-2)}`,sublabel:`W${wn}`}); cur=new Date(cur.getTime()+7*86400000); }
+  } else if (tlZoom === 'month') {
+    let cur = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+    while (cur <= maxDate) { const d=new Date(cur); cols.push({date:d,label:d.toLocaleDateString('nl-BE',{month:'short',year:'numeric'}),sublabel:d.toLocaleDateString('nl-BE',{month:'short'})}); cur=new Date(cur.getFullYear(),cur.getMonth()+1,1); }
+  } else if (tlZoom === 'quarter') {
+    let cur = new Date(minDate.getFullYear(), Math.floor(minDate.getMonth()/3)*3, 1);
+    while (cur <= maxDate) { const d=new Date(cur); const q=Math.floor(d.getMonth()/3)+1; cols.push({date:d,label:`Q${q} ${d.getFullYear()}`,sublabel:`Q${q}`}); cur=new Date(cur.getFullYear(),cur.getMonth()+3,1); }
+  } else {
+    let cur = new Date(minDate.getFullYear(), 0, 1);
+    while (cur <= maxDate) { const d=new Date(cur); cols.push({date:d,label:String(d.getFullYear()),sublabel:String(d.getFullYear())}); cur=new Date(cur.getFullYear()+1,0,1); }
+  }
+  const topGroups = [];
+  if (tlZoom === 'week') {
+    cols.forEach(c => { const key=c.date.getFullYear()*100+c.date.getMonth(); const last=topGroups[topGroups.length-1]; if(last&&last.key===key)last.count++; else topGroups.push({key,label:c.date.toLocaleDateString('nl-BE',{month:'long'})+` '${String(c.date.getFullYear()).slice(-2)}`,count:1}); });
+  } else if (tlZoom !== 'year') {
+    cols.forEach(c => { const y=c.date.getFullYear(); const last=topGroups[topGroups.length-1]; if(last&&last.key===y)last.count++; else topGroups.push({key:y,label:String(y),count:1}); });
   }
 
-  // Collect all dates
-  const allDates = [new Date()];
-  rows.forEach(r => {
-    if (r.type !== 'hb') return;
-    r.lts.forEach(lt => { if (lt.end_date) allDates.push(new Date(lt.end_date)); });
-    r.kts.forEach(kt => { if (kt.target_date) allDates.push(new Date(kt.target_date)); });
-    r.insps.forEach(i => { if (i.end_date) allDates.push(new Date(i.end_date)); });
-    r.acts.forEach(a => {
-      if (a.start_date) allDates.push(new Date(a.start_date));
-      if (a.end_date)   allDates.push(new Date(a.end_date));
-    });
-  });
-  let minD = new Date(Math.min(...allDates.map(d => d.getTime())));
-  let maxD = new Date(Math.max(...allDates.map(d => d.getTime())));
-  minD = new Date(minD.getFullYear(), minD.getMonth(), 1);
-  maxD = new Date(maxD.getFullYear(), maxD.getMonth() + 2, 1);
-  const totalMs = maxD - minD;
+  // ── 4. Helpers ────────────────────────────────────────────────────────────
+  function dateToPercent(ds) { if(!ds)return null; const d=typeof ds==='string'?new Date(ds):ds; return Math.max(0,Math.min(100,(d-minDate)/(maxDate-minDate)*100)); }
+  function colGridLines() { return cols.map(c=>`<div style="position:absolute;top:0;bottom:0;left:${(c.date-minDate)/(maxDate-minDate)*100}%;width:${100/cols.length}%;border-right:1px solid var(--gy200);pointer-events:none;box-sizing:border-box;"></div>`).join(''); }
 
-  function p(dateStr) { return Math.max(0, Math.min(100, (new Date(dateStr) - minD) / totalMs * 100)); }
-  const todayP = p(new Date());
+  // ── 5. Available years ────────────────────────────────────────────────────
+  const yearSet = new Set();
+  allDateObjs.forEach(d => { if(tlYearMode==='fiscal') yearSet.add(d.getMonth()>=3?d.getFullYear():d.getFullYear()-1); else yearSet.add(d.getFullYear()); });
+  const availableYears = [...yearSet].sort();
 
-  // Month labels
-  const months = [];
-  let md = new Date(minD);
-  while (md < maxD) {
-    months.push({ lbl: md.toLocaleDateString('nl-BE', {month:'short', year:'2-digit'}), pct: (md - minD) / totalMs * 100 });
-    md = new Date(md.getFullYear(), md.getMonth() + 1, 1);
-  }
+  // ── 6. Build filter bar ───────────────────────────────────────────────────
+  const zoomLabels = {year:'Jaar',quarter:'Kwartaal',month:'Maand',week:'Week'};
+  const zoomBtns = ['year','quarter','month','week'].map(z => { const act=tlZoom===z; return `<button onclick="setStlZoom('${z}')" style="padding:4px 11px;font-size:11px;font-weight:600;border:none;background:${act?'var(--g700)':'transparent'};color:${act?'white':'var(--gy600)'};cursor:pointer;transition:all .15s;">${zoomLabels[z]}</button>`; }).join('');
+  const ymodeBtns = ['calendar','fiscal'].map(m => { const act=tlYearMode===m; const lbl=m==='calendar'?'Kalenderjaar':'Boekjaar'; return `<button onclick="setStlYearMode('${m}')" style="padding:4px 11px;font-size:11px;font-weight:600;border:none;background:${act?'#1E40AF':'transparent'};color:${act?'white':'var(--gy600)'};cursor:pointer;transition:all .15s;">${lbl}</button>`; }).join('');
+  const yearChips = availableYears.map(y => { const act=tlFilterYears.has(y); const lbl=tlYearMode==='fiscal'?`${String(y).slice(-2)}/${String(y+1).slice(-2)}`:String(y); return `<button onclick="toggleStlFilterYear(${y})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?'#1E40AF':'var(--gy300)'};background:${act?'#EFF6FF':'white'};color:${act?'#1E40AF':'var(--gy700)'};cursor:pointer;white-space:nowrap;">${lbl}</button>`; }).join('');
+  const streamChips = tracks.map(tr => { const act=stlFilterStreams.has(tr.id); const fg=act?(textColor(tr.color)==='#ffffff'?'white':'#111827'):'var(--gy700)'; return `<button onclick="toggleStlFilterStream('${tr.id}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?tr.color:'var(--gy300)'};background:${act?tr.color:'white'};color:${fg};cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;"><span style="width:7px;height:7px;border-radius:50%;background:${act?'rgba(255,255,255,.5)':tr.color};display:inline-block;"></span>${tr.name}</button>`; }).join('');
+  const statusDefs = [{v:'pending',label:'○ Te doen',color:'#6B7280',bg:'#F3F4F6'},{v:'active',label:'▶ Actief',color:'#1E40AF',bg:'#EFF6FF'},{v:'done',label:'✓ Klaar',color:'#14532D',bg:'#F0FDF4'}];
+  const statusChips = statusDefs.map(({v,label,color,bg}) => { const act=stlFilterStatuses.has(v); return `<button onclick="toggleStlFilterStatus('${v}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?color:'var(--gy300)'};background:${act?bg:'white'};color:${act?color:'var(--gy700)'};cursor:pointer;white-space:nowrap;">${label}</button>`; }).join('');
+  const keyChip = `<button onclick="setStlFilterKeyOnly(${!stlFilterKeyOnly})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${stlFilterKeyOnly?'#D97706':'var(--gy300)'};background:${stlFilterKeyOnly?'#FFFBEB':'white'};color:${stlFilterKeyOnly?'#D97706':'var(--gy700)'};cursor:pointer;white-space:nowrap;">⭐ Key only</button>`;
+  const strategicSubcats = subcategories.filter(s => s.strategic_mode);
+  const subcatChips = tracks.filter(tr => strategicSubcats.some(s => s.track_id === tr.id))
+    .filter(tr => !stlFilterStreams.size || stlFilterStreams.has(tr.id))
+    .map(tr => {
+      const trSubs = strategicSubcats.filter(s => s.track_id === tr.id);
+      const chips = trSubs.map(sub => { const act=stlFilterSubcats.has(sub.id); const col=sub.color||'#6B7280'; const fg=act?(textColor(col)==='#ffffff'?'white':'#111827'):'var(--gy700)'; return `<button onclick="toggleStlFilterSubcat('${sub.id}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?col:'var(--gy300)'};background:${act?col:'white'};color:${fg};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:${act?'rgba(255,255,255,.5)':col};display:inline-block;flex-shrink:0;"></span>${sub.name}</button>`; }).join('');
+      return `<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;"><span style="font-size:10px;font-weight:700;color:${tr.color};white-space:nowrap;padding-right:1px;">${tr.name}</span>${chips}</span>`;
+    }).join(`<span style="width:1px;height:16px;background:var(--gy300);display:inline-block;margin:0 4px;flex-shrink:0;align-self:center;"></span>`);
 
-  const gridLines = months.map(m => `<div style="position:absolute;left:${m.pct}%;top:0;bottom:0;width:1px;background:var(--gy100);"></div>`).join('');
-  const todayLine = `<div style="position:absolute;left:${todayP}%;top:0;bottom:0;width:2px;background:#F59E0B;opacity:.5;z-index:2;"></div>`;
+  const hasDateFilter = tlFromDate || tlToDate || tlFilterYears.size;
+  const hasItemFilter = stlFilterStreams.size || stlFilterSubcats.size || stlFilterStatuses.size || stlFilterKeyOnly;
+  const tlLbl = (text, color) => `<span style="font-size:10px;font-weight:700;color:${color||'var(--gy500)'};text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;margin-right:2px;">${text}</span>`;
+  const tlVdiv = `<div style="width:1px;min-height:22px;background:var(--gy200);flex-shrink:0;align-self:stretch;margin:0 2px;"></div>`;
+  const row2Groups = [];
+  if (tracks.length) row2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Streams')}${streamChips}</div>`);
+  if (subcatChips) row2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Subcategorieën')}${subcatChips}</div>`);
+  row2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}</div>`);
 
-  // Header row
-  let html = `<div class="rm-wrap"><div class="rm-scroll"><div class="rm-grid">
-    <div class="rm-month-corner"></div>
-    <div class="rm-month-axis">
-      ${months.map(m => `<span style="position:absolute;left:${m.pct}%;top:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,.75);white-space:nowrap;">${m.lbl}</span>`).join('')}
-      ${months.map(m => `<div style="position:absolute;left:${m.pct}%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.15);"></div>`).join('')}
-      <div style="position:absolute;left:${todayP}%;top:0;bottom:0;width:2px;background:#F59E0B;opacity:.8;"></div>
+  filterBarEl.innerHTML = `
+    <div style="padding:7px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+      <div style="display:flex;border:1px solid var(--gy300);border-radius:6px;overflow:hidden;flex-shrink:0;">${zoomBtns}</div>
+      <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
+      <div style="display:flex;border:1px solid var(--gy300);border-radius:6px;overflow:hidden;flex-shrink:0;">${ymodeBtns}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">${yearChips}</div>
+      <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+        <span style="font-size:11px;color:var(--gy500);font-weight:600;">Van</span>
+        <input type="date" value="${tlFromDate}" onchange="setStlFromDate(this.value)" style="padding:3px 6px;font-size:11px;border:1px solid var(--gy300);border-radius:5px;color:var(--gy700);">
+        <span style="font-size:11px;color:var(--gy500);font-weight:600;">Tot</span>
+        <input type="date" value="${tlToDate}" onchange="setStlToDate(this.value)" style="padding:3px 6px;font-size:11px;border:1px solid var(--gy300);border-radius:5px;color:var(--gy700);">
+        ${hasDateFilter ? `<button onclick="stlClearDateFilter()" style="padding:2px 7px;font-size:11px;border-radius:5px;border:1px solid var(--gy300);background:white;cursor:pointer;color:var(--gy500);">✕</button>` : ''}
+      </div>
+      <div style="flex:1;"></div>
+      ${hasItemFilter ? `<button onclick="stlClearFilters()" style="padding:3px 10px;font-size:11px;border-radius:12px;border:1px solid #FCA5A5;background:#FEF2F2;cursor:pointer;color:#DC2626;font-weight:600;white-space:nowrap;">✕ Filters wissen</button>` : ''}
+    </div>
+    ${stlFilterOpen ? `<div style="padding:6px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">${row2Groups.join(tlVdiv)}</div>` : ''}
+    ${topGroups.length ? `<div style="display:flex;border-bottom:1px solid var(--gy200);">
+      <div style="width:${LABEL_W}px;flex-shrink:0;border-right:1px solid var(--gy300);background:#F3F4F6;"></div>
+      <div style="flex:1;display:flex;">${topGroups.map(g=>`<div style="flex:${g.count};text-align:center;padding:2px 4px;font-size:10px;font-weight:700;color:var(--gy500);border-right:1px solid var(--gy300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;background:#F3F4F6;" title="${g.label}">${g.label}</div>`).join('')}</div>
+    </div>` : ''}
+    <div style="display:flex;border-bottom:1px solid var(--gy300);">
+      <div style="width:${LABEL_W}px;flex-shrink:0;border-right:1px solid var(--gy300);"></div>
+      <div style="flex:1;display:flex;">${cols.map(c=>`<div style="flex:1;text-align:center;padding:3px 2px;font-size:10px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.label}">${c.sublabel}</div>`).join('')}</div>
     </div>`;
 
-  rows.forEach(r => {
-    if (r.type === 'sub') {
-      const tc = textColor(r.sub.color || '#6B7280');
-      html += `<div class="rm-sub-header-row">
-        <div class="rm-label" style="height:32px;background:${r.sub.color||'var(--gy300)'};color:${tc};">
-          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;opacity:.8;">${r.sub.trackName} ›</span>
-          <span style="font-size:13px;font-weight:800;margin-left:5px;">${r.sub.name}</span>
-        </div>
-        <div style="position:relative;height:32px;background:${r.sub.color||'#E5E7EB'}22;">
-          ${gridLines}${todayLine}
-        </div>
-      </div>`;
-    } else if (r.type === 'sc') {
-      const goalBadge = r.sc.goal_value != null
-        ? `<span style="font-size:11px;color:var(--orange);margin-left:8px;font-weight:700;">🎯 ${r.sc.goal_value}${r.sc.goal_unit||''}</span>` : '';
-      html += `<div class="rm-sc-header-row">
-        <div class="rm-label" style="height:28px;background:var(--gy50);padding-left:18px;">
-          <span style="font-size:12px;font-weight:700;color:var(--gy700);">${r.sc.name}</span>${goalBadge}
-        </div>
-        <div style="position:relative;height:28px;background:var(--gy50);">
-          ${gridLines}${todayLine}
-        </div>
-      </div>`;
-    } else if (r.type === 'hb') {
-      let bars = gridLines + todayLine;
+  // ── 7. Build swim lanes ───────────────────────────────────────────────────
+  let html = `<div style="display:flex;align-items:flex-start;"><div style="flex:1;min-width:0;">`;
 
-      // Activity bars
-      r.acts.forEach(act => {
-        if (!act.start_date && !act.end_date) return;
-        const s = act.start_date || act.end_date;
-        const e = act.end_date   || act.start_date;
-        const left = p(s), w = Math.max(0.8, p(e) - left);
-        const actSub = subcategories.find(x => x.id === act.subcategory_id);
-        const col = actSub?.color || r.sub.color || '#6B7280';
-        bars += `<div onclick="openItemModal('${act.id}','edit')" title="${act.title}"
-          style="position:absolute;left:${left}%;width:${w}%;height:20px;top:12px;background:${col};border-radius:4px;
-                 display:flex;align-items:center;padding:0 6px;overflow:hidden;cursor:pointer;
-                 box-shadow:0 1px 3px rgba(0,0,0,.2);opacity:.88;z-index:3;">
-          <span style="font-size:10px;font-weight:600;color:${textColor(col)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${act.title}</span>
+  const todayPct = dateToPercent(new Date().toISOString().split('T')[0]);
+
+  function renderStlLane(labelHtml, laneItems, lts, kts, insps, barColor, bgColor, labelStyle) {
+    // Filter items
+    const visItems = laneItems.filter(it => {
+      if (stlFilterStatuses.size && !stlFilterStatuses.has(it.status||'pending')) return false;
+      if (stlFilterKeyOnly && !it.key_activity) return false;
+      return true;
+    });
+    const scheduled = visItems.filter(it => {
+      if (!it.start_date && !it.date) return false;
+      const s = new Date(it.start_date || it.date);
+      const e = it.end_date ? new Date(it.end_date) : s;
+      return e >= minDate && s <= maxDate;
+    });
+    // Markers: lt_doelstellingen, kt_targets, inspanningen
+    const visLts  = (lts||[]).filter(lt => lt.end_date && new Date(lt.end_date) >= minDate && new Date(lt.end_date) <= maxDate);
+    const visKts  = (kts||[]).filter(kt => kt.target_date && new Date(kt.target_date) >= minDate && new Date(kt.target_date) <= maxDate);
+    const visInsp = (insps||[]).filter(i => i.end_date && new Date(i.end_date) >= minDate && new Date(i.end_date) <= maxDate);
+
+    // Stacking
+    const BAR_H = 28, BAR_GAP = 4, TOP_PAD = 8;
+    const allForStack = [
+      ...scheduled.map(it => ({_id:it.id, _type:'bar', _start:it.start_date||it.date, _end:it.end_date||it.start_date||it.date})),
+      ...visLts.map(lt  => ({_id:lt.id,  _type:'lt',  _start:lt.end_date,     _end:lt.end_date})),
+      ...visKts.map(kt  => ({_id:kt.id,  _type:'kt',  _start:kt.target_date,  _end:kt.target_date})),
+      ...visInsp.map(i  => ({_id:i.id,   _type:'insp',_start:i.end_date,      _end:i.end_date})),
+    ].sort((a,b) => a._start < b._start ? -1 : a._start > b._start ? 1 : 0);
+    const rowEnds = [], barRows = new Map();
+    allForStack.forEach(({_id, _type, _start, _end}) => {
+      const sp = dateToPercent(_start); if(sp===null)return;
+      const ep = dateToPercent(_end);
+      const w = _type==='bar' ? Math.max(0.5,(ep||sp)-sp) : 2;
+      const effEnd = sp + w + 0.3;
+      let rowIdx = 0; while(rowIdx < rowEnds.length && rowEnds[rowIdx] > sp) rowIdx++;
+      rowEnds[rowIdx] = effEnd; barRows.set(_id, {sp, ep, w, rowIdx, _type});
+    });
+    const numRows = Math.max(1, rowEnds.length);
+    const laneH = TOP_PAD + numRows*(BAR_H+BAR_GAP) + TOP_PAD;
+
+    let cells = `<div style="flex:1;position:relative;min-height:${laneH}px;">${colGridLines()}`;
+    // today line
+    if (todayPct !== null && todayPct >= 0 && todayPct <= 100) cells += `<div style="position:absolute;left:${todayPct}%;top:0;bottom:0;width:2px;background:#EF4444;opacity:.5;z-index:5;pointer-events:none;"></div>`;
+
+    // activity bars
+    scheduled.forEach(it => {
+      const bm = barRows.get(it.id); if(!bm)return;
+      const {sp, w, rowIdx} = bm;
+      const top = TOP_PAD + rowIdx*(BAR_H+BAR_GAP);
+      const isDone = it.status==='done', isActive = it.status==='active';
+      const safeTitle = (it.title||'').replace(/"/g,'&quot;');
+      const fw = isActive ? 'font-weight:800;' : 'font-weight:600;';
+      cells += `<div onclick="openModal('modal-item','${it.id}','edit')" title="${safeTitle}"
+        style="position:absolute;left:${sp}%;width:${Math.max(w,2)}%;height:${BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 10px;font-size:11px;color:white;background:${barColor};z-index:2;opacity:${isDone?'.75':'1'};${isDone?'text-decoration:line-through;':''}${fw}cursor:pointer;overflow:hidden;white-space:nowrap;box-sizing:border-box;"
+        onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">
+        ${isActive?`<span style="margin-right:4px;font-size:9px;opacity:.9;">▶</span>`:''}
+        ${it.key_activity?`<span style="margin-right:4px;font-size:10px;">⭐</span>`:''}
+        <span style="overflow:hidden;text-overflow:ellipsis;flex:1;">${it.title}</span>
+      </div>`;
+    });
+    // lt_doelstellingen markers (🏁)
+    visLts.forEach(lt => {
+      const bm = barRows.get(lt.id); if(!bm)return;
+      const {sp, rowIdx} = bm;
+      const top = TOP_PAD + rowIdx*(BAR_H+BAR_GAP);
+      const val = lt.goal_value != null ? `${lt.goal_value}${lt.unit||''}` : '';
+      const safeDesc = (lt.description||'Doelstelling').replace(/"/g,'&quot;');
+      cells += `<div style="position:absolute;left:${sp}%;top:${top}px;height:${BAR_H}px;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:default;" title="🏁 ${safeDesc}${val?' — '+val:''}">
+        <span style="font-size:16px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));">🏁</span>
+        ${val?`<span style="font-size:9px;font-weight:700;color:#059669;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);">${val}</span>`:''}
+      </div>`;
+    });
+    // kt_targets (◆)
+    visKts.forEach(kt => {
+      const bm = barRows.get(kt.id); if(!bm)return;
+      const {sp, rowIdx} = bm;
+      const top = TOP_PAD + rowIdx*(BAR_H+BAR_GAP);
+      const lt = ltDoelstellingen.find(l => l.id === kt.lt_doelstelling_id);
+      const val = kt.value != null ? `${kt.value}${lt?.unit||''}` : '';
+      cells += `<div style="position:absolute;left:${sp}%;top:${top}px;height:${BAR_H}px;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:default;" title="◆ ${val}">
+        <div style="width:13px;height:13px;background:#F59E0B;transform:rotate(45deg);border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,.25);"></div>
+        ${val?`<span style="font-size:9px;font-weight:600;color:#D97706;white-space:nowrap;">${val}</span>`:''}
+      </div>`;
+    });
+    // inspanningen (📝)
+    visInsp.forEach(i => {
+      const bm = barRows.get(i.id); if(!bm)return;
+      const {sp, rowIdx} = bm;
+      const top = TOP_PAD + rowIdx*(BAR_H+BAR_GAP);
+      const safeDesc = (i.description||'Inspanning').replace(/"/g,'&quot;');
+      cells += `<div style="position:absolute;left:${sp}%;top:${top}px;height:${BAR_H}px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;justify-content:center;cursor:default;" title="📝 ${safeDesc}">
+        <span style="font-size:15px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));">📝</span>
+      </div>`;
+    });
+    cells += `</div>`;
+    return `<div style="display:flex;border-bottom:1px solid var(--gy200);background:${bgColor||'white'};align-items:stretch;">
+      <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;${labelStyle||''}">${labelHtml}</div>
+      ${cells}
+    </div>`;
+  }
+
+  // ── 8. Render track → sc → hb lanes ──────────────────────────────────────
+  let anyLane = false;
+  tracks.forEach(tr => {
+    if (stlFilterStreams.size && !stlFilterStreams.has(tr.id)) return;
+    const trStrategicSubs = subcategories.filter(s => s.track_id === tr.id && s.strategic_mode);
+    if (!trStrategicSubs.length) return;
+    let trAdded = false;
+    trStrategicSubs.forEach(sub => {
+      if (stlFilterSubcats.size && !stlFilterSubcats.has(sub.id)) return;
+      const scs = strategicChanges.filter(sc => sc.subcategory_id === sub.id);
+      if (!scs.length) return;
+      if (!trAdded) {
+        const trTc = textColor(tr.color);
+        html += `<div style="display:flex;border-bottom:1px solid var(--gy300);min-height:36px;background:${tr.color};align-items:center;">
+          <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;border-right:1px solid rgba(255,255,255,.3);display:flex;align-items:center;gap:6px;">
+            <span style="font-size:13px;font-weight:800;color:${trTc};">${renderIcon(tr.icon)}${tr.name}</span>
+          </div>
+          <div style="flex:1;background:${tr.color}22;"></div>
         </div>`;
-      });
-
-      // Doelstelling milestones + their KT targets
-      r.lts.forEach(lt => {
-        if (lt.end_date) {
-          const x = p(lt.end_date);
-          const val = lt.goal_value != null ? `${lt.goal_value}${lt.unit||''}` : '';
-          bars += `<div style="position:absolute;left:${x}%;top:50%;transform:translate(-50%,-50%);z-index:5;cursor:default;" title="🏁 ${lt.description||'Doelstelling'}${val?' — '+val:''}">
-            <div style="width:22px;height:22px;background:#059669;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.3);">🏁</div>
-            ${val ? `<div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:#059669;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.15);">${val}</div>` : ''}
-          </div>`;
-        }
-        r.kts.filter(kt => kt.lt_doelstelling_id === lt.id && kt.target_date).forEach(kt => {
-          const kx = p(kt.target_date);
-          const kv = kt.value != null ? `${kt.value}${lt.unit||''}` : '';
-          bars += `<div style="position:absolute;left:${kx}%;top:50%;transform:translate(-50%,-50%);z-index:4;" title="◆ ${kv}">
-            <div style="width:12px;height:12px;background:#F59E0B;transform:rotate(45deg);border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,.25);"></div>
-            ${kv ? `<div style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:#D97706;white-space:nowrap;">${kv}</div>` : ''}
-          </div>`;
+        trAdded = true; anyLane = true;
+      }
+      const subTc = textColor(sub.color||'#6B7280');
+      html += `<div style="display:flex;border-bottom:1px solid var(--gy200);min-height:28px;background:${sub.color||'#E5E7EB'}33;align-items:center;">
+        <div style="width:${LABEL_W}px;flex-shrink:0;padding:5px 12px 5px 18px;border-right:1px solid var(--gy200);display:flex;align-items:center;gap:6px;">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color||tr.color};flex-shrink:0;"></span>
+          <span style="font-size:12px;font-weight:700;color:var(--gy700);">${sub.name}</span>
+        </div>
+        <div style="flex:1;background:${sub.color||'#E5E7EB'}11;${colGridLines().replace(/position:absolute/g,'position:absolute')}"></div>
+      </div>`;
+      scs.forEach(sc => {
+        const goalBadge = sc.goal_value != null ? ` <span style="font-size:10px;color:#D97706;font-weight:700;margin-left:4px;">🎯 ${sc.goal_value}${sc.goal_unit||''}</span>` : '';
+        html += `<div style="display:flex;border-bottom:1px solid var(--gy100);min-height:24px;background:var(--gy50);align-items:center;">
+          <div style="width:${LABEL_W}px;flex-shrink:0;padding:4px 12px 4px 28px;border-right:1px solid var(--gy200);display:flex;align-items:center;gap:5px;">
+            <span style="font-size:11px;font-weight:700;color:var(--gy600);">${sc.name}</span>${goalBadge}
+          </div>
+          <div style="flex:1;background:var(--gy50);position:relative;">${colGridLines()}</div>
+        </div>`;
+        const hbs = hefbomenData.filter(hb => hb.strategic_change_id === sc.id);
+        hbs.forEach(hb => {
+          const lts   = ltDoelstellingen.filter(x => x.hefboom_id === hb.id);
+          const kts   = ktTargets.filter(x => x.hefboom_id === hb.id);
+          const insps = inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id);
+          const linkedIds = itemHefbomenLinks.filter(l => l.hefboom_id === hb.id).map(l => l.roadmap_item_id);
+          const acts = items.filter(it => linkedIds.includes(it.id));
+          const barCol = sub.color || tr.color || '#6B7280';
+          const lbl = `<span style="font-size:11px;color:var(--gy400);flex-shrink:0;">⚙️</span><span style="font-size:12px;font-weight:600;color:var(--gy800);padding-left:4px;">${hb.name}</span>`;
+          html += renderStlLane(lbl, acts, lts, kts, insps, barCol, 'white', 'padding-left:42px;');
         });
       });
-
-      // Inspanningsverbintenissen
-      r.insps.forEach(insp => {
-        if (!insp.end_date) return;
-        const x = p(insp.end_date);
-        bars += `<div style="position:absolute;left:${x}%;top:50%;transform:translate(-50%,-50%);z-index:4;" title="📝 ${insp.description||'Inspanning'}">
-          <div style="width:16px;height:16px;background:#8B5CF6;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,.2);">📝</div>
-        </div>`;
-      });
-
-      html += `<div class="rm-hb-row">
-        <div class="rm-label" style="height:44px;padding-left:30px;gap:5px;">
-          <span style="font-size:11px;color:var(--gy400);">⚙️</span>
-          <span style="font-size:12px;font-weight:600;color:var(--gy800);">${r.hb.name}</span>
-        </div>
-        <div class="rm-bars">${bars}</div>
-      </div>`;
-    }
+    });
   });
 
-  html += `</div></div>
-    <div class="rm-legend">
-      <span><span style="display:inline-block;width:22px;height:9px;background:var(--gy400);border-radius:3px;vertical-align:middle;margin-right:4px;"></span>Activiteit</span>
-      <span>🏁 Doelstelling</span>
-      <span><span style="display:inline-block;width:11px;height:11px;background:#F59E0B;transform:rotate(45deg);vertical-align:middle;margin-right:6px;"></span>KT Target</span>
-      <span>📝 Inspanning</span>
-      <span><span style="display:inline-block;width:2px;height:13px;background:#F59E0B;vertical-align:middle;margin-right:5px;"></span>Vandaag</span>
-    </div>
-  </div>`;
+  if (!anyLane) {
+    html += `<div class="empty" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-title">Geen strategische data zichtbaar</div><div class="empty-sub">Activeer 🎯 strategische doelstellingen per subcategorie in Setup, en koppel hefbomen en activiteiten.</div></div>`;
+  }
 
+  // ── 9. Today line overlay ─────────────────────────────────────────────────
+  if (todayPct !== null && todayPct >= 0 && todayPct <= 100) {
+    html += `<div style="position:relative;height:0;">
+      <div style="position:absolute;left:calc(${LABEL_W}px + ${todayPct}%);top:-9999px;bottom:-20px;width:2px;background:#EF4444;opacity:.6;z-index:20;pointer-events:none;">
+        <div style="position:absolute;top:0;left:-14px;font-size:9px;font-weight:700;color:#EF4444;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.1);">Vandaag</div>
+      </div>
+    </div>`;
+  }
+
+  html += `</div></div>`;
   el.innerHTML = html;
 }
 
@@ -3828,10 +3997,10 @@ function renderStrategie() {
   if (!currentProjectId) { if(noProj) noProj.style.display=''; if(content) content.style.display='none'; return; }
   if(noProj) noProj.style.display='none'; if(content) content.style.display='';
 
-  // Build flat list of all subcategories (with track info)
+  // Build flat list of subcategories with strategic_mode enabled (with track info)
   const allSubs = [];
   tracks.forEach(tr => {
-    subcategories.filter(s => s.track_id === tr.id).forEach(s => allSubs.push({...s, trackName: tr.name, trackColor: tr.color, trackIcon: tr.icon||''}));
+    subcategories.filter(s => s.track_id === tr.id && s.strategic_mode).forEach(s => allSubs.push({...s, trackName: tr.name, trackColor: tr.color, trackIcon: tr.icon||''}));
   });
 
   if (!allSubs.length) {
@@ -4397,7 +4566,7 @@ function switchTab(name) {
   if (name === 'timeline'   && currentProjectId) { if (prev === 'storyboard') syncFiltersToTimeline(); renderTimeline(); }
   if (name === 'setup' && currentProjectId) { renderTracksList(); renderPhasesList(); renderMilestoneTypesList(); renderMeetingTypesList(); }
   if (name === 'strategie' && currentProjectId) { renderStrategie(); }
-  if (name === 'roadmap'   && currentProjectId) { renderRoadmap(); }
+  if (name === 'roadmap'   && currentProjectId) { renderStrategischTijdslijn(); }
 }
 
 // ═══════════════════════════════════════════
