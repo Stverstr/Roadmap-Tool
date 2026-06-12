@@ -92,6 +92,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .drag-handle:hover{color:var(--gy500);}
 .sortable-ghost{opacity:.4;background:var(--g50)!important;}
 .sortable-chosen{box-shadow:0 4px 12px rgba(0,0,0,.15)!important;}
+/* ── ROADMAP TAB ── */
+.rm-wrap{background:white;border-radius:10px;border:1px solid var(--gy200);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+.rm-scroll{overflow-x:auto;scrollbar-width:thin;}
+.rm-grid{display:grid;grid-template-columns:220px 1fr;min-width:800px;}
+.rm-month-bar{grid-column:1/-1;display:grid;background:var(--gy900);height:28px;position:sticky;top:0;z-index:10;}
+.rm-month-corner{background:var(--gy900);width:220px;border-right:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:10;}
+.rm-month-axis{position:relative;height:28px;background:var(--gy900);position:sticky;top:0;z-index:10;}
+.rm-sub-header-row{grid-column:1/-1;display:grid;grid-template-columns:220px 1fr;}
+.rm-sc-header-row{grid-column:1/-1;display:grid;grid-template-columns:220px 1fr;}
+.rm-hb-row{grid-column:1/-1;display:grid;grid-template-columns:220px 1fr;border-bottom:1px solid var(--gy100);}
+.rm-label{display:flex;align-items:center;border-right:1px solid var(--gy200);padding:0 10px;overflow:hidden;}
+.rm-bars{position:relative;height:44px;}
+.rm-legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:var(--gy50);border-top:1px solid var(--gy200);font-size:11px;color:var(--gy600);}
 /* ── STRATEGY TAB ── */
 .str-subnav{overflow-x:auto;margin-bottom:20px;scrollbar-width:none;border-radius:8px 8px 0 0;border:1px solid var(--gy300);border-bottom:2px solid var(--gy200);}
 .str-subnav::-webkit-scrollbar{display:none;}
@@ -368,6 +381,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <button class="ntab" id="tab-strategie-btn" onclick="switchTab('strategie')" style="display:none">🎯 Strategie</button>
     <button class="ntab" id="tab-storyboard-btn" onclick="switchTab('storyboard')">📋 Storyboard</button>
     <button class="ntab" id="tab-timeline-btn" onclick="switchTab('timeline')">📅 Tijdslijn</button>
+    <button class="ntab" id="tab-roadmap-btn" onclick="switchTab('roadmap')" style="display:none">🗺 Roadmap</button>
   </nav>
 
   <!-- ══ SETUP TAB ══ -->
@@ -479,6 +493,14 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       </div>
       <div id="strategie-tree"></div>
     </div>
+  </div>
+
+  <!-- ══ ROADMAP TAB ══ -->
+  <div id="tab-roadmap" class="panel main">
+    <div id="no-project-roadmap" style="display:none">
+      <div class="empty"><div class="empty-icon">🗺</div><div class="empty-title">Geen project geselecteerd</div></div>
+    </div>
+    <div id="roadmap-content" style="display:none"></div>
   </div>
 
   <!-- ══ TIMELINE TAB ══ -->
@@ -1014,6 +1036,10 @@ function showNoProject() {
   const strCnt = document.getElementById('strategie-content');
   if (noStr) noStr.style.display = 'block';
   if (strCnt) strCnt.style.display = 'none';
+  const noRm = document.getElementById('no-project-roadmap');
+  const rmCnt = document.getElementById('roadmap-content');
+  if (noRm) noRm.style.display = 'block';
+  if (rmCnt) rmCnt.style.display = 'none';
 }
 
 async function onProjectChange(render = true) {
@@ -1031,6 +1057,8 @@ async function onProjectChange(render = true) {
   document.getElementById('timeline-content').style.display = 'block';
   document.getElementById('no-project-str').style.display = 'none';
   document.getElementById('strategie-content').style.display = 'block';
+  document.getElementById('no-project-roadmap').style.display = 'none';
+  document.getElementById('roadmap-content').style.display = 'block';
 
   await loadProjectData();
   fillSetupForm();
@@ -1108,6 +1136,7 @@ function fillSetupForm() {
   document.getElementById('s-enable-milestones').checked = p.enable_milestones !== false;
   document.getElementById('s-enable-strategic').checked = p.strategic_mode === true;
   document.getElementById('tab-strategie-btn').style.display = p.strategic_mode ? '' : 'none';
+  document.getElementById('tab-roadmap-btn').style.display = p.strategic_mode ? '' : 'none';
   updateMeetingMilestoneButtons();
 }
 
@@ -1139,8 +1168,9 @@ async function saveProject() {
   await sb.from('projects').update(upd).eq('id', currentProjectId);
   const idx = projects.findIndex(p => p.id === currentProjectId);
   if (idx !== -1) Object.assign(projects[idx], upd);
-  // Show/hide strategie tab
+  // Show/hide strategie + roadmap tabs
   document.getElementById('tab-strategie-btn').style.display = upd.strategic_mode ? '' : 'none';
+  document.getElementById('tab-roadmap-btn').style.display = upd.strategic_mode ? '' : 'none';
   if (upd.strategic_mode) { await loadStrategicData(currentProjectId); updateHefboomTabVisibility(); }
   // update dropdown label
   const sel = document.getElementById('proj-select');
@@ -3553,6 +3583,185 @@ function syncFiltersToStoryboard() {
   sbFilterNoBacklog      = tlFilterNoBacklog;
 }
 // ═══════════════════════════════════════════
+//  ROADMAP RENDER
+// ═══════════════════════════════════════════
+function renderRoadmap() {
+  const el = document.getElementById('roadmap-content');
+  if (!el) return;
+  const proj = projects.find(p => p.id === currentProjectId);
+  if (!proj || !proj.strategic_mode || !hefbomenData.length) {
+    el.innerHTML = `<div class="empty" style="padding:40px;"><div class="empty-icon">🗺</div><div class="empty-title">Geen strategische data</div><div class="empty-sub">Activeer strategische modus en voeg hefbomen toe via de Strategie tab.</div></div>`;
+    return;
+  }
+
+  // Build flat subcategory list (track order)
+  const allSubs = [];
+  tracks.forEach(tr => subcategories.filter(s => s.track_id === tr.id).forEach(s => allSubs.push({...s, trackName: tr.name, trackColor: tr.color})));
+
+  // Build hierarchy rows
+  const rows = [];
+  allSubs.forEach(sub => {
+    const scs = strategicChanges.filter(sc => sc.subcategory_id === sub.id);
+    if (!scs.length) return;
+    let subAdded = false;
+    scs.forEach(sc => {
+      const hbs = hefbomenData.filter(hb => hb.strategic_change_id === sc.id);
+      if (!hbs.length) return;
+      let scAdded = false;
+      hbs.forEach(hb => {
+        const lts  = ltDoelstellingen.filter(x => x.hefboom_id === hb.id);
+        const kts  = ktTargets.filter(x => x.hefboom_id === hb.id);
+        const insps = inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id);
+        const linkedIds = itemHefbomenLinks.filter(l => l.hefboom_id === hb.id).map(l => l.roadmap_item_id);
+        const acts = items.filter(it => linkedIds.includes(it.id));
+        if (!subAdded) { rows.push({type:'sub', sub}); subAdded = true; }
+        if (!scAdded)  { rows.push({type:'sc', sc, sub}); scAdded = true; }
+        rows.push({type:'hb', hb, lts, kts, insps, acts, sub});
+      });
+    });
+  });
+
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty" style="padding:40px;"><div class="empty-icon">🗺</div><div class="empty-title">Voeg doelstellingen of activiteiten toe</div><div class="empty-sub">Koppel activiteiten aan hefbomen via de Strategie tab.</div></div>`;
+    return;
+  }
+
+  // Collect all dates
+  const allDates = [new Date()];
+  rows.forEach(r => {
+    if (r.type !== 'hb') return;
+    r.lts.forEach(lt => { if (lt.end_date) allDates.push(new Date(lt.end_date)); });
+    r.kts.forEach(kt => { if (kt.target_date) allDates.push(new Date(kt.target_date)); });
+    r.insps.forEach(i => { if (i.end_date) allDates.push(new Date(i.end_date)); });
+    r.acts.forEach(a => {
+      if (a.start_date) allDates.push(new Date(a.start_date));
+      if (a.end_date)   allDates.push(new Date(a.end_date));
+    });
+  });
+  let minD = new Date(Math.min(...allDates.map(d => d.getTime())));
+  let maxD = new Date(Math.max(...allDates.map(d => d.getTime())));
+  minD = new Date(minD.getFullYear(), minD.getMonth(), 1);
+  maxD = new Date(maxD.getFullYear(), maxD.getMonth() + 2, 1);
+  const totalMs = maxD - minD;
+
+  function p(dateStr) { return Math.max(0, Math.min(100, (new Date(dateStr) - minD) / totalMs * 100)); }
+  const todayP = p(new Date());
+
+  // Month labels
+  const months = [];
+  let md = new Date(minD);
+  while (md < maxD) {
+    months.push({ lbl: md.toLocaleDateString('nl-BE', {month:'short', year:'2-digit'}), pct: (md - minD) / totalMs * 100 });
+    md = new Date(md.getFullYear(), md.getMonth() + 1, 1);
+  }
+
+  const gridLines = months.map(m => `<div style="position:absolute;left:${m.pct}%;top:0;bottom:0;width:1px;background:var(--gy100);"></div>`).join('');
+  const todayLine = `<div style="position:absolute;left:${todayP}%;top:0;bottom:0;width:2px;background:#F59E0B;opacity:.5;z-index:2;"></div>`;
+
+  // Header row
+  let html = `<div class="rm-wrap"><div class="rm-scroll"><div class="rm-grid">
+    <div class="rm-month-corner"></div>
+    <div class="rm-month-axis">
+      ${months.map(m => `<span style="position:absolute;left:${m.pct}%;top:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,.75);white-space:nowrap;">${m.lbl}</span>`).join('')}
+      ${months.map(m => `<div style="position:absolute;left:${m.pct}%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.15);"></div>`).join('')}
+      <div style="position:absolute;left:${todayP}%;top:0;bottom:0;width:2px;background:#F59E0B;opacity:.8;"></div>
+    </div>`;
+
+  rows.forEach(r => {
+    if (r.type === 'sub') {
+      const tc = textColor(r.sub.color || '#6B7280');
+      html += `<div class="rm-sub-header-row">
+        <div class="rm-label" style="height:32px;background:${r.sub.color||'var(--gy300)'};color:${tc};">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;opacity:.8;">${r.sub.trackName} ›</span>
+          <span style="font-size:13px;font-weight:800;margin-left:5px;">${r.sub.name}</span>
+        </div>
+        <div style="position:relative;height:32px;background:${r.sub.color||'#E5E7EB'}22;">
+          ${gridLines}${todayLine}
+        </div>
+      </div>`;
+    } else if (r.type === 'sc') {
+      const goalBadge = r.sc.goal_value != null
+        ? `<span style="font-size:11px;color:var(--orange);margin-left:8px;font-weight:700;">🎯 ${r.sc.goal_value}${r.sc.goal_unit||''}</span>` : '';
+      html += `<div class="rm-sc-header-row">
+        <div class="rm-label" style="height:28px;background:var(--gy50);padding-left:18px;">
+          <span style="font-size:12px;font-weight:700;color:var(--gy700);">${r.sc.name}</span>${goalBadge}
+        </div>
+        <div style="position:relative;height:28px;background:var(--gy50);">
+          ${gridLines}${todayLine}
+        </div>
+      </div>`;
+    } else if (r.type === 'hb') {
+      let bars = gridLines + todayLine;
+
+      // Activity bars
+      r.acts.forEach(act => {
+        if (!act.start_date && !act.end_date) return;
+        const s = act.start_date || act.end_date;
+        const e = act.end_date   || act.start_date;
+        const left = p(s), w = Math.max(0.8, p(e) - left);
+        const actSub = subcategories.find(x => x.id === act.subcategory_id);
+        const col = actSub?.color || r.sub.color || '#6B7280';
+        bars += `<div onclick="openItemModal('${act.id}','edit')" title="${act.title}"
+          style="position:absolute;left:${left}%;width:${w}%;height:20px;top:12px;background:${col};border-radius:4px;
+                 display:flex;align-items:center;padding:0 6px;overflow:hidden;cursor:pointer;
+                 box-shadow:0 1px 3px rgba(0,0,0,.2);opacity:.88;z-index:3;">
+          <span style="font-size:10px;font-weight:600;color:${textColor(col)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${act.title}</span>
+        </div>`;
+      });
+
+      // Doelstelling milestones + their KT targets
+      r.lts.forEach(lt => {
+        if (lt.end_date) {
+          const x = p(lt.end_date);
+          const val = lt.goal_value != null ? `${lt.goal_value}${lt.unit||''}` : '';
+          bars += `<div style="position:absolute;left:${x}%;top:50%;transform:translate(-50%,-50%);z-index:5;cursor:default;" title="🏁 ${lt.description||'Doelstelling'}${val?' — '+val:''}">
+            <div style="width:22px;height:22px;background:#059669;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.3);">🏁</div>
+            ${val ? `<div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:#059669;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.15);">${val}</div>` : ''}
+          </div>`;
+        }
+        r.kts.filter(kt => kt.lt_doelstelling_id === lt.id && kt.target_date).forEach(kt => {
+          const kx = p(kt.target_date);
+          const kv = kt.value != null ? `${kt.value}${lt.unit||''}` : '';
+          bars += `<div style="position:absolute;left:${kx}%;top:50%;transform:translate(-50%,-50%);z-index:4;" title="◆ ${kv}">
+            <div style="width:12px;height:12px;background:#F59E0B;transform:rotate(45deg);border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,.25);"></div>
+            ${kv ? `<div style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:#D97706;white-space:nowrap;">${kv}</div>` : ''}
+          </div>`;
+        });
+      });
+
+      // Inspanningsverbintenissen
+      r.insps.forEach(insp => {
+        if (!insp.end_date) return;
+        const x = p(insp.end_date);
+        bars += `<div style="position:absolute;left:${x}%;top:50%;transform:translate(-50%,-50%);z-index:4;" title="📝 ${insp.description||'Inspanning'}">
+          <div style="width:16px;height:16px;background:#8B5CF6;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,.2);">📝</div>
+        </div>`;
+      });
+
+      html += `<div class="rm-hb-row">
+        <div class="rm-label" style="height:44px;padding-left:30px;gap:5px;">
+          <span style="font-size:11px;color:var(--gy400);">⚙️</span>
+          <span style="font-size:12px;font-weight:600;color:var(--gy800);">${r.hb.name}</span>
+        </div>
+        <div class="rm-bars">${bars}</div>
+      </div>`;
+    }
+  });
+
+  html += `</div></div>
+    <div class="rm-legend">
+      <span><span style="display:inline-block;width:22px;height:9px;background:var(--gy400);border-radius:3px;vertical-align:middle;margin-right:4px;"></span>Activiteit</span>
+      <span>🏁 Doelstelling</span>
+      <span><span style="display:inline-block;width:11px;height:11px;background:#F59E0B;transform:rotate(45deg);vertical-align:middle;margin-right:6px;"></span>KT Target</span>
+      <span>📝 Inspanning</span>
+      <span><span style="display:inline-block;width:2px;height:13px;background:#F59E0B;vertical-align:middle;margin-right:5px;"></span>Vandaag</span>
+    </div>
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
 //  STRATEGIE RENDER
 // ═══════════════════════════════════════════
 let activeStrSubcatId = null;
@@ -4180,7 +4389,7 @@ async function deleteHefboom() {
 
 function switchTab(name) {
   const prev = [...document.querySelectorAll('.ntab.active')].map(b => b.id.replace('tab-','').replace('-btn',''))[0];
-  ['setup','strategie','storyboard','timeline'].forEach(t => {
+  ['setup','strategie','storyboard','timeline','roadmap'].forEach(t => {
     const el = document.getElementById(`tab-${t}`); if (el) el.classList.toggle('active', t === name);
     const btn = document.getElementById(`tab-${t}-btn`); if (btn) btn.classList.toggle('active', t === name);
   });
@@ -4188,6 +4397,7 @@ function switchTab(name) {
   if (name === 'timeline'   && currentProjectId) { if (prev === 'storyboard') syncFiltersToTimeline(); renderTimeline(); }
   if (name === 'setup' && currentProjectId) { renderTracksList(); renderPhasesList(); renderMilestoneTypesList(); renderMeetingTypesList(); }
   if (name === 'strategie' && currentProjectId) { renderStrategie(); }
+  if (name === 'roadmap'   && currentProjectId) { renderRoadmap(); }
 }
 
 // ═══════════════════════════════════════════
