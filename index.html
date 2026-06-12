@@ -140,18 +140,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .str-add-btn:hover{background:var(--g100);}
 .str-link-wrap{display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #FDE68A;}
 .str-link-wrap select{flex:1;font-size:11px;padding:3px 7px;border:1px solid var(--gy300);border-radius:6px;background:white;}
-/* Activities panel */
-.str-acts-panel{background:white;border:1px solid var(--gy200);border-radius:10px;margin-bottom:16px;overflow:hidden;}
-.str-acts-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;background:var(--gy50);}
-.str-acts-header:hover{background:var(--gy100);}
-.str-acts-toggle{margin-left:auto;font-size:11px;color:var(--gy400);transition:transform .2s;}
-.str-acts-toggle.open{transform:rotate(180deg);}
-.str-acts-body{padding:10px 14px;display:none;border-top:1px solid var(--gy100);}
-.str-acts-body.open{display:block;}
-.str-acts-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
-.str-act-card{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--gy50);border:1px solid var(--gy200);border-radius:8px;font-size:12px;cursor:grab;transition:all .15s;user-select:none;}
-.str-act-card:hover{background:white;box-shadow:0 2px 6px rgba(0,0,0,.1);border-color:var(--gy300);}
-.str-act-card.dragging{opacity:.4;cursor:grabbing;}
+/* Activities sidebar */
+.str-main-wrap{display:flex;gap:16px;align-items:flex-start;}
+.str-sc-col{flex:1;min-width:0;}
+.str-acts-sidebar{width:280px;flex-shrink:0;background:white;border:1px solid var(--gy200);border-radius:12px;display:none;flex-direction:column;position:sticky;top:16px;max-height:calc(100vh - 120px);overflow:hidden;}
+.str-acts-sidebar.open{display:flex;}
+.str-acts-sb-head{padding:12px 14px;border-bottom:1px solid var(--gy100);display:flex;align-items:center;gap:8px;background:var(--gy50);border-radius:12px 12px 0 0;flex-shrink:0;}
+.str-acts-sb-body{flex:1;overflow-y:auto;padding:8px;}
+.str-act-card{display:flex;flex-direction:column;gap:4px;padding:10px 12px;background:white;border:1px solid var(--gy200);border-radius:8px;margin-bottom:6px;cursor:grab;transition:all .15s;user-select:none;border-left:3px solid transparent;}
+.str-act-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);border-color:var(--gy300);}
+.str-act-card.dragging{opacity:.35;cursor:grabbing;}
+.str-act-card-title{font-size:13px;font-weight:600;color:var(--gy900);display:flex;align-items:center;gap:5px;}
+.str-act-card-meta{font-size:11px;color:var(--gy400);}
+.str-act-hb-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
 .str-act-hb-chips{display:inline-flex;gap:3px;}
 /* Drag-over state on hefboom cards */
 .str-hb-card.hb-drag-over{border-color:var(--orange)!important;background:#FFF7ED!important;box-shadow:0 0 0 2px rgba(251,146,60,.3);}
@@ -3552,37 +3553,19 @@ function renderStrategie() {
           <div style="font-size:10px;font-weight:600;color:${tr?.color||'#6B7280'};text-transform:uppercase;letter-spacing:.5px;">${tr?.icon||''} ${tr?.name||''}</div>
           <div style="font-size:16px;font-weight:800;color:var(--gy900);">${sub.name}</div>
         </div>
-        <button class="btn btn-p btn-sm" style="margin-left:auto;" onclick="openStrategicChangeModal(null,'${sub.id}')">＋ Strategische verandering</button>
+        <div style="display:flex;gap:8px;margin-left:auto;">
+          <button class="btn btn-s btn-sm" onclick="toggleActsSidebar('${sub.id}')">🗂 Koppel activiteiten</button>
+          <button class="btn btn-p btn-sm" onclick="openStrategicChangeModal(null,'${sub.id}')">＋ Strategische verandering</button>
+        </div>
       </div>`;
 
-    // ── Activities panel (collapsible) ──
+    // ── Main flex wrapper (SC col + sidebar) ──
     const subcatItems = items.filter(it => it.subcategory_id === sub.id);
-    viewsHtml += `<div class="str-acts-panel">
-      <div class="str-acts-header" onclick="toggleActsPanel('${sub.id}')">
-        <span style="font-size:13px;">📋</span>
-        <span style="font-size:13px;font-weight:600;">Activiteiten voor deze subcategorie</span>
-        <span style="font-size:12px;color:var(--gy400);">(${subcatItems.length})</span>
-        <span style="font-size:11px;color:var(--gy400);margin-left:6px;">sleep naar een hefboom om te koppelen</span>
-        <span class="str-acts-toggle" id="str-acts-tog-${sub.id}">▼</span>
-      </div>
-      <div class="str-acts-body" id="str-acts-body-${sub.id}">
-        <div class="str-acts-list">`;
-    subcatItems.forEach(it => {
-      const linkedHbs = itemHefbomenLinks.filter(l => l.roadmap_item_id === it.id).map(l => hefbomenData.find(h => h.id === l.hefboom_id)).filter(Boolean);
-      const sEmoji = it.status === 'done' ? '✅' : it.status === 'active' ? '▶️' : '○';
-      viewsHtml += `<div class="str-act-card" draggable="true"
-          ondragstart="strDragStart(event,'${it.id}')"
-          ondragend="this.classList.remove('dragging')"
-          onclick="openItemModal('${it.id}','edit')"
-          title="Klik om te bewerken · sleep naar hefboom om te koppelen">
-        <span>${sEmoji} ${it.title}</span>
-        ${linkedHbs.length ? `<span class="str-act-hb-chips">${linkedHbs.map(h=>`<span style="background:#FEF3C7;color:#92400E;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:600;">⚙️ ${h.name}</span>`).join('')}</span>` : ''}
-      </div>`;
-    });
-    viewsHtml += `</div>
-        <button class="str-add-btn" onclick="addActivityForSubcat('${sub.id}')">＋ Nieuwe activiteit</button>
-      </div>
-    </div>`;
+    const phases_map = {};
+    phases.forEach(p => { phases_map[p.id] = p.name; });
+
+    viewsHtml += `<div class="str-main-wrap">
+      <div class="str-sc-col">`;
 
     if (!scs.length) {
       viewsHtml += `<div style="text-align:center;padding:40px;color:var(--gy400);font-size:13px;">Nog geen strategische veranderingen. Klik '＋ Strategische verandering' om te beginnen.</div>`;
@@ -3647,7 +3630,45 @@ function renderStrategie() {
       });
       viewsHtml += `</div>`;
     }
-    viewsHtml += `</div>`;
+
+    // Close .str-sc-col, add sidebar
+    viewsHtml += `</div>
+      <!-- Activities sidebar -->
+      <div class="str-acts-sidebar" id="str-acts-sb-${sub.id}">
+        <div class="str-acts-sb-head">
+          <span style="font-size:14px;">🗂</span>
+          <span style="font-size:13px;font-weight:700;">Activiteiten</span>
+          <span style="font-size:12px;color:var(--gy400);">(${subcatItems.length})</span>
+          <button class="btn btn-p btn-sm" style="margin-left:auto;padding:3px 9px;font-size:11px;" onclick="addActivityForSubcat('${sub.id}')">＋ Nieuw</button>
+          <button class="modal-close" style="width:24px;height:24px;font-size:12px;" onclick="toggleActsSidebar('${sub.id}')">✕</button>
+        </div>
+        <div style="padding:6px 10px 4px;font-size:11px;color:var(--gy400);">Sleep een kaartje naar een hefboom om te koppelen.</div>
+        <div class="str-acts-sb-body">`;
+
+    if (!subcatItems.length) {
+      viewsHtml += `<div style="text-align:center;padding:30px 10px;color:var(--gy400);font-size:12px;">Nog geen activiteiten voor deze subcategorie.<br><br><button class="btn btn-p btn-sm" onclick="addActivityForSubcat('${sub.id}')">＋ Voeg eerste activiteit toe</button></div>`;
+    } else {
+      subcatItems.forEach(it => {
+        const linkedHbs = itemHefbomenLinks.filter(l => l.roadmap_item_id === it.id).map(l => hefbomenData.find(h => h.id === l.hefboom_id)).filter(Boolean);
+        const sColor = it.status === 'done' ? '#10B981' : it.status === 'active' ? '#3B82F6' : '#9CA3AF';
+        const sLabel = it.status === 'done' ? 'Gedaan' : it.status === 'active' ? 'Actief' : 'Gepland';
+        const phaseName = it.phase_id ? (phases_map[it.phase_id]||'') : '';
+        viewsHtml += `<div class="str-act-card" draggable="true"
+            style="border-left-color:${sub.color||'#6B7280'};"
+            ondragstart="strDragStart(event,'${it.id}')"
+            ondragend="this.classList.remove('dragging')">
+          <div class="str-act-card-title" onclick="openItemModal('${it.id}','edit')">
+            <span style="width:8px;height:8px;border-radius:50%;background:${sColor};flex-shrink:0;display:inline-block;"></span>
+            ${it.title}
+          </div>
+          <div class="str-act-card-meta">${sLabel}${phaseName?' · '+phaseName:''}</div>
+          ${linkedHbs.length ? `<div class="str-act-hb-chips">${linkedHbs.map(h=>`<span style="background:#FEF3C7;color:#92400E;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:600;">⚙️ ${h.name}</span>`).join('')}</div>` : `<div style="font-size:10px;color:var(--gy300);font-style:italic;">Nog niet gekoppeld</div>`}
+        </div>`;
+      });
+    }
+
+    viewsHtml += `</div></div>
+    </div></div>`;
   });
 
   el.innerHTML = navHtml + viewsHtml;
@@ -3698,13 +3719,11 @@ async function unlinkItemFromHefboom(itemId, hefboomId) {
   renderStrategie(); toast('Koppeling verwijderd');
 }
 
-// ── Activities panel toggle ──
-function toggleActsPanel(subcatId) {
-  const body = document.getElementById('str-acts-body-' + subcatId);
-  const tog = document.getElementById('str-acts-tog-' + subcatId);
-  if (!body) return;
-  body.classList.toggle('open');
-  if (tog) tog.classList.toggle('open');
+// ── Activities sidebar toggle ──
+function toggleActsSidebar(subcatId) {
+  const sidebar = document.getElementById('str-acts-sb-' + subcatId);
+  if (!sidebar) return;
+  sidebar.classList.toggle('open');
 }
 
 // ── New activity pre-filled for subcategory ──
