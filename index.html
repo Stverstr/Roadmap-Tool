@@ -252,10 +252,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .health-btn{font-size:20px;width:44px;height:40px;border-radius:8px;border:2px solid var(--gy300);background:var(--gy100);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;}
 
 /* ── TIMELINE ── */
-.tl-wrap{overflow:auto;position:relative;max-height:calc(100vh - 180px);}
+.tl-wrap{overflow:hidden;position:relative;width:100%;}
 [data-tl-grid].tl-dragging [data-tl-bar]{pointer-events:none;}
-.tl-container{min-width:0;}
-.tl-header-row{display:flex;border-bottom:2px solid var(--gy300);background:white;position:sticky;top:0;z-index:50;}
+.tl-container{min-width:0;width:100%;}
+.tl-header-row{display:flex;border-bottom:2px solid var(--gy300);background:white;position:sticky;top:146px;z-index:50;width:100%;}
 .tl-lane-label-head{width:200px;flex-shrink:0;padding:8px 12px;font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;border-right:1px solid var(--gy300);}
 .tl-months{flex:1;display:flex;}
 .tl-month{flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);}
@@ -645,6 +645,12 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <button class="btn btn-sm btn-p" onclick="addScDstField()">＋ Voeg toe</button>
       </div>
       <div id="msc-dst-fields"></div>
+      <hr class="sep">
+      <div class="card-row" style="margin:0 0 8px">
+        <span style="font-size:13px;font-weight:700;">📝 Inspanningsverbintenissen</span>
+        <button class="btn btn-sm btn-p" onclick="addScInspField()">＋ Voeg toe</button>
+      </div>
+      <div id="msc-insp-fields"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger btn-sm" id="msc-del-btn" onclick="deleteStrategicChange()" style="margin-right:auto;display:none">🗑 Verwijder</button>
@@ -1135,9 +1141,10 @@ async function loadStrategicData(pid) {
   strategicChanges = sc.data || [];
   if (!strategicChanges.length) { hefbomenData = []; ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = []; itemHefbomenLinks = []; return; }
   const scIds = strategicChanges.map(x => x.id);
-  const [hb, scLtRes, ihl] = await Promise.all([
+  const [hb, scLtRes, scInspRes, ihl] = await Promise.all([
     sb.from('hefbomen').select('*').in('strategic_change_id', scIds).order('position'),
     sb.from('lt_doelstellingen').select('*').in('strategic_change_id', scIds).is('hefboom_id', null),
+    sb.from('inspanningsverbintenissen').select('*').in('strategic_change_id', scIds).is('hefboom_id', null).is('lt_doelstelling_id', null),
     sb.from('roadmap_item_hefbomen').select('*').eq('project_id', pid),
   ]);
   hefbomenData = hb.data || [];
@@ -1150,10 +1157,15 @@ async function loadStrategicData(pid) {
     sb.from('inspanningsverbintenissen').select('*').in('lt_doelstelling_id', scLtIds),
   ]) : [{data:[]},{data:[]}];
 
+  const scInspData = scInspRes.data || [];
+  // Load lt-level inspanningen
+  const ltInspRes = scLtIds.length ? await sb.from('inspanningsverbintenissen').select('*').in('lt_doelstelling_id', scLtIds) : {data:[]};
+  const ltInspData = ltInspRes.data || [];
+
   if (!hefbomenData.length) {
     ltDoelstellingen = scLtData;
     ktTargets = scKtRes.data || [];
-    inspanningsverbintenissen = scInspRes.data || [];
+    inspanningsverbintenissen = [...scInspData, ...ltInspData];
     return;
   }
   const hbIds = hefbomenData.map(x => x.id);
@@ -1164,7 +1176,7 @@ async function loadStrategicData(pid) {
   ]);
   ltDoelstellingen = [...(lt.data||[]), ...scLtData];
   ktTargets = [...(kt.data||[]), ...(scKtRes.data||[])];
-  inspanningsverbintenissen = [...(insp.data||[]), ...(scInspRes.data||[])];
+  inspanningsverbintenissen = [...(insp.data||[]), ...scInspData, ...ltInspData];
 }
 
 function fillSetupForm() {
@@ -1402,31 +1414,6 @@ document.querySelectorAll('.overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
 });
 
-// Timeline scroll: wheel → horizontal, Shift+wheel → vertical
-(function() {
-  function attachTlScroll(wrap) {
-    if (!wrap || wrap._tlScrollBound) return;
-    wrap._tlScrollBound = true;
-    wrap.addEventListener('wheel', function(e) {
-      // Trackpad two-finger: both deltaX and deltaY set → let browser handle
-      if (Math.abs(e.deltaX) > 4) return;
-      e.preventDefault();
-      if (e.shiftKey) {
-        wrap.scrollTop += e.deltaY;
-      } else {
-        wrap.scrollLeft += e.deltaY * 1.5;
-      }
-    }, { passive: false });
-  }
-  // Attach once the container exists (rendered lazily)
-  const observer = new MutationObserver(() => {
-    const stl = document.getElementById('stl-container');
-    if (stl) attachTlScroll(stl.closest('.tl-wrap'));
-    const tl = document.getElementById('tl-container');
-    if (tl) attachTlScroll(tl.closest('.tl-wrap'));
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-})();
 
 function autoColorSubcats() {
   if (!subcatFields.length) { toast('Voeg eerst subcategorieën toe'); return; }
@@ -4474,6 +4461,22 @@ function buildMetroHtml(scId) {
 
   let lanesHtml = '';
 
+  // SC-level inspanningsverbintenissen lane (top level, no doelstelling)
+  const scInsps = inspanningsverbintenissen.filter(x => x.strategic_change_id === scId && !x.hefboom_id && !x.lt_doelstelling_id);
+  if (scInsps.length) {
+    const stops = [];
+    scInsps.forEach(ins => { if (ins.end_date) addStop(stops, new Date(ins.end_date).getTime(), '📝', ins.description, '#FEF9C3'); });
+    if (stops.length) {
+      lanesHtml += `<div class="metro-lane" style="border-left:3px solid #D97706;">
+        <div class="metro-lane-label" title="Inspanningen" style="font-weight:700;color:#D97706;">📝 Inspanningen</div>
+        <div class="metro-track">
+          <div class="metro-line" style="background:#D97706;opacity:.4;"></div>
+          ${stops.join('')}
+        </div>
+      </div>`;
+    }
+  }
+
   // SC-level doelstellingen lane (shown first if present)
   if (scDsts.length) {
     const stops = [];
@@ -4535,7 +4538,9 @@ function openStrategicChangeModal(id, subcatId) {
       .sort((a,b) => (a.target_date||'').localeCompare(b.target_date||'')),
     inspanningen: inspanningsverbintenissen.filter(ins => ins.lt_doelstelling_id === lt.id).map(ins => ({...ins}))
   })) : [];
+  scInspFields = id ? inspanningsverbintenissen.filter(x => x.strategic_change_id === id && !x.hefboom_id && !x.lt_doelstelling_id).map(x => ({...x})) : [];
   renderScDstFields();
+  renderScInspFields();
   document.getElementById('modal-strategic-change').classList.add('open');
 }
 async function saveStrategicChange() {
@@ -4588,13 +4593,24 @@ async function saveStrategicChange() {
     for (const ex of existingInsp) { if (!(f.inspanningen||[]).find(ins => ins.id===ex.id)) { await sb.from('inspanningsverbintenissen').delete().eq('id',ex.id); inspanningsverbintenissen=inspanningsverbintenissen.filter(x=>x.id!==ex.id); } }
   }
   for (const ex of existingScDst) { if (!scDstFields.find(f => f.id===ex.id)) { await sb.from('lt_doelstellingen').delete().eq('id',ex.id); ltDoelstellingen=ltDoelstellingen.filter(x=>x.id!==ex.id); } }
+  // Sync SC-level inspanningsverbintenissen
+  const existingScInsp = inspanningsverbintenissen.filter(x => x.strategic_change_id === savedScId && !x.hefboom_id && !x.lt_doelstelling_id);
+  for (const f of scInspFields) {
+    if (!f.description?.trim()) continue;
+    const insPayload = {description: f.description, end_date: f.end_date||null};
+    if (f.id) { await sb.from('inspanningsverbintenissen').update(insPayload).eq('id', f.id); const x=inspanningsverbintenissen.find(y=>y.id===f.id); if(x) Object.assign(x,insPayload); }
+    else { const {data} = await sb.from('inspanningsverbintenissen').insert({strategic_change_id: savedScId, hefboom_id: null, lt_doelstelling_id: null, ...insPayload}).select().single(); if(data) inspanningsverbintenissen.push(data); }
+  }
+  for (const ex of existingScInsp) { if (!scInspFields.find(f => f.id===ex.id)) { await sb.from('inspanningsverbintenissen').delete().eq('id',ex.id); inspanningsverbintenissen=inspanningsverbintenissen.filter(x=>x.id!==ex.id); } }
   // Reload saved state so edits/deletes work correctly in the still-open modal
   scDstFields = ltDoelstellingen.filter(x => x.strategic_change_id === savedScId && !x.hefboom_id).map(lt => ({
     ...lt,
     targets: ktTargets.filter(kt => kt.lt_doelstelling_id === lt.id).map(kt => ({...kt})).sort((a,b) => (a.target_date||'').localeCompare(b.target_date||'')),
     inspanningen: inspanningsverbintenissen.filter(ins => ins.lt_doelstelling_id === lt.id).map(ins => ({...ins}))
   }));
+  scInspFields = inspanningsverbintenissen.filter(x => x.strategic_change_id === savedScId && !x.hefboom_id && !x.lt_doelstelling_id).map(x => ({...x}));
   renderScDstFields();
+  renderScInspFields();
   renderStrategie(); toast('Opgeslagen ✓');
 }
 async function deleteStrategicChange() {
@@ -4602,10 +4618,11 @@ async function deleteStrategicChange() {
   await sb.from('strategic_changes').delete().eq('id', editingScId);
   strategicChanges = strategicChanges.filter(x => x.id !== editingScId);
   hefbomenData = hefbomenData.filter(x => x.strategic_change_id !== editingScId);
-  // Clean up SC-level doelstellingen from memory (CASCADE handles DB)
+  // Clean up SC-level data from memory (CASCADE handles DB)
   const scDstIds = ltDoelstellingen.filter(x => x.strategic_change_id === editingScId && !x.hefboom_id).map(x => x.id);
   ltDoelstellingen = ltDoelstellingen.filter(x => x.strategic_change_id !== editingScId || x.hefboom_id);
   ktTargets = ktTargets.filter(x => !scDstIds.includes(x.lt_doelstelling_id));
+  inspanningsverbintenissen = inspanningsverbintenissen.filter(x => x.strategic_change_id !== editingScId && !scDstIds.includes(x.lt_doelstelling_id));
   document.getElementById('modal-strategic-change').classList.remove('open');
   renderStrategie(); toast('Verwijderd');
 }
@@ -4616,6 +4633,19 @@ async function deleteStrategicChange() {
 let editingHbId = null, editingHbScId = null;
 let hbDstFields = [], hbInspFields = [];
 let scDstFields = [];
+let scInspFields = [];
+
+function renderScInspFields() {
+  document.getElementById('msc-insp-fields').innerHTML = scInspFields.map((f,i) => `
+    <div class="hb-modal-field">
+      <div style="flex:1;display:flex;gap:6px;align-items:center;">
+        <input class="input" placeholder="Inspanningsverbintenis…" value="${(f.description||'').replace(/"/g,'&quot;')}" style="flex:1;" oninput="scInspFields[${i}].description=this.value">
+        <input class="input" type="date" value="${f.end_date||''}" title="Datum" style="width:145px;flex-shrink:0;" oninput="scInspFields[${i}].end_date=this.value">
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="scInspFields.splice(${i},1);renderScInspFields()">✕</button>
+    </div>`).join('');
+}
+function addScInspField() { scInspFields.push({description:'',end_date:''}); renderScInspFields(); }
 
 function renderScDstFields() {
   document.getElementById('msc-dst-fields').innerHTML = scDstFields.map((f,i) => `
