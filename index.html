@@ -4528,7 +4528,12 @@ async function saveStrategicChange() {
     for (const ex of existingTgts) { if (!(f.targets||[]).find(t => t.id===ex.id)) { await sb.from('kt_targets').delete().eq('id',ex.id); ktTargets=ktTargets.filter(x=>x.id!==ex.id); } }
   }
   for (const ex of existingScDst) { if (!scDstFields.find(f => f.id===ex.id)) { await sb.from('lt_doelstellingen').delete().eq('id',ex.id); ltDoelstellingen=ltDoelstellingen.filter(x=>x.id!==ex.id); } }
-  document.getElementById('modal-strategic-change').classList.remove('open');
+  // Reload saved state so edits/deletes work correctly in the still-open modal
+  scDstFields = ltDoelstellingen.filter(x => x.strategic_change_id === savedScId && !x.hefboom_id).map(lt => ({
+    ...lt,
+    targets: ktTargets.filter(kt => kt.lt_doelstelling_id === lt.id).map(kt => ({...kt})).sort((a,b) => (a.target_date||'').localeCompare(b.target_date||''))
+  }));
+  renderScDstFields();
   renderStrategie(); toast('Opgeslagen ✓');
 }
 async function deleteStrategicChange() {
