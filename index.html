@@ -140,6 +140,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .str-add-btn:hover{background:var(--g100);}
 .str-link-wrap{display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #FDE68A;}
 .str-link-wrap select{flex:1;font-size:11px;padding:3px 7px;border:1px solid var(--gy300);border-radius:6px;background:white;}
+/* Activities panel */
+.str-acts-panel{background:white;border:1px solid var(--gy200);border-radius:10px;margin-bottom:16px;overflow:hidden;}
+.str-acts-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;background:var(--gy50);}
+.str-acts-header:hover{background:var(--gy100);}
+.str-acts-toggle{margin-left:auto;font-size:11px;color:var(--gy400);transition:transform .2s;}
+.str-acts-toggle.open{transform:rotate(180deg);}
+.str-acts-body{padding:10px 14px;display:none;border-top:1px solid var(--gy100);}
+.str-acts-body.open{display:block;}
+.str-acts-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.str-act-card{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--gy50);border:1px solid var(--gy200);border-radius:8px;font-size:12px;cursor:grab;transition:all .15s;user-select:none;}
+.str-act-card:hover{background:white;box-shadow:0 2px 6px rgba(0,0,0,.1);border-color:var(--gy300);}
+.str-act-card.dragging{opacity:.4;cursor:grabbing;}
+.str-act-hb-chips{display:inline-flex;gap:3px;}
+/* Drag-over state on hefboom cards */
+.str-hb-card.hb-drag-over{border-color:var(--orange)!important;background:#FFF7ED!important;box-shadow:0 0 0 2px rgba(251,146,60,.3);}
+/* Metro timeline popup */
+.metro-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.metro-overlay.open{opacity:1;pointer-events:all;}
+.metro-modal{background:white;border-radius:14px;padding:0;width:min(92vw,860px);max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.metro-modal-head{padding:16px 20px;border-bottom:1px solid var(--gy100);display:flex;align-items:center;gap:10px;}
+.metro-modal-body{padding:20px;overflow-y:auto;flex:1;}
+.metro-tl{position:relative;padding-bottom:12px;}
+.metro-axis{display:flex;justify-content:space-between;font-size:10px;color:var(--gy400);margin-bottom:6px;padding:0 6px;}
+.metro-lane{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.metro-lane-label{width:130px;font-size:12px;font-weight:600;color:var(--gy700);text-align:right;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.metro-track{flex:1;position:relative;height:32px;}
+.metro-line{position:absolute;top:50%;left:0;right:0;height:3px;border-radius:2px;transform:translateY(-50%);}
+.metro-stop{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:default;}
+.metro-dot{width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:8px;display:flex;align-items:center;justify-content:center;}
+.metro-stop-lbl{position:absolute;top:14px;font-size:9px;font-weight:600;white-space:nowrap;color:var(--gy600);}
 .hb-modal-field{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
 .hb-modal-field input,.hb-modal-field textarea{flex:1;}
 .phase-name{font-size:14px;font-weight:700;color:var(--gy900);flex:1;}
@@ -520,13 +550,36 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
   </div>
 </div>
 
+<!-- Metro timeline popup -->
+<div class="metro-overlay" id="metro-overlay" onclick="if(event.target===this)closeMetro()">
+  <div class="metro-modal">
+    <div class="metro-modal-head">
+      <span style="font-size:18px;">🚇</span>
+      <span style="font-weight:700;font-size:15px;" id="metro-title">Tijdslijn</span>
+      <button class="modal-close" style="margin-left:auto;" onclick="closeMetro()">✕</button>
+    </div>
+    <div class="metro-modal-body" id="metro-body"></div>
+  </div>
+</div>
+
 <!-- Strategic change modal -->
 <div class="overlay" id="modal-strategic-change">
   <div class="modal">
     <div class="modal-head"><span class="modal-title" id="msc-title">🔄 Strategische verandering</span><button class="modal-close" onclick="closeModal('modal-strategic-change')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label class="label">Naam</label><input class="input" id="msc-name" placeholder="bijv. CO2 reductie met 40% tegen 2030"></div>
-      <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="msc-desc" placeholder="Lange termijn doelstelling en context…"></textarea></div>
+      <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="msc-desc" placeholder="Context en achtergrond…" style="min-height:60px;"></textarea></div>
+      <div class="field">
+        <label class="label">🎯 Doelstelling <span style="font-weight:400;color:var(--gy400);font-size:11px;">(meetbaar)</span></label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input class="input" id="msc-goal-value" type="number" placeholder="Waarde" style="width:90px;" step="any">
+          <input class="input" id="msc-goal-unit" placeholder="Eenheid (%, €, kg…)" style="flex:1;min-width:100px;">
+          <input class="input" id="msc-goal-date" type="date" style="width:145px;" title="Streefdatum">
+        </div>
+        <div style="margin-top:6px;">
+          <input class="input" id="msc-goal-label" placeholder="Omschrijving doelstelling (optioneel)" style="width:100%;">
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger btn-sm" id="msc-del-btn" onclick="deleteStrategicChange()" style="margin-right:auto;display:none">🗑 Verwijder</button>
@@ -847,6 +900,7 @@ let hefbomenData = [];
 let ltDoelstellingen = [];
 let ktTargets = [];
 let inspanningsverbintenissen = [];
+let itemHefbomenLinks = []; // many-to-many: {id, roadmap_item_id, hefboom_id}
 
 // modal editing state
 let editingTrackId = null;
@@ -1004,22 +1058,24 @@ async function loadProjectData() {
 async function loadStrategicData(pid) {
   const sc = await sb.from('strategic_changes').select('*').eq('project_id', pid).order('position');
   strategicChanges = sc.data || [];
-  if (!strategicChanges.length) { hefbomenData = []; ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = []; return; }
+  if (!strategicChanges.length) { hefbomenData = []; ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = []; itemHefbomenLinks = []; return; }
   const scIds = strategicChanges.map(x => x.id);
   const [hb] = await Promise.all([
     sb.from('hefbomen').select('*').in('strategic_change_id', scIds).order('position'),
   ]);
   hefbomenData = hb.data || [];
-  if (!hefbomenData.length) { ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = []; return; }
+  if (!hefbomenData.length) { ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = []; itemHefbomenLinks = []; return; }
   const hbIds = hefbomenData.map(x => x.id);
-  const [lt, kt, insp] = await Promise.all([
+  const [lt, kt, insp, ihl] = await Promise.all([
     sb.from('lt_doelstellingen').select('*').in('hefboom_id', hbIds),
     sb.from('kt_targets').select('*').in('hefboom_id', hbIds),
     sb.from('inspanningsverbintenissen').select('*').in('hefboom_id', hbIds),
+    sb.from('roadmap_item_hefbomen').select('*').eq('project_id', pid),
   ]);
   ltDoelstellingen = lt.data || [];
   ktTargets = kt.data || [];
   inspanningsverbintenissen = insp.data || [];
+  itemHefbomenLinks = ihl.data || [];
 }
 
 function fillSetupForm() {
@@ -3457,14 +3513,13 @@ function renderStrategie() {
     activeStrSubcatId = allSubs[0].id;
   }
 
-  // Nav tabs
+  // Nav tabs — clean: just track name + subcat name, colored border
   let navHtml = '<div class="str-subnav">';
   allSubs.forEach(s => {
     const active = s.id === activeStrSubcatId ? ' active' : '';
-    navHtml += `<button class="str-subtab${active}" onclick="switchStrSubcat('${s.id}')">
-      <span style="width:10px;height:10px;border-radius:50%;background:${s.color};display:inline-block;flex-shrink:0;"></span>
-      <span style="font-size:10px;color:${s.trackColor};font-weight:600;">${s.trackIcon} ${s.trackName}</span>
-      <span>${s.name}</span>
+    navHtml += `<button class="str-subtab${active}" onclick="switchStrSubcat('${s.id}')" style="${active ? 'border-bottom-color:'+s.color+';' : ''}">
+      <span style="font-size:10px;font-weight:700;color:${s.trackColor};text-transform:uppercase;letter-spacing:.4px;">${s.trackName}</span>
+      <span style="font-weight:${active?'800':'600'};color:var(--gy${active?'900':'600'});">${s.name}</span>
     </button>`;
   });
   navHtml += '</div>';
@@ -3487,6 +3542,35 @@ function renderStrategie() {
         <button class="btn btn-p btn-sm" style="margin-left:auto;" onclick="openStrategicChangeModal(null,'${sub.id}')">＋ Strategische verandering</button>
       </div>`;
 
+    // ── Activities panel (collapsible) ──
+    const subcatItems = items.filter(it => it.subcategory_id === sub.id);
+    viewsHtml += `<div class="str-acts-panel">
+      <div class="str-acts-header" onclick="toggleActsPanel('${sub.id}')">
+        <span style="font-size:13px;">📋</span>
+        <span style="font-size:13px;font-weight:600;">Activiteiten voor deze subcategorie</span>
+        <span style="font-size:12px;color:var(--gy400);">(${subcatItems.length})</span>
+        <span style="font-size:11px;color:var(--gy400);margin-left:6px;">sleep naar een hefboom om te koppelen</span>
+        <span class="str-acts-toggle" id="str-acts-tog-${sub.id}">▼</span>
+      </div>
+      <div class="str-acts-body" id="str-acts-body-${sub.id}">
+        <div class="str-acts-list">`;
+    subcatItems.forEach(it => {
+      const linkedHbs = itemHefbomenLinks.filter(l => l.roadmap_item_id === it.id).map(l => hefbomenData.find(h => h.id === l.hefboom_id)).filter(Boolean);
+      const sEmoji = it.status === 'done' ? '✅' : it.status === 'active' ? '▶️' : '○';
+      viewsHtml += `<div class="str-act-card" draggable="true"
+          ondragstart="strDragStart(event,'${it.id}')"
+          ondragend="this.classList.remove('dragging')"
+          onclick="openItemModal('${it.id}','edit')"
+          title="Klik om te bewerken · sleep naar hefboom om te koppelen">
+        <span>${sEmoji} ${it.title}</span>
+        ${linkedHbs.length ? `<span class="str-act-hb-chips">${linkedHbs.map(h=>`<span style="background:#FEF3C7;color:#92400E;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:600;">⚙️ ${h.name}</span>`).join('')}</span>` : ''}
+      </div>`;
+    });
+    viewsHtml += `</div>
+        <button class="str-add-btn" onclick="addActivityForSubcat('${sub.id}')">＋ Nieuwe activiteit</button>
+      </div>
+    </div>`;
+
     if (!scs.length) {
       viewsHtml += `<div style="text-align:center;padding:40px;color:var(--gy400);font-size:13px;">Nog geen strategische veranderingen. Klik '＋ Strategische verandering' om te beginnen.</div>`;
     } else {
@@ -3499,48 +3583,48 @@ function renderStrategie() {
             <div class="str-sc-info">
               <div class="str-sc-title">${sc.name}</div>
               ${sc.description ? `<div class="str-sc-desc">${sc.description}</div>` : ''}
+              ${(sc.goal_value != null || sc.goal_label) ? `<div style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:20px;padding:3px 10px;">
+                <span style="font-size:13px;">🎯</span>
+                <span style="font-size:12px;font-weight:700;color:#166534;">${sc.goal_value != null ? sc.goal_value+(sc.goal_unit||'') : ''}${sc.goal_label ? (sc.goal_value != null ? ' · ' : '')+sc.goal_label : ''}</span>
+                ${sc.goal_date ? `<span style="font-size:11px;color:#4ADE80;font-weight:600;">· ${new Date(sc.goal_date).toLocaleDateString('nl-BE',{month:'short',year:'numeric'})}</span>` : ''}
+              </div>` : ''}
             </div>
-            <button class="btn btn-sm btn-s" style="padding:2px 8px;flex-shrink:0;" onclick="openStrategicChangeModal('${sc.id}','${sub.id}')">✏️</button>
+            <div style="display:flex;gap:4px;flex-shrink:0;">
+              <button class="btn btn-sm btn-s" style="padding:2px 7px;" title="Metro tijdslijn" onclick="openMetroTimeline('${sc.id}')">🚇</button>
+              <button class="btn btn-sm btn-s" style="padding:2px 8px;" onclick="openStrategicChangeModal('${sc.id}','${sub.id}')">✏️</button>
+            </div>
           </div>
           <div class="str-sc-body">
-            <div class="str-section-label" style="margin-bottom:8px;">⚙️ Hefbomen</div>
+            <div class="str-section-label" style="margin-bottom:8px;">⚙️ Hefbomen <span style="font-weight:400;color:var(--gy400);font-size:10px;">— sleep activiteit hierop om te koppelen</span></div>
             <div class="str-hb-grid">`;
 
         hbs.forEach(hb => {
           const lts = ltDoelstellingen.filter(x => x.hefboom_id === hb.id);
           const kts = ktTargets.filter(x => x.hefboom_id === hb.id);
           const insps = inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id);
-          const acts = items.filter(x => x.hefboom_id === hb.id);
+          const linkedItemIds = itemHefbomenLinks.filter(l => l.hefboom_id === hb.id).map(l => l.roadmap_item_id);
+          const linkedActs = items.filter(it => linkedItemIds.includes(it.id));
 
-          viewsHtml += `<div class="str-hb-card">
+          viewsHtml += `<div class="str-hb-card" id="hb-card-${hb.id}"
+              ondragover="event.preventDefault();document.getElementById('hb-card-${hb.id}').classList.add('hb-drag-over')"
+              ondragleave="document.getElementById('hb-card-${hb.id}').classList.remove('hb-drag-over')"
+              ondrop="strDropOnHefboom(event,'${hb.id}')">
             <div class="str-hb-title">
               ⚙️ ${hb.name}
               <button class="btn btn-sm btn-s" style="margin-left:auto;padding:2px 7px;" onclick="openHefboomModal('${hb.id}','${sc.id}')">✏️</button>
             </div>
             ${buildHbTimeline(lts, kts, insps)}`;
-          // Activities
-          if (acts.length) {
+
+          // Linked activities via junction table
+          if (linkedActs.length) {
             viewsHtml += `<div class="str-hb-chips" style="margin-top:4px;padding-top:6px;border-top:1px dashed #FDE68A;">`;
-            acts.forEach(act => {
-              const statusEmoji = act.status === 'done' ? '✅' : act.status === 'active' ? '▶️' : '○';
-              viewsHtml += `<span class="chip-act" onclick="openItemModal('${act.id}','edit')">${statusEmoji} ${act.title}</span>`;
+            linkedActs.forEach(act => {
+              const sEmoji = act.status === 'done' ? '✅' : act.status === 'active' ? '▶️' : '○';
+              viewsHtml += `<span class="chip-act" title="Klik om te ontkoppelen" onclick="unlinkItemFromHefboom('${act.id}','${hb.id}')">${sEmoji} ${act.title} ×</span>`;
             });
             viewsHtml += `</div>`;
           }
-          viewsHtml += `
-            <!-- Link activity -->
-            <div class="str-link-wrap">
-              <select id="str-act-sel-${hb.id}" onchange="linkActivityToHefboom('${hb.id}', this)">
-                <option value="">＋ Koppel activiteit…</option>
-                <optgroup label="Gekoppeld aan deze hefboom">
-                  ${items.filter(it => it.hefboom_id === hb.id).map(it => `<option value="${it.id}" data-linked="1">✓ ${it.title}</option>`).join('') || '<option disabled>—</option>'}
-                </optgroup>
-                <optgroup label="Beschikbaar (niet gekoppeld)">
-                  ${items.filter(it => !it.hefboom_id).map(it => `<option value="${it.id}">${it.title}</option>`).join('') || '<option disabled>—</option>'}
-                </optgroup>
-              </select>
-            </div>
-          </div>`;
+          viewsHtml += `</div>`;
         });
 
         viewsHtml += `</div>
@@ -3566,21 +3650,137 @@ function switchStrSubcat(id) {
   if (view) view.classList.add('active');
 }
 
-async function linkActivityToHefboom(hefboomId, sel) {
-  const itemId = sel.value;
-  if (!itemId) return;
-  const it = items.find(x => x.id === itemId);
-  if (!it) return;
-  // If item already linked to this hefboom → unlink
-  if (it.hefboom_id === hefboomId) {
-    await sb.from('roadmap_items').update({hefboom_id: null}).eq('id', itemId);
-    it.hefboom_id = null;
-    renderStrategie(); toast('Activiteit losgekoppeld');
-  } else {
-    await sb.from('roadmap_items').update({hefboom_id: hefboomId}).eq('id', itemId);
-    it.hefboom_id = hefboomId;
-    renderStrategie(); toast('Activiteit gekoppeld ✓');
+// ── Drag & Drop ──
+let _dragItemId = null;
+function strDragStart(event, itemId) {
+  _dragItemId = itemId;
+  event.dataTransfer.effectAllowed = 'link';
+  event.target.classList.add('dragging');
+}
+async function strDropOnHefboom(event, hefboomId) {
+  event.preventDefault();
+  document.getElementById('hb-card-' + hefboomId)?.classList.remove('hb-drag-over');
+  if (!_dragItemId) return;
+  await linkItemToHefboom(_dragItemId, hefboomId);
+  _dragItemId = null;
+}
+
+// ── Junction table link / unlink ──
+async function linkItemToHefboom(itemId, hefboomId) {
+  if (itemHefbomenLinks.find(l => l.roadmap_item_id === itemId && l.hefboom_id === hefboomId)) {
+    toast('Al gekoppeld'); return;
   }
+  const hb = hefbomenData.find(h => h.id === hefboomId);
+  if (!hb) return;
+  const {data} = await sb.from('roadmap_item_hefbomen').insert({
+    roadmap_item_id: itemId, hefboom_id: hefboomId, project_id: currentProjectId
+  }).select().single();
+  if (data) itemHefbomenLinks.push(data);
+  renderStrategie(); toast('Gekoppeld aan ' + hb.name + ' ✓');
+}
+async function unlinkItemFromHefboom(itemId, hefboomId) {
+  await sb.from('roadmap_item_hefbomen').delete()
+    .eq('roadmap_item_id', itemId).eq('hefboom_id', hefboomId);
+  itemHefbomenLinks = itemHefbomenLinks.filter(l => !(l.roadmap_item_id === itemId && l.hefboom_id === hefboomId));
+  renderStrategie(); toast('Koppeling verwijderd');
+}
+
+// ── Activities panel toggle ──
+function toggleActsPanel(subcatId) {
+  const body = document.getElementById('str-acts-body-' + subcatId);
+  const tog = document.getElementById('str-acts-tog-' + subcatId);
+  if (!body) return;
+  body.classList.toggle('open');
+  if (tog) tog.classList.toggle('open');
+}
+
+// ── New activity pre-filled for subcategory ──
+function addActivityForSubcat(subcatId) {
+  openItemModal(null, 'add');
+  setTimeout(() => {
+    const sub = subcategories.find(s => s.id === subcatId);
+    if (!sub) return;
+    const trSel = document.getElementById('mi-track');
+    if (trSel) { trSel.value = sub.track_id; trSel.dispatchEvent(new Event('change')); }
+    setTimeout(() => {
+      const subSel = document.getElementById('mi-subcat');
+      if (subSel) subSel.value = subcatId;
+    }, 80);
+  }, 80);
+}
+
+// ── Metro timeline popup ──
+function openMetroTimeline(scId) {
+  const sc = strategicChanges.find(x => x.id === scId);
+  if (!sc) return;
+  document.getElementById('metro-title').textContent = sc.name;
+  document.getElementById('metro-body').innerHTML = buildMetroHtml(scId);
+  document.getElementById('metro-overlay').classList.add('open');
+}
+function closeMetro() {
+  document.getElementById('metro-overlay').classList.remove('open');
+}
+function buildMetroHtml(scId) {
+  const hbs = hefbomenData.filter(h => h.strategic_change_id === scId);
+  if (!hbs.length) return '<p style="color:var(--gy400);text-align:center;padding:20px;">Geen hefbomen.</p>';
+
+  // Collect all events across all hefbomen
+  const fmt = d => new Date(d).toLocaleDateString('nl-BE',{month:'short',year:'numeric'});
+  const allTs = [];
+  hbs.forEach(hb => {
+    ltDoelstellingen.filter(x => x.hefboom_id === hb.id && x.end_date).forEach(x => allTs.push(new Date(x.end_date).getTime()));
+    ktTargets.filter(x => x.hefboom_id === hb.id && x.target_date).forEach(x => allTs.push(new Date(x.target_date).getTime()));
+    inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id && x.end_date).forEach(x => allTs.push(new Date(x.end_date).getTime()));
+  });
+  if (!allTs.length) return '<p style="color:var(--gy400);text-align:center;padding:20px;">Voeg datums toe aan targets en inspanningen om de tijdslijn te zien.</p>';
+
+  const minTs = Math.min(...allTs), maxTs = Math.max(...allTs);
+  const span = maxTs - minTs || 1;
+  const pct = ts => 4 + (ts - minTs) / span * 92;
+  const fmt2 = ts => new Date(ts).toLocaleDateString('nl-BE',{month:'short',year:'2-digit'});
+
+  // Axis ticks
+  const tickCount = 5;
+  let axisHtml = '<div style="position:relative;height:16px;margin:0 0 4px;padding-left:140px;">';
+  for (let i = 0; i <= tickCount; i++) {
+    const ts = minTs + (span / tickCount) * i;
+    axisHtml += `<span style="position:absolute;left:calc(${4 + i/tickCount*92}%);transform:translateX(-50%);font-size:9px;color:var(--gy400);">${fmt2(ts)}</span>`;
+  }
+  axisHtml += '</div>';
+
+  const hbColors = ['#F97316','#3B82F6','#10B981','#8B5CF6','#EC4899','#F59E0B','#06B6D4','#EF4444'];
+  let lanesHtml = '';
+  hbs.forEach((hb, idx) => {
+    const color = hbColors[idx % hbColors.length];
+    const lts = ltDoelstellingen.filter(x => x.hefboom_id === hb.id);
+    const kts = ktTargets.filter(x => x.hefboom_id === hb.id);
+    const insps = inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id);
+
+    let stopsHtml = '';
+    const addStop = (ts, emoji, label, bgColor) => {
+      const left = pct(ts);
+      stopsHtml += `<div class="metro-stop" style="left:${left}%" title="${label}">
+        <div class="metro-dot" style="background:${bgColor};width:16px;height:16px;">${emoji}</div>
+        <div class="metro-stop-lbl">${fmt2(ts)}</div>
+      </div>`;
+    };
+    lts.forEach(lt => { if (lt.end_date) addStop(new Date(lt.end_date).getTime(), '🏁', lt.description, '#DCFCE7'); });
+    kts.forEach(kt => { if (kt.target_date) addStop(new Date(kt.target_date).getTime(), '🎯', kt.description, '#FEF3C7'); });
+    insps.forEach(i => { if (i.end_date) addStop(new Date(i.end_date).getTime(), '📝', i.description, '#EDE9FE'); });
+
+    lanesHtml += `<div class="metro-lane">
+      <div class="metro-lane-label" title="${hb.name}">${hb.name}</div>
+      <div class="metro-track">
+        <div class="metro-line" style="background:${color};opacity:.4;"></div>
+        ${stopsHtml}
+      </div>
+    </div>`;
+  });
+
+  return `<div class="metro-tl">${axisHtml}${lanesHtml}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--gy100);">
+      <span style="font-size:11px;color:var(--gy500);">🏁 LT doelstelling &nbsp; 🎯 KT target &nbsp; 📝 Inspanningsverbintenis</span>
+    </div>`;
 }
 
 // ═══════════════════════════════════════════
@@ -3595,18 +3795,27 @@ function openStrategicChangeModal(id, subcatId) {
   const sc = id ? strategicChanges.find(x => x.id === id) : null;
   document.getElementById('msc-name').value = sc ? sc.name : '';
   document.getElementById('msc-desc').value = sc ? (sc.description||'') : '';
+  document.getElementById('msc-goal-value').value = sc?.goal_value ?? '';
+  document.getElementById('msc-goal-unit').value = sc?.goal_unit ?? '';
+  document.getElementById('msc-goal-date').value = sc?.goal_date ?? '';
+  document.getElementById('msc-goal-label').value = sc?.goal_label ?? '';
   document.getElementById('modal-strategic-change').classList.add('open');
 }
 async function saveStrategicChange() {
   const name = document.getElementById('msc-name').value.trim();
   if (!name) { alert('Naam verplicht'); return; }
   const desc = document.getElementById('msc-desc').value.trim();
+  const goal_value = document.getElementById('msc-goal-value').value !== '' ? parseFloat(document.getElementById('msc-goal-value').value) : null;
+  const goal_unit = document.getElementById('msc-goal-unit').value.trim() || null;
+  const goal_date = document.getElementById('msc-goal-date').value || null;
+  const goal_label = document.getElementById('msc-goal-label').value.trim() || null;
+  const payload = {name, description: desc, goal_value, goal_unit, goal_date, goal_label};
   if (editingScId) {
-    await sb.from('strategic_changes').update({name, description: desc}).eq('id', editingScId);
+    await sb.from('strategic_changes').update(payload).eq('id', editingScId);
     const sc = strategicChanges.find(x => x.id === editingScId);
-    if (sc) Object.assign(sc, {name, description: desc});
+    if (sc) Object.assign(sc, payload);
   } else {
-    const {data} = await sb.from('strategic_changes').insert({project_id: currentProjectId, subcategory_id: editingScSubcatId, name, description: desc, position: strategicChanges.filter(x=>x.subcategory_id===editingScSubcatId).length}).select().single();
+    const {data} = await sb.from('strategic_changes').insert({project_id: currentProjectId, subcategory_id: editingScSubcatId, position: strategicChanges.filter(x=>x.subcategory_id===editingScSubcatId).length, ...payload}).select().single();
     if (data) strategicChanges.push(data);
   }
   document.getElementById('modal-strategic-change').classList.remove('open');
