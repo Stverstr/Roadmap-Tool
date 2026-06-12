@@ -4405,17 +4405,21 @@ function closeMetro() {
 }
 function buildMetroHtml(scId) {
   const hbs = hefbomenData.filter(h => h.strategic_change_id === scId);
-  if (!hbs.length) return '<p style="color:var(--gy400);text-align:center;padding:20px;">Geen hefbomen.</p>';
+  const scDsts = ltDoelstellingen.filter(x => x.strategic_change_id === scId && !x.hefboom_id);
 
-  // Collect all events across all hefbomen
-  const fmt = d => new Date(d).toLocaleDateString('nl-BE',{month:'short',year:'numeric'});
+  // Collect all timestamps across SC-level doelstellingen + hefbomen
   const allTs = [];
+  scDsts.forEach(d => {
+    if (d.end_date) allTs.push(new Date(d.end_date).getTime());
+    ktTargets.filter(kt => kt.lt_doelstelling_id === d.id && kt.target_date).forEach(kt => allTs.push(new Date(kt.target_date).getTime()));
+  });
   hbs.forEach(hb => {
     ltDoelstellingen.filter(x => x.hefboom_id === hb.id && x.end_date).forEach(x => allTs.push(new Date(x.end_date).getTime()));
     ktTargets.filter(x => x.hefboom_id === hb.id && x.target_date).forEach(x => allTs.push(new Date(x.target_date).getTime()));
     inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id && x.end_date).forEach(x => allTs.push(new Date(x.end_date).getTime()));
   });
-  if (!allTs.length) return '<p style="color:var(--gy400);text-align:center;padding:20px;">Voeg datums toe aan targets en inspanningen om de tijdslijn te zien.</p>';
+
+  if (!allTs.length) return '<p style="color:var(--gy400);text-align:center;padding:20px;">Voeg datums toe aan doelstellingen en targets om de tijdslijn te zien.</p>';
 
   const minTs = Math.min(...allTs), maxTs = Math.max(...allTs);
   const span = maxTs - minTs || 1;
@@ -4431,38 +4435,52 @@ function buildMetroHtml(scId) {
   }
   axisHtml += '</div>';
 
-  const hbColors = ['#F97316','#3B82F6','#10B981','#8B5CF6','#EC4899','#F59E0B','#06B6D4','#EF4444'];
+  const addStop = (stopsArr, ts, emoji, label, bgColor) => {
+    stopsArr.push(`<div class="metro-stop" style="left:${pct(ts)}%" title="${(label||'').replace(/"/g,'&quot;')}">
+      <div class="metro-dot" style="background:${bgColor};width:16px;height:16px;">${emoji}</div>
+      <div class="metro-stop-lbl">${fmt2(ts)}</div>
+    </div>`);
+  };
+
   let lanesHtml = '';
+
+  // SC-level doelstellingen lane (shown first if present)
+  if (scDsts.length) {
+    const stops = [];
+    scDsts.forEach(d => {
+      if (d.end_date) addStop(stops, new Date(d.end_date).getTime(), '🏁', d.description, '#DCFCE7');
+      ktTargets.filter(kt => kt.lt_doelstelling_id === d.id && kt.target_date)
+        .forEach(kt => addStop(stops, new Date(kt.target_date).getTime(), '◆', `${d.description}${kt.value != null ? ' — '+kt.value+(d.unit?' '+d.unit:'') : ''}`, '#EDE9FE'));
+    });
+    lanesHtml += `<div class="metro-lane" style="border-left:3px solid #059669;">
+      <div class="metro-lane-label" title="SC Doelstellingen" style="font-weight:700;color:#059669;">🏁 Doelstellingen</div>
+      <div class="metro-track">
+        <div class="metro-line" style="background:#059669;opacity:.4;"></div>
+        ${stops.join('')}
+      </div>
+    </div>`;
+  }
+
+  // Hefboom lanes
+  const hbColors = ['#F97316','#3B82F6','#10B981','#8B5CF6','#EC4899','#F59E0B','#06B6D4','#EF4444'];
   hbs.forEach((hb, idx) => {
     const color = hbColors[idx % hbColors.length];
-    const lts = ltDoelstellingen.filter(x => x.hefboom_id === hb.id);
-    const kts = ktTargets.filter(x => x.hefboom_id === hb.id);
-    const insps = inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id);
-
-    let stopsHtml = '';
-    const addStop = (ts, emoji, label, bgColor) => {
-      const left = pct(ts);
-      stopsHtml += `<div class="metro-stop" style="left:${left}%" title="${label}">
-        <div class="metro-dot" style="background:${bgColor};width:16px;height:16px;">${emoji}</div>
-        <div class="metro-stop-lbl">${fmt2(ts)}</div>
-      </div>`;
-    };
-    lts.forEach(lt => { if (lt.end_date) addStop(new Date(lt.end_date).getTime(), '🏁', lt.description, '#DCFCE7'); });
-    kts.forEach(kt => { if (kt.target_date) addStop(new Date(kt.target_date).getTime(), '🎯', kt.description, '#FEF3C7'); });
-    insps.forEach(i => { if (i.end_date) addStop(new Date(i.end_date).getTime(), '📝', i.description, '#EDE9FE'); });
-
+    const stops = [];
+    ltDoelstellingen.filter(x => x.hefboom_id === hb.id).forEach(lt => { if (lt.end_date) addStop(stops, new Date(lt.end_date).getTime(), '🏁', lt.description, '#DCFCE7'); });
+    ktTargets.filter(x => x.hefboom_id === hb.id).forEach(kt => { if (kt.target_date) addStop(stops, new Date(kt.target_date).getTime(), '🎯', kt.description, '#FEF3C7'); });
+    inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id).forEach(i => { if (i.end_date) addStop(stops, new Date(i.end_date).getTime(), '📝', i.description, '#EDE9FE'); });
     lanesHtml += `<div class="metro-lane">
       <div class="metro-lane-label" title="${hb.name}">${hb.name}</div>
       <div class="metro-track">
         <div class="metro-line" style="background:${color};opacity:.4;"></div>
-        ${stopsHtml}
+        ${stops.join('')}
       </div>
     </div>`;
   });
 
   return `<div class="metro-tl">${axisHtml}${lanesHtml}</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--gy100);">
-      <span style="font-size:11px;color:var(--gy500);">🏁 LT doelstelling &nbsp; 🎯 KT target &nbsp; 📝 Inspanningsverbintenis</span>
+      <span style="font-size:11px;color:var(--gy500);">🏁 Doelstelling &nbsp; ◆ Target &nbsp; 🎯 KT target &nbsp; 📝 Inspanningsverbintenis</span>
     </div>`;
 }
 
