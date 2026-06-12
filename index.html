@@ -3803,8 +3803,11 @@ function switchStrSubcat(id) {
 
 // ── Drag & Drop ──
 let _dragItemId = null;
+let _dragItemSubcatId = null;
 function strDragStart(event, itemId) {
   _dragItemId = itemId;
+  const it = items.find(x => x.id === itemId);
+  _dragItemSubcatId = it ? it.subcategory_id : null;
   event.dataTransfer.effectAllowed = 'link';
   event.target.classList.add('dragging');
 }
@@ -3812,8 +3815,15 @@ async function strDropOnHefboom(event, hefboomId) {
   event.preventDefault();
   document.getElementById('hb-card-' + hefboomId)?.classList.remove('hb-drag-over');
   if (!_dragItemId) return;
+  // Only allow drag-drop within the same subcategory
+  const hb = hefbomenData.find(h => h.id === hefboomId);
+  const sc = hb ? strategicChanges.find(x => x.id === hb.strategic_change_id) : null;
+  if (sc && sc.subcategory_id !== _dragItemSubcatId) {
+    toast('Sleep alleen naar hefbomen van dezelfde subcategorie. Gebruik het activiteitdetail voor andere subcategorieën.');
+    _dragItemId = null; _dragItemSubcatId = null; return;
+  }
   await linkItemToHefboom(_dragItemId, hefboomId);
-  _dragItemId = null;
+  _dragItemId = null; _dragItemSubcatId = null;
 }
 
 // ── Junction table link / unlink ──
