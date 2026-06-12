@@ -92,6 +92,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .drag-handle:hover{color:var(--gy500);}
 .sortable-ghost{opacity:.4;background:var(--g50)!important;}
 .sortable-chosen{box-shadow:0 4px 12px rgba(0,0,0,.15)!important;}
+/* ── STRATEGY TREE ── */
+.str-stream{margin-bottom:24px;}
+.str-stream-header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--gy900);color:white;border-radius:10px 10px 0 0;font-weight:700;font-size:14px;}
+.str-subcat-block{border-left:4px solid var(--gy300);margin-left:20px;margin-bottom:12px;background:white;border-radius:0 8px 8px 0;border:1px solid var(--gy200);border-left-width:4px;}
+.str-subcat-header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--gy100);font-weight:600;font-size:13px;}
+.str-sc-card{background:var(--gy50,#f9fafb);border:1px solid var(--gy200);border-radius:8px;margin:10px 14px;padding:12px 14px;}
+.str-sc-title{font-size:13px;font-weight:700;color:var(--gy900);display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.str-sc-desc{font-size:12px;color:var(--gy500);margin-bottom:10px;line-height:1.4;}
+.str-hb-card{background:white;border:1px solid var(--gy300);border-radius:7px;margin:6px 0;padding:10px 12px;border-left:3px solid var(--orange);}
+.str-hb-title{font-size:13px;font-weight:700;color:var(--gy900);display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.str-hb-meta{font-size:11px;color:var(--gy500);display:flex;flex-direction:column;gap:3px;}
+.str-hb-lt{background:#DCFCE7;color:#166534;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin:2px 0;}
+.str-hb-kt{background:#FEF3C7;color:#92400E;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin:2px 0;}
+.str-hb-insp{background:#EDE9FE;color:#5B21B6;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin:2px 0;}
+.str-add-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--g700);background:var(--g50);border:1px dashed var(--g400);border-radius:7px;padding:5px 12px;cursor:pointer;margin:6px 0;}
+.str-add-btn:hover{background:var(--g100);}
+.hb-modal-field{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
+.hb-modal-field input,.hb-modal-field textarea{flex:1;}
 .phase-name{font-size:14px;font-weight:700;color:var(--gy900);flex:1;}
 .phase-dates{font-size:11px;color:var(--gy500);}
 
@@ -260,6 +278,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
 
   <nav class="nav">
     <button class="ntab active" id="tab-setup-btn" onclick="switchTab('setup')">⚙️ Setup</button>
+    <button class="ntab" id="tab-strategie-btn" onclick="switchTab('strategie')" style="display:none">🎯 Strategie</button>
     <button class="ntab" id="tab-storyboard-btn" onclick="switchTab('storyboard')">📋 Storyboard</button>
     <button class="ntab" id="tab-timeline-btn" onclick="switchTab('timeline')">📅 Tijdslijn</button>
   </nav>
@@ -292,6 +311,10 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <div class="toggle-row">
           <input type="checkbox" id="s-enable-milestones" onchange="autoSaveProject()">
           <span class="toggle-label">🏁 Milestones toevoegen aan tijdslijn</span>
+        </div>
+        <div class="toggle-row">
+          <input type="checkbox" id="s-enable-strategic" onchange="autoSaveProject()">
+          <span class="toggle-label">🎯 Strategische veranderingen & doelstellingen activeren</span>
         </div>
         <div style="margin-top:10px;display:flex;gap:8px;">
           <button class="btn btn-p" onclick="saveProject()">💾 Opslaan</button>
@@ -355,6 +378,19 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div class="sb-wrap">
         <div id="sb-grid" style="overflow-x:auto;"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ══ STRATEGIE TAB ══ -->
+  <div id="tab-strategie" class="panel main">
+    <div id="no-project-str" style="display:none">
+      <div class="empty"><div class="empty-icon">🎯</div><div class="empty-title">Geen project geselecteerd</div></div>
+    </div>
+    <div id="strategie-content" style="display:none">
+      <div class="card" style="padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <span style="font-size:15px;font-weight:700;color:var(--gy900)">🎯 Strategische veranderingen</span>
+      </div>
+      <div id="strategie-tree"></div>
     </div>
   </div>
 
@@ -452,6 +488,55 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
   </div>
 </div>
 
+<!-- Strategic change modal -->
+<div class="overlay" id="modal-strategic-change">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title" id="msc-title">🔄 Strategische verandering</span><button class="modal-close" onclick="closeModal('modal-strategic-change')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label class="label">Naam</label><input class="input" id="msc-name" placeholder="bijv. CO2 reductie met 40% tegen 2030"></div>
+      <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="msc-desc" placeholder="Lange termijn doelstelling en context…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="msc-del-btn" onclick="deleteStrategicChange()" style="margin-right:auto;display:none">🗑 Verwijder</button>
+      <button class="btn btn-s" onclick="closeModal('modal-strategic-change')">Annuleer</button>
+      <button class="btn btn-p" onclick="saveStrategicChange()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hefboom modal -->
+<div class="overlay" id="modal-hefboom">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title" id="mhb-title">⚙️ Hefboom</span><button class="modal-close" onclick="closeModal('modal-hefboom')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label class="label">Naam</label><input class="input" id="mhb-name" placeholder="bijv. Elektrificatie vrachtvervoer"></div>
+      <hr class="sep">
+      <div class="card-row" style="margin:0 0 8px">
+        <span style="font-size:13px;font-weight:700;">🏁 LT Doelstellingen</span>
+        <button class="btn btn-sm btn-p" onclick="addLtField()">＋ Voeg toe</button>
+      </div>
+      <div id="mhb-lt-fields"></div>
+      <hr class="sep">
+      <div class="card-row" style="margin:0 0 8px">
+        <span style="font-size:13px;font-weight:700;">🎯 KT Targets</span>
+        <button class="btn btn-sm btn-p" onclick="addKtField()">＋ Voeg toe</button>
+      </div>
+      <div id="mhb-kt-fields"></div>
+      <hr class="sep">
+      <div class="card-row" style="margin:0 0 8px">
+        <span style="font-size:13px;font-weight:700;">📝 Inspanningsverbintenissen</span>
+        <button class="btn btn-sm btn-p" onclick="addInspField()">＋ Voeg toe</button>
+      </div>
+      <div id="mhb-insp-fields"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="mhb-del-btn" onclick="deleteHefboom()" style="margin-right:auto;display:none">🗑 Verwijder</button>
+      <button class="btn btn-s" onclick="closeModal('modal-hefboom')">Annuleer</button>
+      <button class="btn btn-p" onclick="saveHefboom()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <!-- Roadmap item modal -->
 <div class="overlay" id="modal-item">
   <div class="modal" style="width:min(700px,96vw)">
@@ -460,6 +545,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <button class="itab active" id="itab-btn-general" onclick="switchItemTab('general')">📋 Algemeen</button>
       <button class="itab" id="itab-btn-status" onclick="switchItemTab('status')">🚦 Status</button>
       <button class="itab" id="itab-btn-aanpak" onclick="switchItemTab('aanpak')">🎯 Aanpak</button>
+      <button class="itab" id="itab-btn-hefboom" onclick="switchItemTab('hefboom')" style="display:none">⚙️ Hefboom</button>
     </div>
     <div class="modal-body" style="padding-top:16px;">
 
@@ -558,6 +644,15 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
             <button class="btn btn-sm btn-p" onclick="addItemPhase()">＋ Fase</button>
           </div>
           <div id="mi-phases-container"></div>
+        </div>
+      </div>
+
+      <!-- TAB 4: HEFBOOM -->
+      <div id="itab-hefboom" class="itab-panel">
+        <div class="field">
+          <label class="label">⚙️ Koppel aan hefboom</label>
+          <p style="font-size:12px;color:var(--gy500);margin-bottom:10px;">Kies de hefboom waaraan deze activiteit bijdraagt.</p>
+          <select class="select" id="mi-hefboom"><option value="">— Geen koppeling —</option></select>
         </div>
       </div>
 
@@ -715,6 +810,11 @@ let meetings = [];
 let milestones = [];
 let milestoneTypes = [];
 let meetingTypes = [];
+let strategicChanges = [];
+let hefbomenData = [];
+let ltDoelstellingen = [];
+let ktTargets = [];
+let inspanningsverbintenissen = [];
 
 // modal editing state
 let editingTrackId = null;
@@ -805,6 +905,10 @@ function showNoProject() {
     if (c) c.style.display = 'block';
     if (s) s.style.display = 'none';
   });
+  const noStr = document.getElementById('no-project-str');
+  const strCnt = document.getElementById('strategie-content');
+  if (noStr) noStr.style.display = 'block';
+  if (strCnt) strCnt.style.display = 'none';
 }
 
 async function onProjectChange(render = true) {
@@ -820,6 +924,8 @@ async function onProjectChange(render = true) {
   document.getElementById('storyboard-content').style.display = 'block';
   document.getElementById('no-project-tl').style.display = 'none';
   document.getElementById('timeline-content').style.display = 'block';
+  document.getElementById('no-project-str').style.display = 'none';
+  document.getElementById('strategie-content').style.display = 'block';
 
   await loadProjectData();
   fillSetupForm();
@@ -853,6 +959,35 @@ async function loadProjectData() {
   milestones = mi.data || [];
   milestoneTypes = mst.data || [];
   meetingTypes = mst2.data || [];
+
+  // Load strategic data if enabled
+  const proj = projects.find(p => p.id === pid);
+  if (proj && proj.strategic_mode) {
+    await loadStrategicData(pid);
+  } else {
+    strategicChanges = []; hefbomenData = []; ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = [];
+  }
+}
+
+async function loadStrategicData(pid) {
+  const sc = await sb.from('strategic_changes').select('*').eq('project_id', pid).order('position');
+  strategicChanges = sc.data || [];
+  if (!strategicChanges.length) { hefbomenData = []; ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = []; return; }
+  const scIds = strategicChanges.map(x => x.id);
+  const [hb] = await Promise.all([
+    sb.from('hefbomen').select('*').in('strategic_change_id', scIds).order('position'),
+  ]);
+  hefbomenData = hb.data || [];
+  if (!hefbomenData.length) { ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = []; return; }
+  const hbIds = hefbomenData.map(x => x.id);
+  const [lt, kt, insp] = await Promise.all([
+    sb.from('lt_doelstellingen').select('*').in('hefboom_id', hbIds),
+    sb.from('kt_targets').select('*').in('hefboom_id', hbIds),
+    sb.from('inspanningsverbintenissen').select('*').in('hefboom_id', hbIds),
+  ]);
+  ltDoelstellingen = lt.data || [];
+  ktTargets = kt.data || [];
+  inspanningsverbintenissen = insp.data || [];
 }
 
 function fillSetupForm() {
@@ -864,6 +999,8 @@ function fillSetupForm() {
   document.getElementById('s-proj-end').value = p.end_date || '';
   document.getElementById('s-enable-meetings').checked = p.enable_meetings !== false;
   document.getElementById('s-enable-milestones').checked = p.enable_milestones !== false;
+  document.getElementById('s-enable-strategic').checked = p.strategic_mode === true;
+  document.getElementById('tab-strategie-btn').style.display = p.strategic_mode ? '' : 'none';
   updateMeetingMilestoneButtons();
 }
 
@@ -889,11 +1026,15 @@ async function saveProject() {
     end_date: document.getElementById('s-proj-end').value || null,
     enable_meetings: document.getElementById('s-enable-meetings').checked,
     enable_milestones: document.getElementById('s-enable-milestones').checked,
+    strategic_mode: document.getElementById('s-enable-strategic').checked,
     updated_at: new Date().toISOString()
   };
   await sb.from('projects').update(upd).eq('id', currentProjectId);
   const idx = projects.findIndex(p => p.id === currentProjectId);
   if (idx !== -1) Object.assign(projects[idx], upd);
+  // Show/hide strategie tab
+  document.getElementById('tab-strategie-btn').style.display = upd.strategic_mode ? '' : 'none';
+  if (upd.strategic_mode) { await loadStrategicData(currentProjectId); updateHefboomTabVisibility(); }
   // update dropdown label
   const sel = document.getElementById('proj-select');
   const opt = [...sel.options].find(o => o.value === currentProjectId);
@@ -1493,6 +1634,22 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
   psel.innerHTML = '<option value="">— Geen fase —</option>';
   phases.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = (p.icon ? p.icon+' ' : '') + p.name; psel.appendChild(o); });
 
+  // Hefboom tab & dropdown
+  const proj = projects.find(p => p.id === currentProjectId);
+  const hbTab = document.getElementById('itab-btn-hefboom');
+  const showHbTab = proj && proj.strategic_mode && hefbomenData.length > 0;
+  if (hbTab) hbTab.style.display = showHbTab ? '' : 'none';
+  const hbSel = document.getElementById('mi-hefboom');
+  hbSel.innerHTML = '<option value="">— Geen koppeling —</option>';
+  hefbomenData.forEach(hb => {
+    const sc = strategicChanges.find(x => x.id === hb.strategic_change_id);
+    const sub = sc ? subcategories.find(x => x.id === sc.subcategory_id) : null;
+    const o = document.createElement('option');
+    o.value = hb.id;
+    o.textContent = (sub ? sub.name + ' → ' : '') + (sc ? sc.name + ' → ' : '') + hb.name;
+    hbSel.appendChild(o);
+  });
+
   if (mode === 'edit' && editingItemId) {
     const it = items.find(x => x.id === editingItemId);
     // Tab 1
@@ -1512,6 +1669,7 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     document.getElementById('mi-status-desc').value = '';
     // Tab 3
     document.getElementById('mi-owner').value = it.owner || '';
+    hbSel.value = it.hefboom_id || '';
     document.getElementById('mi-other-roadmap').checked = !!it.managed_in_other_roadmap;
     document.getElementById('mi-other-roadmap-name').value = it.other_roadmap_name || '';
     document.getElementById('mi-other-roadmap-wrap').style.display = it.managed_in_other_roadmap ? 'block' : 'none';
@@ -1562,6 +1720,7 @@ async function saveItem() {
     status: newStatus,
     health_status: newHealth,
     owner: document.getElementById('mi-owner').value.trim() || null,
+    hefboom_id: document.getElementById('mi-hefboom').value || null,
     managed_in_other_roadmap: document.getElementById('mi-other-roadmap').checked,
     other_roadmap_name: document.getElementById('mi-other-roadmap-name').value.trim() || null,
     dependencies: getDepsSelected(),
@@ -3191,15 +3350,225 @@ function syncFiltersToStoryboard() {
   sbFilterOtherRoadmap   = tlFilterOtherRoadmap;
   sbFilterNoBacklog      = tlFilterNoBacklog;
 }
+// ═══════════════════════════════════════════
+//  STRATEGIE RENDER
+// ═══════════════════════════════════════════
+function updateHefboomTabVisibility() {
+  const proj = projects.find(p => p.id === currentProjectId);
+  const show = proj && proj.strategic_mode && hefbomenData.length > 0;
+  document.getElementById('itab-btn-hefboom').style.display = show ? '' : 'none';
+}
+
+function renderStrategie() {
+  const el = document.getElementById('strategie-tree');
+  const noProj = document.getElementById('no-project-str');
+  const content = document.getElementById('strategie-content');
+  if (!currentProjectId) { if(noProj) noProj.style.display=''; if(content) content.style.display='none'; return; }
+  if(noProj) noProj.style.display='none'; if(content) content.style.display='';
+
+  let html = '';
+  tracks.forEach(tr => {
+    const trsubs = subcategories.filter(s => s.track_id === tr.id);
+    if (!trsubs.length) return;
+    html += `<div class="str-stream card" style="padding:0;overflow:hidden;">
+      <div class="str-stream-header" style="background:${tr.color||'#374151'}">
+        <div class="color-dot" style="background:${tr.color};border:2px solid rgba(255,255,255,.3)"></div>
+        <span>${tr.icon||''} ${tr.name}</span>
+      </div>`;
+    trsubs.forEach(sub => {
+      const scs = strategicChanges.filter(sc => sc.subcategory_id === sub.id);
+      html += `<div class="str-subcat-block" style="border-left-color:${sub.color||'#6B7280'}">
+        <div class="str-subcat-header">
+          <div class="color-dot" style="background:${sub.color};width:12px;height:12px;"></div>
+          <span>${sub.name}</span>
+        </div>
+        <div style="padding:0 14px 10px;">`;
+      scs.forEach(sc => {
+        const hbs = hefbomenData.filter(h => h.strategic_change_id === sc.id);
+        html += `<div class="str-sc-card">
+          <div class="str-sc-title">
+            🔄 ${sc.name}
+            <button class="btn btn-sm btn-s" style="margin-left:auto;padding:2px 8px;" onclick="openStrategicChangeModal('${sc.id}','${sub.id}')">✏️</button>
+          </div>
+          ${sc.description ? `<div class="str-sc-desc">${sc.description}</div>` : ''}
+          <div style="padding-left:8px;">`;
+        hbs.forEach(hb => {
+          const lts = ltDoelstellingen.filter(x => x.hefboom_id === hb.id);
+          const kts = ktTargets.filter(x => x.hefboom_id === hb.id);
+          const insps = inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id);
+          html += `<div class="str-hb-card">
+            <div class="str-hb-title">
+              ⚙️ ${hb.name}
+              <button class="btn btn-sm btn-s" style="margin-left:auto;padding:2px 8px;" onclick="openHefboomModal('${hb.id}','${sc.id}')">✏️</button>
+            </div>
+            <div class="str-hb-meta">`;
+          lts.forEach(lt => { html += `<span class="str-hb-lt">🏁 LT: ${lt.description}${lt.end_date?' ('+lt.end_date+')':''}</span>`; });
+          kts.forEach(kt => { html += `<span class="str-hb-kt">🎯 KT: ${kt.description}${kt.value?' — '+kt.value+(kt.unit||''):''}${kt.target_date?' ('+kt.target_date+')':''}</span>`; });
+          insps.forEach(i => { html += `<span class="str-hb-insp">📝 ${i.description}</span>`; });
+          html += `</div></div>`;
+        });
+        html += `<button class="str-add-btn" onclick="openHefboomModal(null,'${sc.id}')">＋ Hefboom toevoegen</button>
+          </div></div>`;
+      });
+      html += `<button class="str-add-btn" onclick="openStrategicChangeModal(null,'${sub.id}')">＋ Strategische verandering toevoegen</button>
+        </div></div>`;
+    });
+    html += `</div>`;
+  });
+  if (!html) html = '<div class="empty" style="padding:30px"><div class="empty-icon">🎯</div><div class="empty-title">Nog geen streams met subcategorieën</div><div class="empty-sub">Voeg eerst streams en subcategorieën toe in Setup.</div></div>';
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+//  STRATEGIC CHANGE MODAL
+// ═══════════════════════════════════════════
+let editingScId = null, editingScSubcatId = null;
+function openStrategicChangeModal(id, subcatId) {
+  editingScId = id || null;
+  editingScSubcatId = subcatId;
+  document.getElementById('msc-title').textContent = id ? '✏️ Strategische verandering' : '🔄 Nieuwe strategische verandering';
+  document.getElementById('msc-del-btn').style.display = id ? 'inline-flex' : 'none';
+  const sc = id ? strategicChanges.find(x => x.id === id) : null;
+  document.getElementById('msc-name').value = sc ? sc.name : '';
+  document.getElementById('msc-desc').value = sc ? (sc.description||'') : '';
+  document.getElementById('modal-strategic-change').classList.add('open');
+}
+async function saveStrategicChange() {
+  const name = document.getElementById('msc-name').value.trim();
+  if (!name) { alert('Naam verplicht'); return; }
+  const desc = document.getElementById('msc-desc').value.trim();
+  if (editingScId) {
+    await sb.from('strategic_changes').update({name, description: desc}).eq('id', editingScId);
+    const sc = strategicChanges.find(x => x.id === editingScId);
+    if (sc) Object.assign(sc, {name, description: desc});
+  } else {
+    const {data} = await sb.from('strategic_changes').insert({project_id: currentProjectId, subcategory_id: editingScSubcatId, name, description: desc, position: strategicChanges.filter(x=>x.subcategory_id===editingScSubcatId).length}).select().single();
+    if (data) strategicChanges.push(data);
+  }
+  document.getElementById('modal-strategic-change').classList.remove('open');
+  renderStrategie(); toast('Opgeslagen ✓');
+}
+async function deleteStrategicChange() {
+  if (!confirm('Verwijderen?')) return;
+  await sb.from('strategic_changes').delete().eq('id', editingScId);
+  strategicChanges = strategicChanges.filter(x => x.id !== editingScId);
+  hefbomenData = hefbomenData.filter(x => x.strategic_change_id !== editingScId);
+  document.getElementById('modal-strategic-change').classList.remove('open');
+  renderStrategie(); toast('Verwijderd');
+}
+
+// ═══════════════════════════════════════════
+//  HEFBOOM MODAL
+// ═══════════════════════════════════════════
+let editingHbId = null, editingHbScId = null;
+let hbLtFields = [], hbKtFields = [], hbInspFields = [];
+
+function openHefboomModal(id, scId) {
+  editingHbId = id || null;
+  editingHbScId = scId;
+  document.getElementById('mhb-title').textContent = id ? '✏️ Hefboom bewerken' : '⚙️ Nieuwe hefboom';
+  document.getElementById('mhb-del-btn').style.display = id ? 'inline-flex' : 'none';
+  const hb = id ? hefbomenData.find(x => x.id === id) : null;
+  document.getElementById('mhb-name').value = hb ? hb.name : '';
+  hbLtFields = id ? ltDoelstellingen.filter(x => x.hefboom_id === id).map(x=>({...x})) : [];
+  hbKtFields = id ? ktTargets.filter(x => x.hefboom_id === id).map(x=>({...x})) : [];
+  hbInspFields = id ? inspanningsverbintenissen.filter(x => x.hefboom_id === id).map(x=>({...x})) : [];
+  renderHbFields();
+  document.getElementById('modal-hefboom').classList.add('open');
+}
+function renderHbFields() {
+  document.getElementById('mhb-lt-fields').innerHTML = hbLtFields.map((f,i) => `
+    <div class="hb-modal-field">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+        <input class="input" placeholder="Beschrijving LT doelstelling…" value="${f.description||''}" oninput="hbLtFields[${i}].description=this.value">
+        <input class="input" type="date" value="${f.end_date||''}" title="Einddatum" oninput="hbLtFields[${i}].end_date=this.value">
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="hbLtFields.splice(${i},1);renderHbFields()">✕</button>
+    </div>`).join('');
+  document.getElementById('mhb-kt-fields').innerHTML = hbKtFields.map((f,i) => `
+    <div class="hb-modal-field">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+        <input class="input" placeholder="Beschrijving KT target…" value="${f.description||''}" oninput="hbKtFields[${i}].description=this.value">
+        <div style="display:flex;gap:6px;">
+          <input class="input" placeholder="Waarde (bijv. 80)" value="${f.value||''}" style="flex:1" oninput="hbKtFields[${i}].value=this.value">
+          <input class="input" placeholder="Eenheid (%, €…)" value="${f.unit||''}" style="width:80px" oninput="hbKtFields[${i}].unit=this.value">
+          <input class="input" type="date" value="${f.target_date||''}" title="Doeldatum" oninput="hbKtFields[${i}].target_date=this.value">
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="hbKtFields.splice(${i},1);renderHbFields()">✕</button>
+    </div>`).join('');
+  document.getElementById('mhb-insp-fields').innerHTML = hbInspFields.map((f,i) => `
+    <div class="hb-modal-field">
+      <textarea class="textarea" placeholder="Inspanningsverbintenis…" style="min-height:50px;" oninput="hbInspFields[${i}].description=this.value">${f.description||''}</textarea>
+      <button class="btn btn-danger btn-sm" onclick="hbInspFields.splice(${i},1);renderHbFields()">✕</button>
+    </div>`).join('');
+}
+function addLtField() { hbLtFields.push({description:'',end_date:''}); renderHbFields(); }
+function addKtField() { hbKtFields.push({description:'',value:'',unit:'',target_date:''}); renderHbFields(); }
+function addInspField() { hbInspFields.push({description:''}); renderHbFields(); }
+
+async function saveHefboom() {
+  const name = document.getElementById('mhb-name').value.trim();
+  if (!name) { alert('Naam verplicht'); return; }
+  let hbId = editingHbId;
+  if (hbId) {
+    await sb.from('hefbomen').update({name}).eq('id', hbId);
+    const hb = hefbomenData.find(x => x.id === hbId); if (hb) hb.name = name;
+  } else {
+    const {data} = await sb.from('hefbomen').insert({project_id: currentProjectId, strategic_change_id: editingHbScId, name, position: hefbomenData.filter(x=>x.strategic_change_id===editingHbScId).length}).select().single();
+    if (!data) return;
+    hefbomenData.push(data); hbId = data.id;
+  }
+  // Sync LT
+  const existingLt = ltDoelstellingen.filter(x => x.hefboom_id === hbId);
+  for (const f of hbLtFields) {
+    if (!f.description.trim()) continue;
+    if (f.id) { await sb.from('lt_doelstellingen').update({description:f.description,end_date:f.end_date||null}).eq('id',f.id); const x=ltDoelstellingen.find(y=>y.id===f.id); if(x) Object.assign(x,f); }
+    else { const {data} = await sb.from('lt_doelstellingen').insert({hefboom_id:hbId,description:f.description,end_date:f.end_date||null}).select().single(); if(data) ltDoelstellingen.push(data); }
+  }
+  for (const ex of existingLt) { if (!hbLtFields.find(f=>f.id===ex.id)) { await sb.from('lt_doelstellingen').delete().eq('id',ex.id); ltDoelstellingen=ltDoelstellingen.filter(x=>x.id!==ex.id); } }
+  // Sync KT
+  const existingKt = ktTargets.filter(x => x.hefboom_id === hbId);
+  for (const f of hbKtFields) {
+    if (!f.description.trim()) continue;
+    if (f.id) { await sb.from('kt_targets').update({description:f.description,value:f.value||null,unit:f.unit||null,target_date:f.target_date||null}).eq('id',f.id); const x=ktTargets.find(y=>y.id===f.id); if(x) Object.assign(x,f); }
+    else { const {data} = await sb.from('kt_targets').insert({hefboom_id:hbId,description:f.description,value:f.value||null,unit:f.unit||null,target_date:f.target_date||null}).select().single(); if(data) ktTargets.push(data); }
+  }
+  for (const ex of existingKt) { if (!hbKtFields.find(f=>f.id===ex.id)) { await sb.from('kt_targets').delete().eq('id',ex.id); ktTargets=ktTargets.filter(x=>x.id!==ex.id); } }
+  // Sync Inspanning
+  const existingInsp = inspanningsverbintenissen.filter(x => x.hefboom_id === hbId);
+  for (const f of hbInspFields) {
+    if (!f.description.trim()) continue;
+    if (f.id) { await sb.from('inspanningsverbintenissen').update({description:f.description}).eq('id',f.id); const x=inspanningsverbintenissen.find(y=>y.id===f.id); if(x) x.description=f.description; }
+    else { const {data} = await sb.from('inspanningsverbintenissen').insert({hefboom_id:hbId,description:f.description}).select().single(); if(data) inspanningsverbintenissen.push(data); }
+  }
+  for (const ex of existingInsp) { if (!hbInspFields.find(f=>f.id===ex.id)) { await sb.from('inspanningsverbintenissen').delete().eq('id',ex.id); inspanningsverbintenissen=inspanningsverbintenissen.filter(x=>x.id!==ex.id); } }
+  document.getElementById('modal-hefboom').classList.remove('open');
+  updateHefboomTabVisibility();
+  renderStrategie(); toast('Hefboom opgeslagen ✓');
+}
+async function deleteHefboom() {
+  if (!confirm('Hefboom verwijderen?')) return;
+  await sb.from('hefbomen').delete().eq('id', editingHbId);
+  hefbomenData = hefbomenData.filter(x => x.id !== editingHbId);
+  ltDoelstellingen = ltDoelstellingen.filter(x => x.hefboom_id !== editingHbId);
+  ktTargets = ktTargets.filter(x => x.hefboom_id !== editingHbId);
+  inspanningsverbintenissen = inspanningsverbintenissen.filter(x => x.hefboom_id !== editingHbId);
+  document.getElementById('modal-hefboom').classList.remove('open');
+  updateHefboomTabVisibility();
+  renderStrategie(); toast('Verwijderd');
+}
+
 function switchTab(name) {
   const prev = [...document.querySelectorAll('.ntab.active')].map(b => b.id.replace('tab-','').replace('-btn',''))[0];
-  ['setup','storyboard','timeline'].forEach(t => {
-    document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
-    document.getElementById(`tab-${t}-btn`).classList.toggle('active', t === name);
+  ['setup','strategie','storyboard','timeline'].forEach(t => {
+    const el = document.getElementById(`tab-${t}`); if (el) el.classList.toggle('active', t === name);
+    const btn = document.getElementById(`tab-${t}-btn`); if (btn) btn.classList.toggle('active', t === name);
   });
   if (name === 'storyboard' && currentProjectId) { if (prev === 'timeline') syncFiltersToStoryboard(); renderStoryboard(); }
   if (name === 'timeline'   && currentProjectId) { if (prev === 'storyboard') syncFiltersToTimeline(); renderTimeline(); }
   if (name === 'setup' && currentProjectId) { renderTracksList(); renderPhasesList(); renderMilestoneTypesList(); renderMeetingTypesList(); }
+  if (name === 'strategie' && currentProjectId) { renderStrategie(); }
 }
 
 // ═══════════════════════════════════════════
