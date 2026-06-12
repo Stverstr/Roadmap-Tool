@@ -113,7 +113,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* Hefboom cards — horizontal row */
 .str-hb-grid{display:flex;flex-direction:row;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
 .str-hb-card{background:#FFFBF0;border:1px solid #FDE68A;border-radius:10px;padding:12px;border-left:4px solid var(--orange);min-width:220px;max-width:320px;flex:1;}
-.str-hb-title{font-size:13px;font-weight:700;color:var(--gy900);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.str-hb-title{font-size:13px;font-weight:700;color:var(--gy900);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+/* Doelstelling summary in hb card */
+.hb-dst-section{margin-bottom:6px;display:flex;flex-direction:column;gap:3px;}
+.hb-dst-row{display:flex;align-items:baseline;gap:4px;background:rgba(251,146,60,.08);border-radius:6px;padding:4px 7px;}
+.hb-dst-icon{font-size:11px;flex-shrink:0;}
+.hb-dst-desc{font-size:11px;font-weight:600;color:var(--gy800);flex:1;line-height:1.3;}
+.hb-dst-val{font-size:11px;font-weight:700;color:var(--orange);white-space:nowrap;flex-shrink:0;}
+/* Inspanningsverbintenissen summary in hb card */
+.hb-insp-section{margin-bottom:6px;display:flex;flex-direction:column;gap:2px;}
+.hb-insp-row{display:flex;align-items:baseline;gap:4px;padding:3px 5px;}
+.hb-insp-icon{font-size:10px;flex-shrink:0;color:var(--gy400);}
+.hb-insp-desc{font-size:11px;color:var(--gy600);line-height:1.3;}
 /* Mini timeline */
 .hb-timeline{margin:4px 0 8px;}
 .hb-tl-wrap{position:relative;height:52px;margin:4px 8px 4px;}
@@ -3601,6 +3612,31 @@ function renderStrategie() {
           const linkedItemIds = itemHefbomenLinks.filter(l => l.hefboom_id === hb.id).map(l => l.roadmap_item_id);
           const linkedActs = items.filter(it => linkedItemIds.includes(it.id));
 
+          // Build doelstelling summary HTML
+          let dstHtml = '';
+          if (lts.length) {
+            dstHtml = `<div class="hb-dst-section">`;
+            lts.forEach(lt => {
+              const goalStr = lt.goal_value != null ? `${lt.goal_value}${lt.unit ? ' ' + lt.unit : ''}` : '';
+              const dateStr = lt.end_date ? new Date(lt.end_date).toLocaleDateString('nl-BE',{month:'short',year:'2-digit'}) : '';
+              dstHtml += `<div class="hb-dst-row">
+                <span class="hb-dst-icon">🏁</span>
+                <span class="hb-dst-desc">${lt.description || '—'}</span>
+                ${goalStr || dateStr ? `<span class="hb-dst-val">${[goalStr,dateStr].filter(Boolean).join(' · ')}</span>` : ''}
+              </div>`;
+            });
+            dstHtml += `</div>`;
+          }
+          // Build inspanningsverbintenissen summary HTML
+          let inspHtml = '';
+          if (insps.length) {
+            inspHtml = `<div class="hb-insp-section">`;
+            insps.forEach(insp => {
+              inspHtml += `<div class="hb-insp-row"><span class="hb-insp-icon">📝</span><span class="hb-insp-desc">${insp.description || '—'}</span></div>`;
+            });
+            inspHtml += `</div>`;
+          }
+
           viewsHtml += `<div class="str-hb-card" id="hb-card-${hb.id}"
               ondragover="event.preventDefault();document.getElementById('hb-card-${hb.id}').classList.add('hb-drag-over')"
               ondragleave="document.getElementById('hb-card-${hb.id}').classList.remove('hb-drag-over')"
@@ -3609,6 +3645,7 @@ function renderStrategie() {
               ⚙️ ${hb.name}
               <button class="btn btn-sm btn-s" style="margin-left:auto;padding:2px 7px;" onclick="openHefboomModal('${hb.id}','${sc.id}')">✏️</button>
             </div>
+            ${dstHtml}${inspHtml}
             ${buildHbTimeline(lts, kts, insps)}`;
 
           // Linked activities via junction table
