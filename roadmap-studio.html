@@ -1192,7 +1192,7 @@ function initSortables() {
   if (tracksList) {
     _sortableInstances.push(Sortable.create(tracksList, {
       animation: 150,
-      handle: '.track-item > .track-header > .drag-handle',
+      handle: '.drag-handle',
       onEnd: async function() {
         const ids = [...tracksList.querySelectorAll(':scope > .track-item')].map(el => el.dataset.id);
         ids.forEach((id, i) => { const t = tracks.find(x => x.id === id); if (t) t.position = i; });
