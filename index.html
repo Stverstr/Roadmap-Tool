@@ -3706,7 +3706,10 @@ function renderStrategie() {
             viewsHtml += `<div class="str-hb-chips" style="margin-top:4px;padding-top:6px;border-top:1px dashed #FDE68A;">`;
             linkedActs.forEach(act => {
               const sEmoji = act.status === 'done' ? '✅' : act.status === 'active' ? '▶️' : '○';
-              viewsHtml += `<span class="chip-act" title="Klik om te ontkoppelen" onclick="unlinkItemFromHefboom('${act.id}','${hb.id}')">${sEmoji} ${act.title} ×</span>`;
+              viewsHtml += `<span class="chip-act" style="display:inline-flex;align-items:center;gap:3px;padding:0;">
+                <span style="padding:3px 6px;cursor:pointer;" title="Open activiteit" onclick="openItemModal('${act.id}','edit')">${sEmoji} ${act.title}</span>
+                <span style="padding:3px 6px 3px 0;cursor:pointer;opacity:.6;" title="Ontkoppelen" onclick="unlinkItemFromHefboom('${act.id}','${hb.id}')">×</span>
+              </span>`;
             });
             viewsHtml += `</div>`;
           }
