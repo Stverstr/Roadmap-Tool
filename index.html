@@ -1816,13 +1816,16 @@ async function saveItem() {
     status: newStatus,
     health_status: newHealth,
     owner: document.getElementById('mi-owner').value.trim() || null,
-    hefboom_id: document.getElementById('mi-hefboom').value || null,
     managed_in_other_roadmap: document.getElementById('mi-other-roadmap').checked,
     other_roadmap_name: document.getElementById('mi-other-roadmap-name').value.trim() || null,
     dependencies: getDepsSelected(),
     item_phases: itemPhasesTemp,
     updated_at: new Date().toISOString()
   };
+  // Collect checked hefboom IDs from the multi-checkbox UI
+  const checkedHbIds = [...document.querySelectorAll('#mi-hefboom-list input[type=checkbox]:checked')].map(cb => cb.value);
+
+  let savedItemId = editingItemId;
   if (editingItemId) {
     const prevItem = items.find(x => x.id === editingItemId);
     const prevStatus = prevItem?.status;
@@ -1840,6 +1843,7 @@ async function saveItem() {
     const {data: nd} = await sb.from('roadmap_items').insert({...data, project_id: currentProjectId}).select().single();
     if (nd) {
       items.push(nd);
+      savedItemId = nd.id;
       if (statusDesc) {
         await sb.from('item_status_history').insert({
           item_id: nd.id, status: newStatus, health_status: newHealth,
@@ -1848,8 +1852,30 @@ async function saveItem() {
       }
     }
   }
+  // Sync hefboom junction table
+  if (savedItemId) {
+    const existingLinks = itemHefbomenLinks.filter(l => l.roadmap_item_id === savedItemId);
+    const existingHbIds = existingLinks.map(l => l.hefboom_id);
+    // Add new links
+    for (const hbId of checkedHbIds) {
+      if (!existingHbIds.includes(hbId)) {
+        const {data: nl} = await sb.from('roadmap_item_hefbomen').insert({
+          roadmap_item_id: savedItemId, hefboom_id: hbId, project_id: currentProjectId
+        }).select().single();
+        if (nl) itemHefbomenLinks.push(nl);
+      }
+    }
+    // Remove unchecked links
+    for (const link of existingLinks) {
+      if (!checkedHbIds.includes(link.hefboom_id)) {
+        await sb.from('roadmap_item_hefbomen').delete().eq('id', link.id);
+        itemHefbomenLinks = itemHefbomenLinks.filter(l => l.id !== link.id);
+      }
+    }
+  }
   closeModal('modal-item');
   renderStoryboard(); renderTimeline();
+  if (document.getElementById('strategie-tab')?.classList.contains('active') || currentTab === 'strategie') renderStrategie();
   toast('Activiteit opgeslagen ✓');
 }
 
