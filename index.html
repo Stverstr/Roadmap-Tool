@@ -1152,14 +1152,11 @@ async function loadStrategicData(pid) {
   const scLtData = scLtRes.data || [];
   // Load targets + inspanningen for SC-level doelstellingen
   const scLtIds = scLtData.map(x => x.id);
-  const [scKtRes, scInspRes] = scLtIds.length ? await Promise.all([
+  const scInspData = scInspRes.data || []; // SC-level inspanningsverbintenissen (loaded above)
+  const [scKtRes, ltInspRes] = scLtIds.length ? await Promise.all([
     sb.from('kt_targets').select('*').in('lt_doelstelling_id', scLtIds),
     sb.from('inspanningsverbintenissen').select('*').in('lt_doelstelling_id', scLtIds),
   ]) : [{data:[]},{data:[]}];
-
-  const scInspData = scInspRes.data || [];
-  // Load lt-level inspanningen
-  const ltInspRes = scLtIds.length ? await sb.from('inspanningsverbintenissen').select('*').in('lt_doelstelling_id', scLtIds) : {data:[]};
   const ltInspData = ltInspRes.data || [];
 
   if (!hefbomenData.length) {
