@@ -100,33 +100,46 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .str-subtab.active{color:var(--gy900);border-bottom-color:var(--orange);font-weight:700;}
 .str-subcat-view{display:none;}.str-subcat-view.active{display:block;}
 .str-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gy500);margin:0 0 10px;}
-/* Strategic change cards */
-.str-sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:16px;}
-.str-sc-card{background:white;border:2px solid var(--gy200);border-radius:12px;padding:0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:box-shadow .15s;}
-.str-sc-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1);}
-.str-sc-head{padding:14px 16px;border-bottom:1px solid var(--gy100);display:flex;align-items:flex-start;gap:10px;}
-.str-sc-icon{font-size:22px;flex-shrink:0;}
+/* Strategic change cards — vertical stack */
+.str-sc-grid{display:flex;flex-direction:column;gap:14px;margin-bottom:16px;}
+.str-sc-card{background:white;border:1px solid var(--gy200);border-radius:12px;padding:0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05);transition:box-shadow .15s;}
+.str-sc-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.09);}
+.str-sc-head{padding:12px 16px;border-bottom:1px solid var(--gy100);display:flex;align-items:flex-start;gap:10px;}
+.str-sc-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
 .str-sc-info{flex:1;}
-.str-sc-title{font-size:14px;font-weight:700;color:var(--gy900);line-height:1.3;margin-bottom:3px;}
+.str-sc-title{font-size:14px;font-weight:700;color:var(--gy900);line-height:1.3;margin-bottom:2px;}
 .str-sc-desc{font-size:12px;color:var(--gy500);line-height:1.4;}
 .str-sc-body{padding:12px 16px;}
-/* Hefboom cards */
-.str-hb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:10px;}
-.str-hb-card{background:#FFFBF0;border:1px solid #FDE68A;border-radius:9px;padding:12px;border-left:4px solid var(--orange);}
-.str-hb-title{font-size:13px;font-weight:700;color:var(--gy900);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+/* Hefboom cards — horizontal row */
+.str-hb-grid{display:flex;flex-direction:row;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+.str-hb-card{background:#FFFBF0;border:1px solid #FDE68A;border-radius:10px;padding:12px;border-left:4px solid var(--orange);min-width:220px;max-width:320px;flex:1;}
+.str-hb-title{font-size:13px;font-weight:700;color:var(--gy900);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+/* Mini timeline */
+.hb-timeline{margin:4px 0 8px;}
+.hb-tl-wrap{position:relative;height:52px;margin:4px 8px 4px;}
+.hb-tl-bar{position:absolute;top:50%;left:0;right:0;height:2px;background:var(--gy200);border-radius:2px;transform:translateY(-50%);}
+/* dot: label boven de bar, icon op de bar */
+.hb-tl-dot{position:absolute;top:0;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:center;transform:translateX(-50%);cursor:default;z-index:2;}
+.hb-tl-lbl{font-size:9px;font-weight:600;color:var(--gy600);white-space:nowrap;line-height:1;margin-bottom:2px;margin-top:-2px;}
+.hb-tl-ico{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.2);flex-shrink:0;transition:transform .12s;}
+.tl-lt .hb-tl-ico{background:#DCFCE7;}
+.tl-kt .hb-tl-ico{background:#FEF3C7;}
+.tl-insp .hb-tl-ico{background:#EDE9FE;}
+.hb-tl-tooltip{display:none;position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--gy900);color:white;font-size:10px;padding:4px 8px;border-radius:5px;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;z-index:20;pointer-events:none;}
+.hb-tl-dot:hover .hb-tl-tooltip{display:block;}
+.hb-tl-dot:hover .hb-tl-ico{transform:scale(1.3);}
+.hb-tl-none{font-size:11px;color:var(--gy400);font-style:italic;}
+/* Chips (undated items + activities) */
 .str-hb-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
-.chip-lt{background:#DCFCE7;color:#166534;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;cursor:pointer;border:1px solid #BBF7D0;}
-.chip-lt:hover{background:#BBF7D0;}
-.chip-kt{background:#FEF3C7;color:#92400E;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;cursor:pointer;border:1px solid #FDE68A;}
-.chip-kt:hover{background:#FDE68A;}
-.chip-insp{background:#EDE9FE;color:#5B21B6;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;cursor:pointer;border:1px solid #DDD6FE;}
-.chip-insp:hover{background:#DDD6FE;}
-.chip-act{background:#E0F2FE;color:#0369A1;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:4px;cursor:pointer;border:1px solid #BAE6FD;}
+.chip-lt{background:#DCFCE7;color:#166534;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:3px;border:1px solid #BBF7D0;}
+.chip-kt{background:#FEF3C7;color:#92400E;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:3px;border:1px solid #FDE68A;}
+.chip-insp{background:#EDE9FE;color:#5B21B6;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:3px;border:1px solid #DDD6FE;}
+.chip-act{background:#E0F2FE;color:#0369A1;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:500;display:inline-flex;align-items:center;gap:3px;cursor:pointer;border:1px solid #BAE6FD;}
 .chip-act:hover{background:#BAE6FD;}
 .str-add-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--g700);background:var(--g50);border:1px dashed var(--g400);border-radius:7px;padding:5px 12px;cursor:pointer;margin:4px 0;}
 .str-add-btn:hover{background:var(--g100);}
-.str-link-wrap{display:flex;gap:6px;align-items:center;margin-top:6px;}
-.str-link-wrap select{flex:1;font-size:12px;padding:4px 8px;border:1px solid var(--gy300);border-radius:6px;background:white;}
+.str-link-wrap{display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #FDE68A;}
+.str-link-wrap select{flex:1;font-size:11px;padding:3px 7px;border:1px solid var(--gy300);border-radius:6px;background:white;}
 .hb-modal-field{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
 .hb-modal-field input,.hb-modal-field textarea{flex:1;}
 .phase-name{font-size:14px;font-weight:700;color:var(--gy900);flex:1;}
@@ -781,18 +794,18 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
   <div class="modal" style="max-width:400px">
     <div class="modal-head"><span class="modal-title">📂 Subcategorie</span><button class="modal-close" onclick="closeModal('modal-subcat')">✕</button></div>
     <div class="modal-body">
-      <div class="field"><label class="label">Naam</label><input class="input" id="msc-name" placeholder="bijv. Reporting, Training…"></div>
+      <div class="field"><label class="label">Naam</label><input class="input" id="msub-name" placeholder="bijv. Reporting, Training…"></div>
       <div class="field"><label class="label">Icoon</label>
         <div class="icon-pick-wrap">
-          <button type="button" class="icon-pick-btn empty" id="msc-icon-btn" onclick="openIconPicker('msc-icon','msc-icon-btn')">＋</button>
-          <input type="hidden" id="msc-icon" value="">
-          <button type="button" class="icon-clear-btn" onclick="clearIcon('msc-icon','msc-icon-btn')" title="Leegmaken">✕ leeg</button>
+          <button type="button" class="icon-pick-btn empty" id="msub-icon-btn" onclick="openIconPicker('msub-icon','msub-icon-btn')">＋</button>
+          <input type="hidden" id="msub-icon" value="">
+          <button type="button" class="icon-clear-btn" onclick="clearIcon('msub-icon','msub-icon-btn')" title="Leegmaken">✕ leeg</button>
         </div>
       </div>
-      <div class="field"><label class="label">Kleur</label><input type="color" id="msc-color" value="#74C69D"></div>
+      <div class="field"><label class="label">Kleur</label><input type="color" id="msub-color" value="#74C69D"></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-danger btn-sm" id="msc-del-btn" onclick="deleteSubcat()" style="margin-right:auto;display:none">🗑 Verwijder</button>
+      <button class="btn btn-danger btn-sm" id="msub-del-btn" onclick="deleteSubcat()" style="margin-right:auto;display:none">🗑 Verwijder</button>
       <button class="btn btn-s" onclick="closeModal('modal-subcat')">Annuleer</button>
       <button class="btn btn-p" onclick="saveSubcat()">Opslaan</button>
     </div>
@@ -1214,16 +1227,16 @@ function openModal(modalId, recordId, mode, extra, extra2) {
   } else if (modalId === 'modal-subcat') {
     editingSubcatId = mode === 'edit' ? recordId : null;
     editingSubcatTrackId = extra2;
-    document.getElementById('msc-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
+    document.getElementById('msub-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
     if (mode === 'edit' && editingSubcatId) {
       const s = subcategories.find(x => x.id === editingSubcatId);
-      document.getElementById('msc-name').value = s.name;
-      setIconBtn('msc-icon','msc-icon-btn', s.icon);
-      document.getElementById('msc-color').value = s.color || '#74C69D';
+      document.getElementById('msub-name').value = s.name;
+      setIconBtn('msub-icon','msub-icon-btn', s.icon);
+      document.getElementById('msub-color').value = s.color || '#74C69D';
     } else {
-      document.getElementById('msc-name').value = '';
-      setIconBtn('msc-icon','msc-icon-btn','');
-      document.getElementById('msc-color').value = '#74C69D';
+      document.getElementById('msub-name').value = '';
+      setIconBtn('msub-icon','msub-icon-btn','');
+      document.getElementById('msub-color').value = '#74C69D';
     }
   } else if (modalId === 'modal-project') {
     document.getElementById('mp-name').value = '';
@@ -1545,10 +1558,10 @@ async function deleteMilestoneType(id) {
 //  SUBCATEGORIES (standalone modal)
 // ═══════════════════════════════════════════
 async function saveSubcat() {
-  const name = document.getElementById('msc-name').value.trim();
+  const name = document.getElementById('msub-name').value.trim();
   if (!name) { alert('Naam verplicht'); return; }
-  const color = document.getElementById('msc-color').value;
-  const icon = document.getElementById('msc-icon').value || '';
+  const color = document.getElementById('msub-color').value;
+  const icon = document.getElementById('msub-icon').value || '';
   if (editingSubcatId) {
     await sb.from('subcategories').update({name, color, icon}).eq('id', editingSubcatId);
     const s = subcategories.find(x => x.id === editingSubcatId);
@@ -3380,6 +3393,47 @@ function updateHefboomTabVisibility() {
   document.getElementById('itab-btn-hefboom').style.display = show ? '' : 'none';
 }
 
+function buildHbTimeline(lts, kts, insps) {
+  const events = [];
+  const undated = [];
+  const fmt = d => { const dt = new Date(d); return dt.toLocaleDateString('nl-BE',{month:'short',year:'2-digit'}); };
+  lts.forEach(lt => {
+    if (lt.end_date) events.push({type:'lt',ts:new Date(lt.end_date).getTime(),lbl:fmt(lt.end_date),tip:lt.description,emoji:'🏁'});
+    else undated.push(`<span class="chip-lt">🏁 ${lt.description}</span>`);
+  });
+  kts.forEach(kt => {
+    const tip = kt.description + (kt.value?` · ${kt.value}${kt.unit||''}` :'');
+    if (kt.target_date) events.push({type:'kt',ts:new Date(kt.target_date).getTime(),lbl:fmt(kt.target_date),tip,emoji:'🎯'});
+    else undated.push(`<span class="chip-kt">🎯 ${tip}</span>`);
+  });
+  insps.forEach(i => {
+    if (i.end_date) events.push({type:'insp',ts:new Date(i.end_date).getTime(),lbl:fmt(i.end_date),tip:i.description,emoji:'📝'});
+    else undated.push(`<span class="chip-insp">📝 ${i.description}</span>`);
+  });
+
+  let html = '<div class="hb-timeline">';
+  if (events.length) {
+    events.sort((a,b)=>a.ts-b.ts);
+    const minTs = events[0].ts, maxTs = events[events.length-1].ts;
+    const span = maxTs - minTs || 1;
+    html += '<div class="hb-tl-wrap"><div class="hb-tl-bar"></div>';
+    events.forEach(ev => {
+      const pct = events.length === 1 ? 50 : 8 + (ev.ts - minTs) / span * 84;
+      html += `<div class="hb-tl-dot tl-${ev.type}" style="left:${pct.toFixed(1)}%">
+        <div class="hb-tl-lbl">${ev.lbl}</div>
+        <div class="hb-tl-ico">${ev.emoji}</div>
+        <div class="hb-tl-tooltip">${ev.tip.length>40?ev.tip.slice(0,37)+'…':ev.tip}</div>
+      </div>`;
+    });
+    html += '</div>';
+  } else if (!undated.length) {
+    html += '<div class="hb-tl-none">Nog geen targets of inspanningen</div>';
+  }
+  if (undated.length) html += `<div class="str-hb-chips">${undated.join('')}</div>`;
+  html += '</div>';
+  return html;
+}
+
 function renderStrategie() {
   const el = document.getElementById('strategie-tree');
   const noProj = document.getElementById('no-project-str');
@@ -3463,19 +3517,17 @@ function renderStrategie() {
               ⚙️ ${hb.name}
               <button class="btn btn-sm btn-s" style="margin-left:auto;padding:2px 7px;" onclick="openHefboomModal('${hb.id}','${sc.id}')">✏️</button>
             </div>
-            <div class="str-hb-chips">`;
-          lts.forEach(lt => { viewsHtml += `<span class="chip-lt" title="${lt.end_date||''}">🏁 ${lt.description}${lt.end_date?' · '+lt.end_date:''}</span>`; });
-          kts.forEach(kt => { viewsHtml += `<span class="chip-kt">🎯 ${kt.description}${kt.value?' · '+kt.value+(kt.unit||''):''}${kt.target_date?' · '+kt.target_date:''}</span>`; });
-          insps.forEach(i => { viewsHtml += `<span class="chip-insp">📝 ${i.description}${i.end_date?' · '+i.end_date:''}</span>`; });
+            ${buildHbTimeline(lts, kts, insps)}`;
           // Activities
           if (acts.length) {
-            viewsHtml += `<div style="width:100%;height:1px;background:var(--gy100);margin:4px 0;"></div>`;
+            viewsHtml += `<div class="str-hb-chips" style="margin-top:4px;padding-top:6px;border-top:1px dashed #FDE68A;">`;
             acts.forEach(act => {
               const statusEmoji = act.status === 'done' ? '✅' : act.status === 'active' ? '▶️' : '○';
               viewsHtml += `<span class="chip-act" onclick="openItemModal('${act.id}','edit')">${statusEmoji} ${act.title}</span>`;
             });
+            viewsHtml += `</div>`;
           }
-          viewsHtml += `</div>
+          viewsHtml += `
             <!-- Link activity -->
             <div class="str-link-wrap">
               <select id="str-act-sel-${hb.id}" onchange="linkActivityToHefboom('${hb.id}', this)">
