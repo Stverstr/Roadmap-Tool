@@ -1103,13 +1103,15 @@ function autoColorSubcats() {
     const f = n => ll - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
     return '#' + [0,8,4].map(n => Math.round(f(n)*255).toString(16).padStart(2,'0')).join('');
   };
-  const baseL = Math.max(35, Math.min(60, l));
-  const spread = Math.min(30, Math.max(10, n * 5));
-  const startL = Math.max(30, baseL - spread/2);
   subcatFields.forEach((sc, i) => {
-    const stepL = n === 1 ? baseL : startL + (spread / (n-1)) * i;
-    const stepS = Math.max(30, Math.min(90, s + (i % 2 === 0 ? 5 : -5)));
-    sc.color = hslToHex(h, stepS, Math.round(stepL));
+    const t = n === 1 ? 0.5 : i / (n - 1);
+    // Lightness: spreid van 30% (donker) tot 72% (licht)
+    const stepL = Math.round(30 + t * 42);
+    // Hue: kleine verschuiving per stap (±15°) zodat kleuren iets afwijken maar herkenbaar verwant blijven
+    const stepH = (h + (i - Math.floor(n/2)) * 12 + 360) % 360;
+    // Saturatie: iets rijker in het midden, wat minder aan de randen
+    const stepS = Math.round(Math.max(40, Math.min(85, s + 15 - Math.abs(t - 0.5) * 20)));
+    sc.color = hslToHex(stepH, stepS, stepL);
   });
   renderSubcatFields();
   toast('Kleuren automatisch ingesteld ✓');
