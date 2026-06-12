@@ -1888,6 +1888,42 @@ async function deleteItem() {
   toast('Verwijderd');
 }
 
+// ── HEFBOOM MULTI-CHECKBOX for activity modal ──────────────────
+function renderHbCheckboxes(itemId) {
+  const container = document.getElementById('mi-hefboom-list');
+  if (!container) return;
+  if (!hefbomenData.length) {
+    container.innerHTML = '<p style="font-size:12px;color:var(--gy400);">Geen hefbomen gevonden. Voeg eerst hefbomen toe via de Strategie tab.</p>';
+    return;
+  }
+  const checkedIds = new Set(itemHefbomenLinks.filter(l => l.roadmap_item_id === itemId).map(l => l.hefboom_id));
+  // Group by strategic change
+  const groups = {};
+  hefbomenData.forEach(hb => {
+    const sc = strategicChanges.find(x => x.id === hb.strategic_change_id);
+    const sub = sc ? subcategories.find(x => x.id === sc.subcategory_id) : null;
+    const key = hb.strategic_change_id || '__none';
+    if (!groups[key]) groups[key] = { label: (sub ? sub.name + ' › ' : '') + (sc ? sc.name : '—'), hbs: [] };
+    groups[key].hbs.push(hb);
+  });
+  let html = '';
+  Object.values(groups).forEach(g => {
+    html += `<div style="margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">${g.label}</div>`;
+    g.hbs.forEach(hb => {
+      const checked = checkedIds.has(hb.id) ? 'checked' : '';
+      html += `<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid ${checked ? 'var(--orange)' : 'var(--gy200)'};background:${checked ? '#FFFBF0' : 'white'};cursor:pointer;margin-bottom:4px;transition:all .1s;"
+        onclick="this.querySelector('input').click();event.preventDefault();">
+        <input type="checkbox" value="${hb.id}" ${checked} style="accent-color:var(--orange);width:15px;height:15px;cursor:pointer;"
+          onchange="this.closest('label').style.borderColor=this.checked?'var(--orange)':'var(--gy200)';this.closest('label').style.background=this.checked?'#FFFBF0':'white'">
+        <span style="font-size:13px;font-weight:600;color:var(--gy800);">⚙️ ${hb.name}</span>
+      </label>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
 // ── ITEM DETAIL HELPERS ──────────────────────────────────────
 function switchItemTab(tab) {
   ['general','status','aanpak'].forEach(t => {
