@@ -49,6 +49,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .ntab{padding:13px 18px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--gy500);border-bottom:3px solid transparent;white-space:nowrap;transition:all .18s;display:flex;align-items:center;gap:7px;margin-bottom:-2px;}
 .ntab:hover{color:var(--g700);}
 .ntab.active{color:var(--g800);border-bottom-color:var(--g700);font-weight:700;}
+.subnav{background:white;border-bottom:1px solid var(--gy200);display:flex;padding:0 24px;position:sticky;top:108px;z-index:99;box-shadow:0 1px 0 var(--gy100);}
+.stab{padding:7px 16px;border:none;background:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--gy500);border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:6px;margin-bottom:-1px;}
+.stab:hover{color:var(--g700);}
+.stab.active{color:var(--g800);border-bottom-color:var(--g700);font-weight:700;}
 
 /* ── MAIN ── */
 .main{padding:22px;max-width:1500px;margin:0 auto;}
@@ -251,7 +255,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .tl-wrap{overflow-x:auto;position:relative;}
 [data-tl-grid].tl-dragging [data-tl-bar]{pointer-events:none;}
 .tl-container{min-width:0;}
-.tl-header-row{display:flex;border-bottom:2px solid var(--gy300);background:white;position:sticky;top:108px;z-index:50;}
+.tl-header-row{display:flex;border-bottom:2px solid var(--gy300);background:white;position:sticky;top:146px;z-index:50;}
 .tl-lane-label-head{width:200px;flex-shrink:0;padding:8px 12px;font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.5px;border-right:1px solid var(--gy300);}
 .tl-months{flex:1;display:flex;}
 .tl-month{flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;color:var(--gy700);border-right:1px solid var(--gy200);}
@@ -377,12 +381,18 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
   </header>
 
   <nav class="nav">
-    <button class="ntab active" id="tab-setup-btn" onclick="switchTab('setup')">⚙️ Setup</button>
-    <button class="ntab" id="tab-strategie-btn" onclick="switchTab('strategie')" style="display:none">🎯 Strategie</button>
-    <button class="ntab" id="tab-roadmap-btn" onclick="switchTab('roadmap')" style="display:none">📅 Strategisch Tijdslijn</button>
-    <button class="ntab" id="tab-storyboard-btn" onclick="switchTab('storyboard')">📋 Storyboard</button>
-    <button class="ntab" id="tab-timeline-btn" onclick="switchTab('timeline')">📅 Activiteiten Tijdslijn</button>
+    <button class="ntab active" id="nav-setup-btn" onclick="switchNavGroup('setup')">⚙️ Setup</button>
+    <button class="ntab" id="nav-strategie-btn" onclick="switchNavGroup('strategie')" style="display:none">🎯 Strategie</button>
+    <button class="ntab" id="nav-activiteiten-btn" onclick="switchNavGroup('activiteiten')">📋 Activiteiten</button>
   </nav>
+  <div class="subnav" id="subnav-strategie" style="display:none">
+    <button class="stab" id="tab-strategie-btn" onclick="switchTab('strategie')">🗺 Doelen</button>
+    <button class="stab" id="tab-roadmap-btn" onclick="switchTab('roadmap')">📅 Tijdslijn</button>
+  </div>
+  <div class="subnav" id="subnav-activiteiten" style="display:none">
+    <button class="stab" id="tab-storyboard-btn" onclick="switchTab('storyboard')">📋 Storyboard</button>
+    <button class="stab" id="tab-timeline-btn" onclick="switchTab('timeline')">📅 Tijdslijn</button>
+  </div>
 
   <!-- ══ SETUP TAB ══ -->
   <div id="tab-setup" class="panel active main">
@@ -507,7 +517,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
           <button class="btn btn-s btn-sm" id="stl-filter-toggle" onclick="stlToggleFilter()" title="Filters tonen/verbergen" style="background:var(--g100);">🔍 Filter</button>
         </div>
       </div>
-      <div id="stl-filter-bar" style="position:sticky;top:108px;z-index:60;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:0;border-radius:10px 10px 0 0;overflow:hidden;"></div>
+      <div id="stl-filter-bar" style="position:sticky;top:146px;z-index:60;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:0;border-radius:10px 10px 0 0;overflow:hidden;"></div>
       <div class="card" style="padding:0;overflow:hidden;border-radius:0 0 10px 10px;margin-top:0;">
         <div class="tl-wrap">
           <div id="stl-container" class="tl-container"></div>
@@ -532,7 +542,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
           <button style="background:none;border:none;color:#5B21B6;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'" onclick="openModal('modal-milestone','','new')" id="btn-add-milestone">＋ Milestone</button>
         </div>
       </div>
-      <div id="tl-filter-bar" style="position:sticky;top:108px;z-index:60;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:0;border-radius:10px 10px 0 0;overflow:hidden;"></div>
+      <div id="tl-filter-bar" style="position:sticky;top:146px;z-index:60;background:white;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:0;border-radius:10px 10px 0 0;overflow:hidden;"></div>
       <div class="card" style="padding:0;overflow:hidden;border-radius:0 0 10px 10px;margin-top:0;">
         <div class="tl-wrap">
           <div id="tl-container" class="tl-container"></div>
@@ -1089,7 +1099,8 @@ async function onProjectChange(render = true) {
     renderPhasesList();
     renderMilestoneTypesList();
     renderMeetingTypesList();
-    renderStoryboard();
+    // Default to Storyboard after project load — also updates subnav state
+    switchTab('storyboard');
     renderTimeline();
   }
 }
@@ -1157,8 +1168,7 @@ function fillSetupForm() {
   document.getElementById('s-enable-meetings').checked = p.enable_meetings !== false;
   document.getElementById('s-enable-milestones').checked = p.enable_milestones !== false;
   document.getElementById('s-enable-strategic').checked = p.strategic_mode === true;
-  document.getElementById('tab-strategie-btn').style.display = p.strategic_mode ? '' : 'none';
-  document.getElementById('tab-roadmap-btn').style.display = p.strategic_mode ? '' : 'none';
+  document.getElementById('nav-strategie-btn').style.display = p.strategic_mode ? '' : 'none';
   updateMeetingMilestoneButtons();
 }
 
@@ -1190,9 +1200,8 @@ async function saveProject() {
   await sb.from('projects').update(upd).eq('id', currentProjectId);
   const idx = projects.findIndex(p => p.id === currentProjectId);
   if (idx !== -1) Object.assign(projects[idx], upd);
-  // Show/hide strategie + roadmap tabs
-  document.getElementById('tab-strategie-btn').style.display = upd.strategic_mode ? '' : 'none';
-  document.getElementById('tab-roadmap-btn').style.display = upd.strategic_mode ? '' : 'none';
+  // Show/hide strategie nav group
+  document.getElementById('nav-strategie-btn').style.display = upd.strategic_mode ? '' : 'none';
   if (upd.strategic_mode) { await loadStrategicData(currentProjectId); updateHefboomTabVisibility(); }
   // update dropdown label
   const sel = document.getElementById('proj-select');
@@ -3997,10 +4006,10 @@ function renderStrategie() {
   if (!currentProjectId) { if(noProj) noProj.style.display=''; if(content) content.style.display='none'; return; }
   if(noProj) noProj.style.display='none'; if(content) content.style.display='';
 
-  // Build flat list of subcategories with strategic_mode enabled (with track info)
+  // Build flat list of all subcategories (with track info) — Strategie tab shows all
   const allSubs = [];
   tracks.forEach(tr => {
-    subcategories.filter(s => s.track_id === tr.id && s.strategic_mode).forEach(s => allSubs.push({...s, trackName: tr.name, trackColor: tr.color, trackIcon: tr.icon||''}));
+    subcategories.filter(s => s.track_id === tr.id).forEach(s => allSubs.push({...s, trackName: tr.name, trackColor: tr.color, trackIcon: tr.icon||''}));
   });
 
   if (!allSubs.length) {
@@ -4556,17 +4565,46 @@ async function deleteHefboom() {
   renderStrategie(); toast('Verwijderd');
 }
 
+const TAB_GROUPS = {setup:'setup', strategie:'strategie', roadmap:'strategie', storyboard:'activiteiten', timeline:'activiteiten'};
+
+function switchNavGroup(group) {
+  const defaultTab = group === 'strategie' ? 'strategie' : group === 'activiteiten' ? 'storyboard' : 'setup';
+  switchTab(defaultTab);
+}
+
 function switchTab(name) {
-  const prev = [...document.querySelectorAll('.ntab.active')].map(b => b.id.replace('tab-','').replace('-btn',''))[0];
+  // remember previous active panel for sync
+  const prevActive = document.querySelector('.panel.active');
+  const prev = prevActive ? prevActive.id.replace('tab-','') : '';
+
+  // Switch tab panels
   ['setup','strategie','storyboard','timeline','roadmap'].forEach(t => {
     const el = document.getElementById(`tab-${t}`); if (el) el.classList.toggle('active', t === name);
+  });
+
+  // Update sub-tab buttons (stab)
+  ['strategie','roadmap','storyboard','timeline'].forEach(t => {
     const btn = document.getElementById(`tab-${t}-btn`); if (btn) btn.classList.toggle('active', t === name);
   });
+
+  // Update top-level nav group buttons (ntab)
+  const activeGroup = TAB_GROUPS[name] || 'setup';
+  ['setup','strategie','activiteiten'].forEach(g => {
+    const btn = document.getElementById(`nav-${g}-btn`); if (btn) btn.classList.toggle('active', g === activeGroup);
+  });
+
+  // Show/hide subnavs
+  const snStr = document.getElementById('subnav-strategie');
+  const snAct = document.getElementById('subnav-activiteiten');
+  if (snStr) snStr.style.display = activeGroup === 'strategie' ? 'flex' : 'none';
+  if (snAct) snAct.style.display = activeGroup === 'activiteiten' ? 'flex' : 'none';
+
+  // Render tab content
   if (name === 'storyboard' && currentProjectId) { if (prev === 'timeline') syncFiltersToStoryboard(); renderStoryboard(); }
   if (name === 'timeline'   && currentProjectId) { if (prev === 'storyboard') syncFiltersToTimeline(); renderTimeline(); }
-  if (name === 'setup' && currentProjectId) { renderTracksList(); renderPhasesList(); renderMilestoneTypesList(); renderMeetingTypesList(); }
-  if (name === 'strategie' && currentProjectId) { renderStrategie(); }
-  if (name === 'roadmap'   && currentProjectId) { renderStrategischTijdslijn(); }
+  if (name === 'setup'      && currentProjectId) { renderTracksList(); renderPhasesList(); renderMilestoneTypesList(); renderMeetingTypesList(); }
+  if (name === 'strategie'  && currentProjectId) { renderStrategie(); }
+  if (name === 'roadmap'    && currentProjectId) { renderStrategischTijdslijn(); }
 }
 
 // ═══════════════════════════════════════════
