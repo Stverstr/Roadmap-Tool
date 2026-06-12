@@ -639,17 +639,6 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div class="modal-body">
       <div class="field"><label class="label">Naam</label><input class="input" id="msc-name" placeholder="bijv. CO2 reductie met 40% tegen 2030"></div>
       <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="msc-desc" placeholder="Context en achtergrond…" style="min-height:60px;"></textarea></div>
-      <div class="field">
-        <label class="label">🎯 Overkoepelende target <span style="font-weight:400;color:var(--gy400);font-size:11px;">(tijdslijn-marker)</span></label>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input class="input" id="msc-goal-value" type="number" placeholder="Waarde" style="width:90px;" step="any">
-          <input class="input" id="msc-goal-unit" placeholder="Eenheid (%, €, kg…)" style="flex:1;min-width:100px;">
-          <input class="input" id="msc-goal-date" type="date" style="width:145px;" title="Streefdatum">
-        </div>
-        <div style="margin-top:6px;">
-          <input class="input" id="msc-goal-label" placeholder="Omschrijving (optioneel)" style="width:100%;">
-        </div>
-      </div>
       <hr class="sep">
       <div class="card-row" style="margin:0 0 8px">
         <span style="font-size:13px;font-weight:700;">🏁 Doelstellingen</span>
@@ -4489,10 +4478,6 @@ function openStrategicChangeModal(id, subcatId) {
   const sc = id ? strategicChanges.find(x => x.id === id) : null;
   document.getElementById('msc-name').value = sc ? sc.name : '';
   document.getElementById('msc-desc').value = sc ? (sc.description||'') : '';
-  document.getElementById('msc-goal-value').value = sc?.goal_value ?? '';
-  document.getElementById('msc-goal-unit').value = sc?.goal_unit ?? '';
-  document.getElementById('msc-goal-date').value = sc?.goal_date ?? '';
-  document.getElementById('msc-goal-label').value = sc?.goal_label ?? '';
   scDstFields = id ? ltDoelstellingen.filter(x => x.strategic_change_id === id && !x.hefboom_id).map(lt => ({
     ...lt,
     targets: ktTargets.filter(kt => kt.lt_doelstelling_id === lt.id)
@@ -4506,11 +4491,7 @@ async function saveStrategicChange() {
   const name = document.getElementById('msc-name').value.trim();
   if (!name) { alert('Naam verplicht'); return; }
   const desc = document.getElementById('msc-desc').value.trim();
-  const goal_value = document.getElementById('msc-goal-value').value !== '' ? parseFloat(document.getElementById('msc-goal-value').value) : null;
-  const goal_unit = document.getElementById('msc-goal-unit').value.trim() || null;
-  const goal_date = document.getElementById('msc-goal-date').value || null;
-  const goal_label = document.getElementById('msc-goal-label').value.trim() || null;
-  const payload = {name, description: desc, goal_value, goal_unit, goal_date, goal_label};
+  const payload = {name, description: desc};
   let savedScId = editingScId;
   if (editingScId) {
     await sb.from('strategic_changes').update(payload).eq('id', editingScId);
