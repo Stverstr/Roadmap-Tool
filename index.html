@@ -4130,73 +4130,74 @@ function renderStrategie() {
               <button class="btn btn-sm btn-s" style="padding:2px 8px;" onclick="openStrategicChangeModal('${sc.id}','${sub.id}')">✏️</button>
               <button class="btn btn-sm btn-s" style="padding:2px 8px;font-size:12px;" title="${isCollapsed?'Uitklappen':'Inklappen'}">${isCollapsed?'▸':'▾'}</button>
             </div>
-          </div>
-          ${isCollapsed ? '' : `<div class="str-sc-body">`}
+          </div>`;  // close str-sc-head only — str-sc-card stays open
+
+        if (!isCollapsed) {
+          viewsHtml += `<div class="str-sc-body">
             <div class="str-section-label" style="margin-bottom:8px;">⚙️ Hefbomen <span style="font-weight:400;color:var(--gy400);font-size:10px;">— sleep activiteit hierop om te koppelen</span></div>
             <div class="str-hb-grid">`;
 
-        hbs.forEach(hb => {
-          const lts = ltDoelstellingen.filter(x => x.hefboom_id === hb.id);
-          const kts = ktTargets.filter(x => x.hefboom_id === hb.id);
-          const insps = inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id);
-          const linkedItemIds = itemHefbomenLinks.filter(l => l.hefboom_id === hb.id).map(l => l.roadmap_item_id);
-          const linkedActs = items.filter(it => linkedItemIds.includes(it.id));
+          hbs.forEach(hb => {
+            const lts = ltDoelstellingen.filter(x => x.hefboom_id === hb.id);
+            const kts = ktTargets.filter(x => x.hefboom_id === hb.id);
+            const insps = inspanningsverbintenissen.filter(x => x.hefboom_id === hb.id);
+            const linkedItemIds = itemHefbomenLinks.filter(l => l.hefboom_id === hb.id).map(l => l.roadmap_item_id);
+            const linkedActs = items.filter(it => linkedItemIds.includes(it.id));
 
-          // Build doelstelling summary HTML
-          let dstHtml = '';
-          if (lts.length) {
-            dstHtml = `<div class="hb-dst-section">`;
-            lts.forEach(lt => {
-              const goalStr = lt.goal_value != null ? `${lt.goal_value}${lt.unit ? ' ' + lt.unit : ''}` : '';
-              const dateStr = lt.end_date ? new Date(lt.end_date).toLocaleDateString('nl-BE',{month:'short',year:'2-digit'}) : '';
-              dstHtml += `<div class="hb-dst-row">
-                <span class="hb-dst-icon">🏁</span>
-                <span class="hb-dst-desc">${lt.description || '—'}</span>
-                ${goalStr || dateStr ? `<span class="hb-dst-val">${[goalStr,dateStr].filter(Boolean).join(' · ')}</span>` : ''}
-              </div>`;
-            });
-            dstHtml += `</div>`;
-          }
-          // Build inspanningsverbintenissen summary HTML
-          let inspHtml = '';
-          if (insps.length) {
-            inspHtml = `<div class="hb-insp-section">`;
-            insps.forEach(insp => {
-              inspHtml += `<div class="hb-insp-row"><span class="hb-insp-icon">📝</span><span class="hb-insp-desc">${insp.description || '—'}</span></div>`;
-            });
-            inspHtml += `</div>`;
-          }
+            let dstHtml = '';
+            if (lts.length) {
+              dstHtml = `<div class="hb-dst-section">`;
+              lts.forEach(lt => {
+                const goalStr = lt.goal_value != null ? `${lt.goal_value}${lt.unit ? ' ' + lt.unit : ''}` : '';
+                const dateStr = lt.end_date ? new Date(lt.end_date).toLocaleDateString('nl-BE',{month:'short',year:'2-digit'}) : '';
+                dstHtml += `<div class="hb-dst-row">
+                  <span class="hb-dst-icon">🏁</span>
+                  <span class="hb-dst-desc">${lt.description || '—'}</span>
+                  ${goalStr || dateStr ? `<span class="hb-dst-val">${[goalStr,dateStr].filter(Boolean).join(' · ')}</span>` : ''}
+                </div>`;
+              });
+              dstHtml += `</div>`;
+            }
+            let inspHtml = '';
+            if (insps.length) {
+              inspHtml = `<div class="hb-insp-section">`;
+              insps.forEach(insp => {
+                inspHtml += `<div class="hb-insp-row"><span class="hb-insp-icon">📝</span><span class="hb-insp-desc">${insp.description || '—'}</span></div>`;
+              });
+              inspHtml += `</div>`;
+            }
 
-          viewsHtml += `<div class="str-hb-card" id="hb-card-${hb.id}"
-              ondragover="event.preventDefault();document.getElementById('hb-card-${hb.id}').classList.add('hb-drag-over')"
-              ondragleave="document.getElementById('hb-card-${hb.id}').classList.remove('hb-drag-over')"
-              ondrop="strDropOnHefboom(event,'${hb.id}')">
-            <div class="str-hb-title">
-              ⚙️ ${hb.name}
-              <button class="btn btn-sm btn-s" style="margin-left:auto;padding:2px 7px;" onclick="openHefboomModal('${hb.id}','${sc.id}')">✏️</button>
-            </div>
-            ${dstHtml}${inspHtml}
-            ${buildHbTimeline(lts, kts, insps)}`;
+            viewsHtml += `<div class="str-hb-card" id="hb-card-${hb.id}"
+                ondragover="event.preventDefault();document.getElementById('hb-card-${hb.id}').classList.add('hb-drag-over')"
+                ondragleave="document.getElementById('hb-card-${hb.id}').classList.remove('hb-drag-over')"
+                ondrop="strDropOnHefboom(event,'${hb.id}')">
+              <div class="str-hb-title">
+                ⚙️ ${hb.name}
+                <button class="btn btn-sm btn-s" style="margin-left:auto;padding:2px 7px;" onclick="openHefboomModal('${hb.id}','${sc.id}')">✏️</button>
+              </div>
+              ${dstHtml}${inspHtml}
+              ${buildHbTimeline(lts, kts, insps)}`;
 
-          // Linked activities via junction table
-          if (linkedActs.length) {
-            viewsHtml += `<div class="str-hb-chips" style="margin-top:4px;padding-top:6px;border-top:1px dashed #FDE68A;">`;
-            linkedActs.forEach(act => {
-              const sEmoji = act.status === 'done' ? '✅' : act.status === 'active' ? '▶️' : '○';
-              viewsHtml += `<span class="chip-act" style="display:inline-flex;align-items:center;gap:3px;padding:0;">
-                <span style="padding:3px 6px;cursor:pointer;" title="Open activiteit" onclick="openItemModal('${act.id}','edit')">${sEmoji} ${act.title}</span>
-                <span style="padding:3px 6px 3px 0;cursor:pointer;opacity:.6;" title="Ontkoppelen" onclick="unlinkItemFromHefboom('${act.id}','${hb.id}')">×</span>
-              </span>`;
-            });
+            if (linkedActs.length) {
+              viewsHtml += `<div class="str-hb-chips" style="margin-top:4px;padding-top:6px;border-top:1px dashed #FDE68A;">`;
+              linkedActs.forEach(act => {
+                const sEmoji = act.status === 'done' ? '✅' : act.status === 'active' ? '▶️' : '○';
+                viewsHtml += `<span class="chip-act" style="display:inline-flex;align-items:center;gap:3px;padding:0;">
+                  <span style="padding:3px 6px;cursor:pointer;" title="Open activiteit" onclick="openItemModal('${act.id}','edit')">${sEmoji} ${act.title}</span>
+                  <span style="padding:3px 6px 3px 0;cursor:pointer;opacity:.6;" title="Ontkoppelen" onclick="unlinkItemFromHefboom('${act.id}','${hb.id}')">×</span>
+                </span>`;
+              });
+              viewsHtml += `</div>`;
+            }
             viewsHtml += `</div>`;
-          }
-          viewsHtml += `</div>`;
-        });
+          });
 
-        viewsHtml += `</div>
-            <button class="str-add-btn" onclick="openHefboomModal(null,'${sc.id}')">＋ Hefboom toevoegen</button>
-          </div>
-        </div>` : '</div>';
+          viewsHtml += `</div>
+              <button class="str-add-btn" onclick="openHefboomModal(null,'${sc.id}')">＋ Hefboom toevoegen</button>
+            </div>`;  // close str-sc-body
+        }
+
+        viewsHtml += `</div>`;  // close str-sc-card
       });
       viewsHtml += `</div>`;
     }
