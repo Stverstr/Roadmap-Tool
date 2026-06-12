@@ -3897,7 +3897,7 @@ function renderStrategischTijdslijn() {
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color||tr.color};flex-shrink:0;"></span>
           <span style="font-size:12px;font-weight:700;color:var(--gy700);">${sub.name}</span>
         </div>
-        <div style="flex:1;background:${sub.color||'#E5E7EB'}11;${colGridLines().replace(/position:absolute/g,'position:absolute')}"></div>
+        <div style="flex:1;background:${sub.color||'#E5E7EB'}11;position:relative;">${colGridLines()}</div>
       </div>`;
       scs.forEach(sc => {
         const goalBadge = sc.goal_value != null ? ` <span style="font-size:10px;color:#D97706;font-weight:700;margin-left:4px;">🎯 ${sc.goal_value}${sc.goal_unit||''}</span>` : '';
@@ -4006,14 +4006,14 @@ function renderStrategie() {
   if (!currentProjectId) { if(noProj) noProj.style.display=''; if(content) content.style.display='none'; return; }
   if(noProj) noProj.style.display='none'; if(content) content.style.display='';
 
-  // Build flat list of all subcategories (with track info) — Strategie tab shows all
+  // Build flat list — only subcategories with strategic_mode enabled
   const allSubs = [];
   tracks.forEach(tr => {
-    subcategories.filter(s => s.track_id === tr.id).forEach(s => allSubs.push({...s, trackName: tr.name, trackColor: tr.color, trackIcon: tr.icon||''}));
+    subcategories.filter(s => s.track_id === tr.id && s.strategic_mode).forEach(s => allSubs.push({...s, trackName: tr.name, trackColor: tr.color, trackIcon: tr.icon||''}));
   });
 
   if (!allSubs.length) {
-    el.innerHTML = '<div class="empty" style="padding:30px"><div class="empty-icon">🎯</div><div class="empty-title">Nog geen subcategorieën</div><div class="empty-sub">Voeg eerst streams en subcategorieën toe via Setup.</div></div>';
+    el.innerHTML = '<div class="empty" style="padding:30px"><div class="empty-icon">🎯</div><div class="empty-title">Geen strategische subcategorieën actief</div><div class="empty-sub">Activeer "🎯 Strategische doelstellingen" per subcategorie in Setup om ze hier te tonen.</div></div>';
     return;
   }
 
