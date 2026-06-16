@@ -2864,7 +2864,7 @@ function renderRmTijdslijn(){
 
 // ── Backlog ──
 function renderRmBacklog(){
-  const bl=RM_ITEMS.filter(it=>it.inBacklog);
+  const bl=RM_ITEMS.filter(it=>it.inBacklog&&rmFilterApply(it));
   const el=document.getElementById('rm-backlog');
   if(!el)return;
   if(!bl.length){el.innerHTML='';return;}
@@ -2894,7 +2894,7 @@ function renderRmBacklog(){
   el.innerHTML=`<div style="border-top:2px dashed #f59e0b;margin-top:6px;padding-top:10px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <span style="font-size:12px;font-weight:700;color:#92400e">📋 Backlog</span>
-      <span style="font-size:11px;color:#9ca3af">${bl.length} item${bl.length!==1?'s':''} — nog niet ingepland op tijdslijn. Klik ✏️ om kolom en datum toe te wijzen.</span>
+      <span style="font-size:11px;color:#9ca3af">${bl.length} item${bl.length!==1?'s':''} — sleep naar een lane om in te plannen, of sleep een geplande activiteit hierheen om te deplannnen</span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div>
