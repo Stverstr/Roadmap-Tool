@@ -3572,6 +3572,9 @@ function renderBacklog() {
   // All items without start_date, apply active filters
   const backlogItems = items.filter(it => {
     if (it.start_date) return false;
+    if (tlFilterStreams.size && !tlFilterStreams.has(it.track_id)) return false;
+    if (tlFilterSubcats.size && it.subcategory_id && !tlFilterSubcats.has(it.subcategory_id)) return false;
+    if (tlFilterPhases.size && it.phase_id && !tlFilterPhases.has(it.phase_id)) return false;
     if (tlFilterStatuses.size && !tlFilterStatuses.has(it.status || 'pending')) return false;
     if (tlFilterHealthStatuses.size && !tlFilterHealthStatuses.has(it.health_status || '')) return false;
     if (tlFilterKeyOnly && !it.key_activity) return false;
