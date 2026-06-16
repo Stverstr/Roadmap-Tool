@@ -50,7 +50,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .ntab.active{color:var(--g800);border-bottom-color:var(--g700);font-weight:700;}
 
 /* ── MAIN ── */
-.main{padding:22px;max-width:1500px;margin:0 auto;}
+.main{padding:22px;max-width:1600px;margin:0 auto;}
+#tab-storyboard.main,#tab-timeline.main{max-width:100%;padding:16px 22px;}
 .panel{display:none;}.panel.active{display:block;}
 /* ── EMBED MODE (inside iframe in health-cg-hub) ── */
 body.embed-mode .hdr{display:none!important;}
@@ -110,7 +111,7 @@ body.embed-mode #app-screen{min-height:100vh;}
 .modal-foot{padding:12px 22px;border-top:1px solid var(--gy200);display:flex;justify-content:flex-end;gap:10px;background:white;border-radius:0 0 12px 12px;}
 
 /* ── STORYBOARD ── */
-.sb-wrap{overflow-x:auto;}
+.sb-wrap{overflow-x:auto;width:100%;}
 .sb-grid{display:grid;min-width:900px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;}
 .sb-header{display:contents;}
 .sb-phase-head{background:var(--g800);color:white;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(255,255,255,.15);}
@@ -337,7 +338,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item toevoegen</button>
       </div>
       <div class="sb-wrap">
-        <div id="sb-grid" style="overflow-x:auto;"></div>
+        <div id="sb-grid"></div>
       </div>
     </div>
   </div>
@@ -1677,13 +1678,13 @@ function renderStoryboard() {
   }
 
   const cols = phases.length || 1;
-  const labelW = 160;
-  const minColW = 130; // minimum before horizontal scroll kicks in
+  const labelW = 140;
+  const minColW = 80; // minimum before horizontal scroll kicks in
   // Use 1fr so columns fill all available width; only force scroll if truly too narrow
   const gridCols = `${labelW}px ${Array(cols).fill(`minmax(${minColW}px,1fr)`).join(' ')}`;
   const minW = labelW + cols * minColW;
 
-  let html = `<div style="display:grid;grid-template-columns:${gridCols};width:100%;min-width:${minW}px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
+  let html = `<div style="display:grid;grid-template-columns:${gridCols};width:100%;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
 
   // Header row
   html += `<div style="background:var(--gy900);padding:10px 14px;border-right:1px solid rgba(255,255,255,.1);"></div>`;
