@@ -112,6 +112,9 @@ body.embed-mode #app-screen{min-height:100vh;}
 
 /* ── STORYBOARD ── */
 .sb-wrap{overflow-x:auto;width:100%;}
+#sb-grid{width:100%;}
+.sb-inner-grid{width:100%;}
+.sb-inner-grid>*{min-width:0;overflow:hidden;}
 .sb-grid{display:grid;min-width:900px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;}
 .sb-header{display:contents;}
 .sb-phase-head{background:var(--g800);color:white;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;border-right:1px solid rgba(255,255,255,.15);}
@@ -1684,7 +1687,7 @@ function renderStoryboard() {
   const gridCols = `${labelW}px ${Array(cols).fill(`minmax(${minColW}px,1fr)`).join(' ')}`;
   const minW = labelW + cols * minColW;
 
-  let html = `<div style="display:grid;grid-template-columns:${gridCols};width:100%;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
+  let html = `<div class="sb-inner-grid" style="display:grid;grid-template-columns:${gridCols};width:100%;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
 
   // Header row
   html += `<div style="background:var(--gy900);padding:10px 14px;border-right:1px solid rgba(255,255,255,.1);min-width:0;"></div>`;
