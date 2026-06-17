@@ -704,12 +704,10 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
 <!-- Roadmap item modal -->
 <div class="overlay" id="modal-item">
   <div class="modal" style="width:min(700px,96vw)">
-    <div class="modal-head"><span class="modal-title" id="mi-title">📝 Activiteit</span><button class="modal-close" onclick="closeModal('modal-item')">✕</button></div>
+    <div class="modal-head"><span class="modal-title" id="mi-title">📝 Activiteit</span><button class="btn btn-sm" id="mi-detail-btn-head" onclick="openActivityDetail()" style="display:none;background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;margin-left:auto;margin-right:8px;" title="Open volledig detail in nieuw tabblad">📂 Open detail</button><button class="modal-close" onclick="closeModal('modal-item')">✕</button></div>
     <div class="item-tabs">
       <button class="itab active" id="itab-btn-general" onclick="switchItemTab('general')">📋 Algemeen</button>
       <button class="itab" id="itab-btn-status" onclick="switchItemTab('status')">🚦 Status</button>
-      <button class="itab" id="itab-btn-aanpak" onclick="switchItemTab('aanpak')">🎯 Aanpak</button>
-      <button class="itab" id="itab-btn-hefboom" onclick="switchItemTab('hefboom')" style="display:none">⚙️ Hefboom</button>
     </div>
     <div class="modal-body" style="padding-top:16px;">
 
@@ -779,51 +777,9 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         </div>
       </div>
 
-      <!-- TAB 3: AANPAK -->
-      <div id="itab-aanpak" class="itab-panel">
-        <div class="field">
-          <label class="label">👤 Owner</label>
-          <input class="input" id="mi-owner" placeholder="Naam of team verantwoordelijk voor deze activiteit">
-        </div>
-        <hr class="sep">
-        <div class="toggle-row" style="gap:10px;">
-          <input type="checkbox" id="mi-other-roadmap" onchange="toggleOtherRoadmap()">
-          <span style="font-size:16px;">🔍</span>
-          <span class="toggle-label">Wordt beheerd in een andere roadmap</span>
-        </div>
-        <div id="mi-other-roadmap-wrap" style="display:none;padding-left:28px;margin-top:6px;">
-          <input class="input" id="mi-other-roadmap-name" placeholder="Naam van de andere roadmap…">
-        </div>
-        <hr class="sep">
-        <div class="field">
-          <label class="label">🔗 Dependencies <span style="font-weight:400;color:var(--gy500);">(afhankelijkheden)</span></label>
-          <div id="mi-deps-container" class="deps-scroll">
-            <div style="color:var(--gy400);font-size:12px;font-style:italic;">Laden…</div>
-          </div>
-        </div>
-        <hr class="sep">
-        <div class="field">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <label class="label" style="margin:0;">📋 Fasen van deze activiteit</label>
-            <button class="btn btn-sm btn-p" onclick="addItemPhase()">＋ Fase</button>
-          </div>
-          <div id="mi-phases-container"></div>
-        </div>
-      </div>
-
-      <!-- TAB 4: HEFBOOM -->
-      <div id="itab-hefboom" class="itab-panel">
-        <div class="field">
-          <label class="label">⚙️ Gekoppelde hefbomen</label>
-          <p style="font-size:12px;color:var(--gy500);margin-bottom:10px;">Selecteer de hefbomen waaraan deze activiteit bijdraagt. Meerdere zijn mogelijk.</p>
-          <div id="mi-hefboom-list" style="display:flex;flex-direction:column;gap:6px;"></div>
-        </div>
-      </div>
-
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger btn-sm" id="mi-del-btn" onclick="deleteItem()" style="margin-right:auto;display:none">🗑 Verwijder</button>
-      <button class="btn btn-s" id="mi-detail-btn" onclick="openActivityDetail()" style="display:none;background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;" title="Open volledig detail in nieuw venster">📂 Open detail</button>
       <button class="btn btn-s" onclick="closeModal('modal-item')">Annuleer</button>
       <button class="btn btn-p" onclick="saveItem()">Opslaan</button>
     </div>
@@ -1832,7 +1788,7 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
   editingItemId = mode === 'edit' ? id : null;
   document.getElementById('mi-title').textContent = mode === 'edit' ? '✏️ Activiteit bewerken' : '📝 Nieuwe activiteit';
   document.getElementById('mi-del-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
-  document.getElementById('mi-detail-btn').style.display = mode === 'edit' ? 'inline-flex' : 'none';
+  document.getElementById('mi-detail-btn-head').style.display = mode === 'edit' ? 'inline-flex' : 'none';
   switchItemTab('general');
 
   fillMonthYearSelects('mi-start-m','mi-start-y','mi-end-m','mi-end-y');
@@ -1840,12 +1796,6 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
   const psel = document.getElementById('mi-phase');
   psel.innerHTML = '<option value="">— Geen fase —</option>';
   phases.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = (p.icon ? p.icon+' ' : '') + p.name; psel.appendChild(o); });
-
-  // Hefboom tab — multi-select checkboxes
-  const proj = projects.find(p => p.id === currentProjectId);
-  const hbTab = document.getElementById('itab-btn-hefboom');
-  const showHbTab = proj && proj.strategic_mode && hefbomenData.length > 0;
-  if (hbTab) hbTab.style.display = showHbTab ? '' : 'none';
 
   if (mode === 'edit' && editingItemId) {
     const it = items.find(x => x.id === editingItemId);
@@ -1865,12 +1815,7 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     setHealthStatus(it.health_status || '');
     document.getElementById('mi-status-desc').value = '';
     // Tab 3
-    document.getElementById('mi-owner').value = it.owner || '';
-    renderHbCheckboxes(editingItemId);
-    document.getElementById('mi-other-roadmap').checked = !!it.managed_in_other_roadmap;
-    document.getElementById('mi-other-roadmap-name').value = it.other_roadmap_name || '';
-    document.getElementById('mi-other-roadmap-wrap').style.display = it.managed_in_other_roadmap ? 'block' : 'none';
-    itemPhasesTemp = Array.isArray(it.item_phases) ? JSON.parse(JSON.stringify(it.item_phases)) : [];
+
     loadStatusHistory(editingItemId);
   } else {
     document.getElementById('mi-name').value = '';
@@ -1885,15 +1830,12 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     document.getElementById('mi-history-wrap').style.display = 'none';
     psel.value = prefillPhaseId || '';
     fillTrackSubDropdown(prefillTrackId, prefillSubcatId);
-    document.getElementById('mi-owner').value = '';
+
     document.getElementById('mi-other-roadmap').checked = false;
     document.getElementById('mi-other-roadmap-name').value = '';
     document.getElementById('mi-other-roadmap-wrap').style.display = 'none';
-    itemPhasesTemp = [];
     itemStatusHistory = [];
-    renderHbCheckboxes(null);
   }
-  renderItemPhasesBuilder();
   document.getElementById('modal-item').classList.add('open');
 }
 
@@ -1917,15 +1859,25 @@ async function saveItem() {
     end_date: getDateFromMonthYear('mi-end-m','mi-end-y', true),
     status: newStatus,
     health_status: newHealth,
-    owner: document.getElementById('mi-owner').value.trim() || null,
-    managed_in_other_roadmap: document.getElementById('mi-other-roadmap').checked,
-    other_roadmap_name: document.getElementById('mi-other-roadmap-name').value.trim() || null,
-    dependencies: getDepsSelected(),
-    item_phases: itemPhasesTemp,
+    // Aanpak & hefboom worden beheerd vanuit de activiteit-detailpagina — bewaar huidige waarden
+    ...(editingItemId ? (() => {
+      const prev = items.find(x => x.id === editingItemId) || {};
+      return {
+        owner: prev.owner ?? null,
+        managed_in_other_roadmap: prev.managed_in_other_roadmap ?? false,
+        other_roadmap_name: prev.other_roadmap_name ?? null,
+        dependencies: prev.dependencies ?? [],
+        item_phases: prev.item_phases ?? [],
+      };
+    })() : {
+      owner: null,
+      managed_in_other_roadmap: false,
+      other_roadmap_name: null,
+      dependencies: [],
+      item_phases: [],
+    }),
     updated_at: new Date().toISOString()
   };
-  // Collect checked hefboom IDs from the multi-checkbox UI
-  const checkedHbIds = [...document.querySelectorAll('#mi-hefboom-list input[type=checkbox]:checked')].map(cb => cb.value);
 
   let savedItemId = editingItemId;
   if (editingItemId) {
@@ -1954,27 +1906,7 @@ async function saveItem() {
       }
     }
   }
-  // Sync hefboom junction table
-  if (savedItemId) {
-    const existingLinks = itemHefbomenLinks.filter(l => l.roadmap_item_id === savedItemId);
-    const existingHbIds = existingLinks.map(l => l.hefboom_id);
-    // Add new links
-    for (const hbId of checkedHbIds) {
-      if (!existingHbIds.includes(hbId)) {
-        const {data: nl} = await sb.from('roadmap_item_hefbomen').insert({
-          roadmap_item_id: savedItemId, hefboom_id: hbId, project_id: currentProjectId
-        }).select().single();
-        if (nl) itemHefbomenLinks.push(nl);
-      }
-    }
-    // Remove unchecked links
-    for (const link of existingLinks) {
-      if (!checkedHbIds.includes(link.hefboom_id)) {
-        await sb.from('roadmap_item_hefbomen').delete().eq('id', link.id);
-        itemHefbomenLinks = itemHefbomenLinks.filter(l => l.id !== link.id);
-      }
-    }
-  }
+  // Hefboom-koppeling wordt beheerd vanuit de activiteit-detailpagina
   closeModal('modal-item');
   renderStoryboard(); renderTimeline();
   if (document.getElementById('strategie-tab')?.classList.contains('active') || currentTab === 'strategie') renderStrategie();
@@ -1984,7 +1916,7 @@ async function saveItem() {
 function openActivityDetail() {
   if (!editingItemId) return;
   const base = location.href.replace(/\/[^/]*$/, '/');
-  window.open(base + 'activity-detail.html?id=' + editingItemId, '_blank', 'width=1100,height=800,noopener');
+  window.open(base + 'activity-detail.html?id=' + editingItemId, '_blank');
 }
 
 async function deleteItem() {
@@ -2072,14 +2004,12 @@ function renderHbCheckboxes(itemId) {
 
 // ── ITEM DETAIL HELPERS ──────────────────────────────────────
 function switchItemTab(tab) {
-  ['general','status','aanpak','hefboom'].forEach(t => {
+  ['general','status'].forEach(t => {
     const panel = document.getElementById(`itab-${t}`);
     const btn = document.getElementById(`itab-btn-${t}`);
     if (panel) panel.classList.toggle('active', t === tab);
     if (btn) btn.classList.toggle('active', t === tab);
   });
-  if (tab === 'aanpak') renderDepsMultiselect();
-  if (tab === 'hefboom') renderHbCheckboxes(editingItemId);
 }
 function toggleOtherRoadmap() {
   document.getElementById('mi-other-roadmap-wrap').style.display =
@@ -4061,9 +3991,7 @@ function toggleScCollapse(scId) {
 }
 
 function updateHefboomTabVisibility() {
-  const proj = projects.find(p => p.id === currentProjectId);
-  const show = proj && proj.strategic_mode && hefbomenData.length > 0;
-  document.getElementById('itab-btn-hefboom').style.display = show ? '' : 'none';
+  // Hefboom tab is verplaatst naar de activiteit-detailpagina
 }
 
 function buildHbTimeline(lts, kts, insps) {

@@ -135,6 +135,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #toast{position:fixed;bottom:24px;right:24px;background:var(--g800);color:white;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;}
 #toast.show{opacity:1;}
 
+/* ── DEPS ── */
+.deps-group-label{font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.05em;padding:8px 0 4px;}
+.dep-option{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:13px;}
+.dep-option:hover{background:var(--gy200);}
+.dep-option input{width:15px;height:15px;accent-color:var(--g700);cursor:pointer;}
+/* ── ITEM PHASES ── */
+.iph-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--gy200);}
+.iph-row:last-child{border-bottom:none;}
+.iph-name{flex:1;border:1px solid var(--gy300);border-radius:6px;padding:5px 8px;font-size:13px;font-family:inherit;}
+.iph-date{border:1px solid var(--gy300);border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;width:120px;}
+/* ── HEFBOOM ── */
+.hb-check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--gy200);border-radius:9px;margin-bottom:8px;background:white;cursor:pointer;}
+.hb-check-item:hover{border-color:var(--g400);}
+.hb-check-item input{width:16px;height:16px;accent-color:var(--g700);cursor:pointer;flex-shrink:0;margin-top:2px;}
+.hb-check-label{font-size:14px;font-weight:600;color:var(--gy900);}
+.hb-check-sub{font-size:12px;color:var(--gy500);margin-top:2px;}
+
 @media(max-width:600px){
   .row2{grid-template-columns:1fr;}
   .budget-grid{grid-template-columns:1fr;}
@@ -170,6 +187,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <!-- Tabs -->
   <div class="tabs" id="tabs">
     <button class="tab active" onclick="switchTab('basis')">📋 Basis-info</button>
+    <button class="tab" onclick="switchTab('aanpak')">🎯 Aanpak</button>
+    <button class="tab" id="tab-hefboom" onclick="switchTab('hefboom')" style="display:none">⚙️ Hefboom</button>
     <button class="tab" onclick="switchTab('taken')">✅ Taken <span class="cnt" id="cnt-taken">0</span></button>
     <button class="tab" onclick="switchTab('stakeholders')">🧑‍🤝‍🧑 Stakeholders <span class="cnt" id="cnt-sh">0</span></button>
     <button class="tab" onclick="switchTab('budget')">💰 Budget</button>
@@ -275,6 +294,56 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
       <div style="display:flex;justify-content:flex-end;">
         <button class="btn btn-p" onclick="saveBasis()">💾 Basis-info opslaan</button>
+      </div>
+    </div>
+
+    <!-- ══ TAB: AANPAK ══ -->
+    <div class="panel" id="panel-aanpak">
+      <div class="card">
+        <div class="card-title">👤 Owner & Roadmap</div>
+        <div class="field">
+          <label class="label">👤 Owner</label>
+          <input class="input" id="aanpak-owner" placeholder="Naam of team verantwoordelijk voor deze activiteit">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+          <input type="checkbox" id="aanpak-other-roadmap" style="width:15px;height:15px;accent-color:var(--g700);cursor:pointer;" onchange="document.getElementById('aanpak-other-roadmap-wrap').style.display=this.checked?'block':'none'">
+          <span style="font-size:15px;">🔍</span>
+          <span style="font-size:13px;font-weight:500;">Wordt beheerd in een andere roadmap</span>
+        </div>
+        <div id="aanpak-other-roadmap-wrap" style="display:none;padding-left:28px;margin-top:8px;">
+          <input class="input" id="aanpak-other-roadmap-name" placeholder="Naam van de andere roadmap…">
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">📋 Fasen van deze activiteit</div>
+          <button class="btn btn-p btn-sm" onclick="addAanpakPhase()">＋ Fase</button>
+        </div>
+        <div id="aanpak-phases-container">
+          <div class="empty">Nog geen fasen. Voeg er een toe.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔗 Dependencies <span style="font-size:11px;font-weight:400;color:var(--gy500);">(afhankelijkheden)</span></div>
+        <p style="font-size:12px;color:var(--gy500);margin-bottom:10px;">Vink de activiteiten aan waarvan deze activiteit afhankelijk is.</p>
+        <div id="aanpak-deps-container" style="max-height:300px;overflow-y:auto;border:1px solid var(--gy200);border-radius:8px;padding:8px 12px;background:var(--gy100);">
+          <div class="loading">Laden…</div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+        <button class="btn btn-p" onclick="saveAanpak()">💾 Aanpak opslaan</button>
+      </div>
+    </div>
+
+    <!-- ══ TAB: HEFBOOM ══ -->
+    <div class="panel" id="panel-hefboom">
+      <div class="card">
+        <div class="card-title">⚙️ Gekoppelde hefbomen</div>
+        <p style="font-size:12px;color:var(--gy500);margin-bottom:14px;">Selecteer de hefbomen waaraan deze activiteit bijdraagt. Meerdere zijn mogelijk.</p>
+        <div id="hefboom-list"><div class="loading">Hefbomen laden…</div></div>
       </div>
     </div>
 
@@ -1030,14 +1099,191 @@ async function deleteNote(id) {
   toast('🗑 Notitie verwijderd');
 }
 
+// ── AANPAK ───────────────────────────────────────
+let aanpakPhasesTemp = [];
+let allProjectItems = [];
+let hefbomenAll = [];
+let hefbomenLinks = []; // [{id, roadmap_item_id, hefboom_id}]
+
+async function loadAanpak() {
+  if (!currentItem) return;
+  // Owner
+  document.getElementById('aanpak-owner').value = currentItem.owner || '';
+  // Andere roadmap
+  const other = !!currentItem.managed_in_other_roadmap;
+  document.getElementById('aanpak-other-roadmap').checked = other;
+  document.getElementById('aanpak-other-roadmap-wrap').style.display = other ? 'block' : 'none';
+  document.getElementById('aanpak-other-roadmap-name').value = currentItem.other_roadmap_name || '';
+  // Item phases
+  aanpakPhasesTemp = Array.isArray(currentItem.item_phases) ? JSON.parse(JSON.stringify(currentItem.item_phases)) : [];
+  renderAanpakPhases();
+  // Dependencies — load all items for the project
+  const { data: projItems } = await sb.from('roadmap_items').select('id,title,track_id,subcategory_id').eq('project_id', currentItem.project_id).neq('id', itemId).order('title');
+  allProjectItems = projItems || [];
+  const { data: tracks } = await sb.from('tracks').select('id,name,color,icon').eq('project_id', currentItem.project_id).order('position');
+  const { data: subcats } = await sb.from('subcategories').select('id,name,track_id').eq('project_id', currentItem.project_id);
+  renderDeps(projItems || [], tracks || [], subcats || [], currentItem.dependencies || []);
+}
+
+function renderAanpakPhases() {
+  const c = document.getElementById('aanpak-phases-container');
+  if (!aanpakPhasesTemp.length) {
+    c.innerHTML = '<div class="empty">Nog geen fasen. Klik ＋ Fase.</div>';
+    return;
+  }
+  c.innerHTML = aanpakPhasesTemp.map((ph, i) => `
+    <div class="iph-row">
+      <input type="checkbox" style="width:16px;height:16px;accent-color:var(--g700);flex-shrink:0;" ${ph.completed?'checked':''}
+        onchange="aanpakPhasesTemp[${i}].completed=this.checked" title="Afgerond">
+      <input class="iph-name" value="${(ph.name||'').replace(/"/g,'&quot;')}" placeholder="Naam fase…"
+        oninput="aanpakPhasesTemp[${i}].name=this.value">
+      <input class="iph-date" type="date" value="${ph.start_date||''}" title="Start"
+        onchange="aanpakPhasesTemp[${i}].start_date=this.value">
+      <input class="iph-date" type="date" value="${ph.end_date||''}" title="Eind"
+        onchange="aanpakPhasesTemp[${i}].end_date=this.value">
+      <button class="btn btn-danger btn-sm" onclick="aanpakPhasesTemp.splice(${i},1);renderAanpakPhases()" title="Verwijder">✕</button>
+    </div>`).join('');
+}
+
+function addAanpakPhase() {
+  aanpakPhasesTemp.push({ id: Date.now().toString(), name: '', start_date: '', end_date: '', completed: false });
+  renderAanpakPhases();
+}
+
+function renderDeps(items, tracks, subcats, selectedIds) {
+  const c = document.getElementById('aanpak-deps-container');
+  const sel = new Set((selectedIds||[]).map(String));
+  if (!items.length) {
+    c.innerHTML = '<div class="empty" style="padding:12px;">Geen andere activiteiten in dit project.</div>';
+    return;
+  }
+  let html = '';
+  tracks.forEach(tr => {
+    const tItems = items.filter(i => i.track_id === tr.id);
+    if (!tItems.length) return;
+    html += `<div class="deps-group-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${tr.color||'#888'};margin-right:5px;"></span>${tr.icon||''} ${esc(tr.name)}</div>`;
+    const subs = subcats.filter(s => s.track_id === tr.id);
+    subs.forEach(sub => {
+      const sItems = tItems.filter(i => i.subcategory_id === sub.id);
+      if (!sItems.length) return;
+      html += `<div style="padding-left:10px;font-size:11px;color:var(--gy500);font-weight:600;margin-bottom:2px;">${esc(sub.name)}</div>`;
+      sItems.forEach(it => {
+        html += `<div class="dep-option" style="padding-left:20px;" onclick="document.getElementById('dep-${it.id}').click();event.stopPropagation()">
+          <input type="checkbox" id="dep-${it.id}" value="${it.id}" ${sel.has(it.id)?'checked':''} onclick="event.stopPropagation()">
+          <label for="dep-${it.id}" style="cursor:pointer;">${esc(it.title)}</label></div>`;
+      });
+    });
+    tItems.filter(i => !i.subcategory_id).forEach(it => {
+      html += `<div class="dep-option" style="padding-left:10px;" onclick="document.getElementById('dep-${it.id}').click();event.stopPropagation()">
+        <input type="checkbox" id="dep-${it.id}" value="${it.id}" ${sel.has(it.id)?'checked':''} onclick="event.stopPropagation()">
+        <label for="dep-${it.id}" style="cursor:pointer;">${esc(it.title)}</label></div>`;
+    });
+  });
+  const noTrack = items.filter(i => !i.track_id);
+  if (noTrack.length) {
+    html += `<div class="deps-group-label">Geen stream</div>`;
+    noTrack.forEach(it => {
+      html += `<div class="dep-option" onclick="document.getElementById('dep-${it.id}').click();event.stopPropagation()">
+        <input type="checkbox" id="dep-${it.id}" value="${it.id}" ${sel.has(it.id)?'checked':''} onclick="event.stopPropagation()">
+        <label for="dep-${it.id}" style="cursor:pointer;">${esc(it.title)}</label></div>`;
+    });
+  }
+  c.innerHTML = html;
+}
+
+async function saveAanpak() {
+  const deps = Array.from(document.querySelectorAll('#aanpak-deps-container input[type=checkbox]:checked')).map(c => c.value);
+  const updates = {
+    owner: document.getElementById('aanpak-owner').value.trim() || null,
+    managed_in_other_roadmap: document.getElementById('aanpak-other-roadmap').checked,
+    other_roadmap_name: document.getElementById('aanpak-other-roadmap-name').value.trim() || null,
+    dependencies: deps,
+    item_phases: aanpakPhasesTemp,
+    updated_at: new Date().toISOString()
+  };
+  const { error } = await sb.from('roadmap_items').update(updates).eq('id', itemId);
+  if (error) { toast('❌ ' + error.message); return; }
+  // Update cached currentItem
+  Object.assign(currentItem, updates);
+  // Update header owner if shown
+  toast('✅ Aanpak opgeslagen');
+}
+
+// ── HEFBOOM ──────────────────────────────────────
+async function loadHefboom() {
+  // Load hefbomen for this project (via strategic_changes)
+  const { data: sc } = await sb.from('strategic_changes').select('id,name').eq('project_id', currentItem.project_id);
+  if (!sc || !sc.length) {
+    document.getElementById('tab-hefboom').style.display = 'none';
+    return;
+  }
+  document.getElementById('tab-hefboom').style.display = '';
+  const scIds = sc.map(s => s.id);
+  const { data: hbs } = await sb.from('hefbomen').select('id,name,strategic_change_id').in('strategic_change_id', scIds).order('position');
+  hefbomenAll = hbs || [];
+  const { data: links } = await sb.from('roadmap_item_hefbomen').select('id,hefboom_id').eq('roadmap_item_id', itemId);
+  hefbomenLinks = links || [];
+  renderHefboom(sc, hbs || [], links || []);
+}
+
+function renderHefboom(sc, hbs, links) {
+  const el = document.getElementById('hefboom-list');
+  if (!hbs.length) { el.innerHTML = '<div class="empty">Geen hefbomen gevonden voor dit project.</div>'; return; }
+  const linkedIds = new Set(links.map(l => l.hefboom_id));
+  let html = '';
+  sc.forEach(s => {
+    const sHbs = hbs.filter(h => h.strategic_change_id === s.id);
+    if (!sHbs.length) return;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px;">${esc(s.name)}</div>`;
+    sHbs.forEach(hb => {
+      html += `<div class="hb-check-item" onclick="toggleHefboom('${hb.id}',this)">
+        <input type="checkbox" id="hb-${hb.id}" value="${hb.id}" ${linkedIds.has(hb.id)?'checked':''} onclick="event.stopPropagation();toggleHefboom('${hb.id}',this.closest('.hb-check-item'))">
+        <div>
+          <div class="hb-check-label">⚙️ ${esc(hb.name)}</div>
+        </div>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+async function toggleHefboom(hbId, rowEl) {
+  const cb = document.getElementById('hb-' + hbId);
+  const newChecked = !cb.checked;
+  cb.checked = newChecked;
+  if (newChecked) {
+    // Insert link
+    const { data } = await sb.from('roadmap_item_hefbomen').insert({
+      roadmap_item_id: itemId, hefboom_id: hbId, project_id: currentItem.project_id
+    }).select().single();
+    if (data) hefbomenLinks.push(data);
+    toast('✅ Hefboom gekoppeld');
+  } else {
+    // Remove link
+    const link = hefbomenLinks.find(l => l.hefboom_id === hbId);
+    if (link) {
+      await sb.from('roadmap_item_hefbomen').delete().eq('id', link.id);
+      hefbomenLinks = hefbomenLinks.filter(l => l.id !== link.id);
+    }
+    toast('🔓 Hefboom ontkoppeld');
+  }
+}
+
 // ── UI HELPERS ────────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
-  const tabMap = {basis:0,taken:1,stakeholders:2,budget:3,documenten:4,notities:5};
-  document.querySelectorAll('.tab')[tabMap[name]]?.classList.add('active');
+  // Find and activate the clicked tab button by matching onclick attribute
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.getAttribute('onclick') === `switchTab('${name}')`) t.classList.add('active');
+  });
+  // Lazy-load aanpak when first opened
+  if (name === 'aanpak' && !aanpakLoaded) { aanpakLoaded = true; loadAanpak(); }
+  if (name === 'hefboom' && !hefboomLoaded) { hefboomLoaded = true; loadHefboom(); }
 }
+let aanpakLoaded = false;
+let hefboomLoaded = false;
 
 function toast(msg) {
   const t = document.getElementById('toast');
