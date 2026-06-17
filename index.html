@@ -4017,7 +4017,7 @@ function renderStrategischTijdslijn() {
           const linkedIds = itemHefbomenLinks.filter(l => l.hefboom_id === hb.id).map(l => l.roadmap_item_id);
           const acts = items.filter(it => linkedIds.includes(it.id));
           const barCol = sub.color || tr.color || '#6B7280';
-          const lbl = `<span style="font-size:11px;color:var(--gy400);flex-shrink:0;">⚙️</span><span style="font-size:12px;font-weight:600;color:var(--gy800);padding-left:4px;flex:1;">${hb.name}</span><button onclick="event.stopPropagation();openAddItemPrefill('${tr.id}','${sub.id}',null)" title="Activiteit toevoegen aan deze subcategorie" style="flex-shrink:0;background:none;border:1px dashed var(--gy300);color:var(--gy500);border-radius:5px;padding:1px 7px;font-size:11px;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='var(--gy500)';this.style.color='var(--gy800)'" onmouseout="this.style.borderColor='var(--gy300)';this.style.color='var(--gy500)'">＋</button>`;
+          const lbl = `<span style="font-size:11px;color:var(--gy400);flex-shrink:0;">⚙️</span><span style="font-size:12px;font-weight:600;color:var(--gy800);padding-left:4px;flex:1;">${hb.name}</span><button onclick="event.stopPropagation();openHbLinkPicker('${hb.id}','${sub.id}',this)" title="Activiteit koppelen aan hefboom" style="flex-shrink:0;background:none;border:1px dashed var(--gy300);color:var(--gy500);border-radius:5px;padding:1px 7px;font-size:11px;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='var(--gy500)';this.style.color='var(--gy800)'" onmouseout="this.style.borderColor='var(--gy300)';this.style.color='var(--gy500)'">🔗</button>`;
           html += renderStlLane(lbl, acts, lts, kts, insps, barCol, 'white', 'padding-left:42px;display:flex;align-items:center;gap:4px;', `openHefboomModal('${hb.id}','${sc.id}')`);
         });
       });
@@ -4444,6 +4444,57 @@ async function linkItemToHefboom(itemId, hefboomId) {
   if (data) itemHefbomenLinks.push(data);
   renderStrategie(); renderStrategischTijdslijn(); toast('Gekoppeld aan ' + hb.name + ' ✓');
 }
+function openHbLinkPicker(hbId, subcatId, anchorBtn) {
+  // Remove any existing picker
+  document.getElementById('hb-link-picker')?.remove();
+
+  // Items in this subcategory not yet linked to this hefboom
+  const linkedIds = new Set(itemHefbomenLinks.filter(l => l.hefboom_id === hbId).map(l => l.roadmap_item_id));
+  const candidates = items.filter(it => it.subcategory_id === subcatId && !linkedIds.has(it.id))
+    .sort((a,b) => (a.title||'').localeCompare(b.title||''));
+
+  const popup = document.createElement('div');
+  popup.id = 'hb-link-picker';
+  popup.style.cssText = 'position:fixed;z-index:9999;background:white;border:1px solid var(--gy300);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);width:280px;max-height:320px;display:flex;flex-direction:column;overflow:hidden;';
+
+  const rect = anchorBtn.getBoundingClientRect();
+  popup.style.top  = (rect.bottom + 6) + 'px';
+  popup.style.left = Math.min(rect.left, window.innerWidth - 296) + 'px';
+
+  popup.innerHTML = `
+    <div style="padding:8px 10px;border-bottom:1px solid var(--gy200);font-size:12px;font-weight:700;color:var(--gy700);">🔗 Activiteit koppelen</div>
+    <input id="hb-link-search" placeholder="Zoeken…" style="margin:8px;padding:5px 8px;border:1px solid var(--gy300);border-radius:6px;font-size:12px;outline:none;" autocomplete="off">
+    <div id="hb-link-list" style="overflow-y:auto;flex:1;padding:0 6px 6px;">
+      ${candidates.length ? candidates.map(it => {
+        const st = it.status==='done'?'✓':it.status==='active'?'▶':'○';
+        return `<div onclick="linkItemToHefboom('${it.id}','${hbId}');document.getElementById('hb-link-picker')?.remove()"
+          style="padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--gy800);display:flex;align-items:center;gap:6px;"
+          onmouseover="this.style.background='var(--gy100)'" onmouseout="this.style.background=''"
+          data-title="${(it.title||'').toLowerCase()}">
+          <span style="font-size:10px;color:var(--gy400);">${st}</span>${it.title}
+        </div>`;
+      }).join('') : '<p style="font-size:12px;color:var(--gy400);padding:8px;text-align:center;">Geen activiteiten beschikbaar</p>'}
+    </div>`;
+
+  document.body.appendChild(popup);
+
+  // Live filter
+  popup.querySelector('#hb-link-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    popup.querySelectorAll('#hb-link-list [data-title]').forEach(el => {
+      el.style.display = el.dataset.title.includes(q) ? '' : 'none';
+    });
+  });
+  popup.querySelector('#hb-link-search').focus();
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function close(e) {
+      if (!popup.contains(e.target) && e.target !== anchorBtn) { popup.remove(); document.removeEventListener('click', close); }
+    });
+  }, 0);
+}
+
 async function unlinkItemFromHefboom(itemId, hefboomId) {
   await sb.from('roadmap_item_hefbomen').delete()
     .eq('roadmap_item_id', itemId).eq('hefboom_id', hefboomId);
