@@ -187,14 +187,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <!-- Tabs -->
   <div class="tabs" id="tabs">
     <button class="tab active" onclick="switchTab('basis')">📋 Basis-info</button>
-    <button class="tab" onclick="switchTab('status')">🚦 Status</button>
     <button class="tab" onclick="switchTab('aanpak')">🎯 Aanpak</button>
+    <button class="tab" onclick="switchTab('status')">🚦 Status</button>
     <button class="tab" id="tab-hefboom" onclick="switchTab('hefboom')" style="display:none">⚙️ Hefboom</button>
     <button class="tab" onclick="switchTab('taken')">✅ Taken <span class="cnt" id="cnt-taken">0</span></button>
     <button class="tab" onclick="switchTab('stakeholders')">🧑‍🤝‍🧑 Stakeholders <span class="cnt" id="cnt-sh">0</span></button>
-    <button class="tab" onclick="switchTab('budget')">💰 Budget</button>
     <button class="tab" onclick="switchTab('documenten')">📎 Documenten <span class="cnt" id="cnt-docs">0</span></button>
-    <button class="tab" onclick="switchTab('notities')">📝 Notities <span class="cnt" id="cnt-notes">0</span></button>
   </div>
 
   <div class="content">
@@ -266,7 +264,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
 
         <div style="font-size:12px;color:var(--gy500);margin-top:2px;">
-          Status opmerking & historiek → 🚦 Status tab &nbsp;|&nbsp; Owner & deliverables → 🎯 Aanpak tab
+          Owner & deliverables → 🎯 Aanpak tab &nbsp;|&nbsp; Status opmerking & historiek → 🚦 Status tab
         </div>
       </div>
 
@@ -421,61 +419,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!-- ══ TAB: BUDGET ══ -->
-    <div class="panel" id="panel-budget">
-      <div class="card">
-        <div class="card-title">💰 Budget Overzicht</div>
-        <div class="budget-grid" id="budget-summary" style="display:none;margin-bottom:20px;">
-          <div>
-            <div class="budget-num" id="bsum-total">—</div>
-            <div class="budget-label-sm">Budget totaal</div>
-          </div>
-          <div>
-            <div class="budget-num" id="bsum-used">—</div>
-            <div class="budget-label-sm">Reeds gebruikt</div>
-          </div>
-          <div>
-            <div class="budget-num" id="bsum-fte-est">—</div>
-            <div class="budget-label-sm">FTE estimate</div>
-          </div>
-          <div>
-            <div class="budget-num" id="bsum-fte-now">—</div>
-            <div class="budget-label-sm">FTE huidig</div>
-          </div>
-        </div>
-        <div id="budget-progress" style="display:none;margin-bottom:20px;">
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gy500);margin-bottom:4px;">
-            <span>Budgetverbruik</span><span id="bpct">0%</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" id="bbar" style="width:0%"></div></div>
-        </div>
-        <sep class="sep"></sep>
-        <div class="card-title" style="margin-top:4px;">✏️ Budget bewerken</div>
-        <div class="row2">
-          <div class="field"><label class="label">Budget totaal</label><input class="input" id="bg-total" type="number" step="0.01" placeholder="0.00"></div>
-          <div class="field"><label class="label">Budget gebruikt</label><input class="input" id="bg-used" type="number" step="0.01" placeholder="0.00"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label class="label">Valuta</label>
-            <select class="select" id="bg-currency">
-              <option value="EUR">€ EUR</option>
-              <option value="USD">$ USD</option>
-              <option value="GBP">£ GBP</option>
-            </select>
-          </div>
-          <div class="field"><label class="label">FTE estimate</label><input class="input" id="bg-fte-est" type="number" step="0.1" placeholder="bijv. 2.5"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label class="label">FTE huidig ingezet</label><input class="input" id="bg-fte-now" type="number" step="0.1" placeholder="bijv. 1.8"></div>
-          <div></div>
-        </div>
-        <div class="field"><label class="label">📝 Notities (budget)</label><textarea class="textarea" id="bg-notes" placeholder="Context rond budget, beperkingen, opmerkingen…"></textarea></div>
-        <div style="display:flex;justify-content:flex-end;">
-          <button class="btn btn-p" onclick="saveBudget()">💾 Budget opslaan</button>
-        </div>
-      </div>
-    </div>
-
     <!-- ══ TAB: DOCUMENTEN ══ -->
     <div class="panel" id="panel-documenten">
       <div class="card">
@@ -510,21 +453,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!-- ══ TAB: NOTITIES ══ -->
-    <div class="panel" id="panel-notities">
-      <div class="card">
-        <div class="card-title">📝 Notities & Logboek</div>
-        <div class="inline-form" style="margin-bottom:16px;">
-          <div class="field" style="margin-bottom:8px;"><label class="label">Nieuwe notitie</label>
-            <textarea class="textarea" id="note-new" placeholder="Schrijf een notitie, aantekening of logboekentry…" style="min-height:90px;"></textarea>
-          </div>
-          <div style="display:flex;justify-content:flex-end;">
-            <button class="btn btn-p btn-sm" onclick="saveNote()">➕ Toevoegen</button>
-          </div>
-        </div>
-        <div id="note-list"><div class="loading">Notities laden…</div></div>
-      </div>
-    </div>
 
   </div><!-- /content -->
 </div><!-- /app -->
@@ -573,9 +501,7 @@ async function loadAll() {
     loadItem(),
     loadTasks(),
     loadStakeholders(),
-    loadBudget(),
-    loadDocuments(),
-    loadNotes()
+    loadDocuments()
   ]);
 }
 
@@ -669,21 +595,28 @@ function fillMonthYear() {
 async function fillTrackSub(projectId, trackId, subcatId) {
   const el = document.getElementById('b-track-sub');
   el.innerHTML = '<option value="">— Kies stream —</option>';
-  const { data: tracks } = await sb.from('tracks').select('id,name,color,subcategories(id,name)').eq('project_id', projectId).order('position');
+  const { data: tracks } = await sb.from('tracks').select('id,name,icon,subcategories(id,name,icon)').eq('project_id', projectId).order('position');
   if (!tracks) return;
   tracks.forEach(t => {
-    if (!t.subcategories || t.subcategories.length === 0) {
-      const o = new Option(`${t.name}`, t.id + '|');
-      el.add(o);
+    const subs = t.subcategories || [];
+    if (subs.length === 0) {
+      const o = document.createElement('option');
+      o.value = t.id + '|';
+      o.textContent = (t.icon ? t.icon + ' ' : '') + t.name;
+      el.appendChild(o);
     } else {
-      t.subcategories.forEach(s => {
-        const o = new Option(`${t.name} › ${s.name}`, t.id + '|' + s.id);
-        el.add(o);
+      const grp = document.createElement('optgroup');
+      grp.label = (t.icon ? t.icon + ' ' : '') + t.name;
+      subs.forEach(s => {
+        const o = document.createElement('option');
+        o.value = t.id + '|' + s.id;
+        o.textContent = (s.icon ? s.icon + ' ' : '') + s.name;
+        grp.appendChild(o);
       });
+      el.appendChild(grp);
     }
   });
-  const val = (trackId || '') + '|' + (subcatId || '');
-  el.value = val;
+  el.value = (trackId || '') + '|' + (subcatId || '');
 }
 
 async function fillPhases(projectId, phaseId) {
@@ -910,54 +843,6 @@ async function deleteSh(id) {
   toast('🗑 Stakeholder verwijderd');
 }
 
-// ── BUDGET ────────────────────────────────────────
-async function loadBudget() {
-  const { data } = await sb.from('activity_budget').select('*').eq('item_id', itemId).single();
-  if (!data) return;
-  document.getElementById('bg-total').value = data.budget_total ?? '';
-  document.getElementById('bg-used').value = data.budget_used ?? '';
-  document.getElementById('bg-currency').value = data.budget_currency || 'EUR';
-  document.getElementById('bg-fte-est').value = data.fte_estimate ?? '';
-  document.getElementById('bg-fte-now').value = data.fte_current ?? '';
-  document.getElementById('bg-notes').value = data.budget_notes || '';
-  updateBudgetSummary(data);
-}
-
-function updateBudgetSummary(d) {
-  const sym = d.budget_currency === 'USD' ? '$' : d.budget_currency === 'GBP' ? '£' : '€';
-  const fmt = n => n != null ? sym + Number(n).toLocaleString('nl-BE',{minimumFractionDigits:0,maximumFractionDigits:0}) : '—';
-  document.getElementById('bsum-total').textContent = fmt(d.budget_total);
-  document.getElementById('bsum-used').textContent = fmt(d.budget_used);
-  document.getElementById('bsum-fte-est').textContent = d.fte_estimate != null ? d.fte_estimate + ' FTE' : '—';
-  document.getElementById('bsum-fte-now').textContent = d.fte_current != null ? d.fte_current + ' FTE' : '—';
-  document.getElementById('budget-summary').style.display = 'grid';
-  if (d.budget_total && d.budget_used != null) {
-    const pct = Math.min(100, Math.round(d.budget_used / d.budget_total * 100));
-    document.getElementById('bpct').textContent = pct + '%';
-    const bar = document.getElementById('bbar');
-    bar.style.width = pct + '%';
-    bar.classList.toggle('over', pct >= 100);
-    document.getElementById('budget-progress').style.display = 'block';
-  }
-}
-
-async function saveBudget() {
-  const payload = {
-    item_id: itemId, user_id: userId,
-    budget_total: parseFloat(document.getElementById('bg-total').value) || null,
-    budget_used: parseFloat(document.getElementById('bg-used').value) || null,
-    budget_currency: document.getElementById('bg-currency').value,
-    fte_estimate: parseFloat(document.getElementById('bg-fte-est').value) || null,
-    fte_current: parseFloat(document.getElementById('bg-fte-now').value) || null,
-    budget_notes: document.getElementById('bg-notes').value,
-    updated_at: new Date().toISOString()
-  };
-  const { error } = await sb.from('activity_budget').upsert(payload, {onConflict:'item_id'});
-  if (error) { toast('❌ ' + error.message); return; }
-  await loadBudget();
-  toast('✅ Budget opgeslagen');
-}
-
 // ── DOCUMENTS ─────────────────────────────────────
 async function loadDocuments() {
   const { data, error } = await sb.from('activity_documents').select('*').eq('item_id', itemId).order('position').order('created_at');
@@ -1026,59 +911,6 @@ async function deleteDoc(id) {
   await sb.from('activity_documents').delete().eq('id', id);
   await loadDocuments();
   toast('🗑 Document verwijderd');
-}
-
-// ── NOTES ─────────────────────────────────────────
-async function loadNotes() {
-  const { data, error } = await sb.from('activity_notes').select('*').eq('item_id', itemId).order('created_at', {ascending:false});
-  document.getElementById('cnt-notes').textContent = data ? data.length : 0;
-  if (error) { document.getElementById('note-list').innerHTML = '<div class="empty">Fout bij laden.</div>'; return; }
-  renderNotes(data || []);
-}
-
-function renderNotes(list) {
-  const el = document.getElementById('note-list');
-  if (list.length === 0) { el.innerHTML = '<div class="empty">Nog geen notities. Schrijf de eerste!</div>'; return; }
-  el.innerHTML = list.map(n => {
-    const d = new Date(n.created_at);
-    const ds = d.toLocaleDateString('nl-BE',{weekday:'long',day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    return `<div class="note-item" id="note-${n.id}">
-      <div class="note-date">${ds}</div>
-      <div class="note-content" id="nc-${n.id}">${esc(n.content)}</div>
-      <div class="note-actions">
-        <button class="btn btn-s btn-sm" onclick="editNote('${n.id}')">✏️ Bewerken</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}')">🗑 Verwijderen</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function saveNote() {
-  const content = document.getElementById('note-new').value.trim();
-  if (!content) { toast('❌ Notitie is leeg'); return; }
-  const { error } = await sb.from('activity_notes').insert({item_id:itemId, user_id:userId, content});
-  if (error) { toast('❌ ' + error.message); return; }
-  document.getElementById('note-new').value = '';
-  await loadNotes();
-  toast('✅ Notitie toegevoegd');
-}
-
-async function editNote(id) {
-  const { data } = await sb.from('activity_notes').select('*').eq('id', id).single();
-  if (!data) return;
-  const newContent = prompt('Notitie bewerken:', data.content);
-  if (newContent === null) return;
-  const { error } = await sb.from('activity_notes').update({content:newContent, updated_at:new Date().toISOString()}).eq('id', id);
-  if (error) { toast('❌ ' + error.message); return; }
-  await loadNotes();
-  toast('✅ Notitie bijgewerkt');
-}
-
-async function deleteNote(id) {
-  if (!confirm('Notitie verwijderen?')) return;
-  await sb.from('activity_notes').delete().eq('id', id);
-  await loadNotes();
-  toast('🗑 Notitie verwijderd');
 }
 
 // ── STATUS OPMERKING ─────────────────────────────
