@@ -3845,7 +3845,7 @@ function renderStrategischTijdslijn() {
     allForStack.forEach(({_id, _type, _start, _end}) => {
       const sp = dateToPercent(_start); if(sp===null)return;
       const ep = dateToPercent(_end);
-      const w = _type==='bar' ? Math.max(0.5,(ep||sp)-sp) : 2;
+      const w = _type==='bar' ? Math.max(0.5,(ep||sp)-sp) : 6;
       const effEnd = sp + w + 0.3;
       let rowIdx = 0; while(rowIdx < rowEnds.length && rowEnds[rowIdx] > sp) rowIdx++;
       rowEnds[rowIdx] = effEnd; barRows.set(_id, {sp, ep, w, rowIdx, _type});
@@ -3866,7 +3866,7 @@ function renderStrategischTijdslijn() {
       const safeTitle = (it.title||'').replace(/"/g,'&quot;');
       const fw = isActive ? 'font-weight:800;' : 'font-weight:600;';
       cells += `<div onclick="openModal('modal-item','${it.id}','edit')" title="${safeTitle}"
-        style="position:absolute;left:${sp}%;width:${Math.max(w,2)}%;height:${BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 10px;font-size:11px;color:white;background:${barColor};z-index:2;opacity:${isDone?'.75':'1'};${isDone?'text-decoration:line-through;':''}${fw}cursor:pointer;overflow:hidden;white-space:nowrap;box-sizing:border-box;"
+        style="position:absolute;left:${sp}%;width:${Math.min(Math.max(w,2), 100-sp).toFixed(1)}%;height:${BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 10px;font-size:11px;color:white;background:${barColor};z-index:2;opacity:${isDone?'.75':'1'};${isDone?'text-decoration:line-through;':''}${fw}cursor:pointer;overflow:hidden;white-space:nowrap;box-sizing:border-box;"
         onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">
         ${isActive?`<span style="margin-right:4px;font-size:9px;opacity:.9;">▶</span>`:''}
         ${it.key_activity?`<span style="margin-right:4px;font-size:10px;">⭐</span>`:''}
@@ -3948,50 +3948,67 @@ function renderStrategischTijdslijn() {
       </div>`;
       scs.forEach(sc => {
         const goalBadge = sc.goal_value != null ? ` <span style="font-size:10px;color:#D97706;font-weight:700;margin-left:4px;">🎯 ${sc.goal_value}${sc.goal_unit||''}</span>` : '';
-        // 🎯 goal marker on the timeline if goal_date exists
-        let scGoalMarker = '';
+
+        // Collect all SC-level markers, then stack them to prevent overlap
+        const scAllMarkers = [];
         if (sc.goal_date) {
           const gp = dateToPercent(sc.goal_date);
-          if (gp !== null && gp >= 0 && gp <= 100) {
-            const val = sc.goal_value != null ? `${sc.goal_value}${sc.goal_unit||''}` : '';
-            const safeLabel = (sc.name||'').replace(/"/g,'&quot;');
-            scGoalMarker = `<div style="position:absolute;left:${gp}%;top:50%;transform:translate(-50%,-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:default;" title="🎯 ${safeLabel}${val?' — '+val:''}">
-              <span style="font-size:15px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));">🎯</span>
-              ${val?`<span style="font-size:9px;font-weight:700;color:#D97706;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);">${val}</span>`:''}
-            </div>`;
-          }
+          if (gp !== null && gp >= 0 && gp <= 100)
+            scAllMarkers.push({ type:'goal', pct:gp, val: sc.goal_value != null ? `${sc.goal_value}${sc.goal_unit||''}` : '', label:(sc.name||'').replace(/"/g,'&quot;') });
         }
-        // 🏁 SC-level doelstellingen markers
-        let scDstMarkers = '';
         const scDstsForTl = ltDoelstellingen.filter(x => x.strategic_change_id === sc.id && !x.hefboom_id);
         scDstsForTl.forEach(d => {
           if (!d.end_date) return;
           const dp = dateToPercent(d.end_date);
           if (dp === null || dp < 0 || dp > 100) return;
-          const dVal = d.goal_value != null ? `${d.goal_value}${d.unit ? ' '+d.unit : ''}` : '';
-          const safeDesc = (d.description||'').replace(/"/g,'&quot;');
-          scDstMarkers += `<div style="position:absolute;left:${dp}%;top:50%;transform:translate(-50%,-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:default;" title="🏁 ${safeDesc}${dVal?' — '+dVal:''}">
-            <span style="font-size:13px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18));">🏁</span>
-            ${dVal?`<span style="font-size:9px;font-weight:700;color:#059669;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);">${dVal}</span>`:''}
-          </div>`;
-          // ◆ tussentijdse targets
+          scAllMarkers.push({ type:'lt', pct:dp, val: d.goal_value != null ? `${d.goal_value}${d.unit?' '+d.unit:''}` : '', label:(d.description||'').replace(/"/g,'&quot;') });
           ktTargets.filter(kt => kt.lt_doelstelling_id === d.id).forEach(t => {
             if (!t.target_date) return;
             const tp = dateToPercent(t.target_date);
             if (tp === null || tp < 0 || tp > 100) return;
-            const tVal = t.value != null ? `${t.value}${d.unit ? ' '+d.unit : ''}` : '';
-            scDstMarkers += `<div style="position:absolute;left:${tp}%;top:50%;transform:translate(-50%,-50%);z-index:3;cursor:default;" title="◆ Target${tVal?' '+tVal:''}">
-              <span style="font-size:10px;color:#7C3AED;font-weight:900;filter:drop-shadow(0 1px 1px rgba(0,0,0,.15));">◆</span>
-              ${tVal?`<div style="font-size:8px;font-weight:700;color:#7C3AED;white-space:nowrap;text-align:center;margin-top:-1px;">${tVal}</div>`:''}
-            </div>`;
+            scAllMarkers.push({ type:'kt', pct:tp, val: t.value != null ? `${t.value}${d.unit?' '+d.unit:''}` : '' });
           });
         });
-        const hasScMarkers = sc.goal_date || scDstsForTl.length;
-        html += `<div style="display:flex;border-bottom:1px solid var(--gy100);min-height:${hasScMarkers?'36':'24'}px;background:var(--gy50);align-items:center;">
+
+        // Stack markers by assigning rows
+        const MRK_VW = 7, MRK_H = 32, MRK_PAD = 4;
+        const mrkRowEnds = [];
+        scAllMarkers.sort((a,b) => a.pct - b.pct).forEach(m => {
+          const leftEdge = m.pct - MRK_VW / 2;
+          let rowIdx = 0;
+          while (rowIdx < mrkRowEnds.length && mrkRowEnds[rowIdx] > leftEdge) rowIdx++;
+          mrkRowEnds[rowIdx] = m.pct + MRK_VW / 2 + 0.5;
+          m.rowIdx = rowIdx;
+        });
+        const numMrkRows = Math.max(1, mrkRowEnds.length);
+        const scLaneH = scAllMarkers.length ? (MRK_PAD + numMrkRows * MRK_H + MRK_PAD) : 24;
+
+        let scMarkersHtml = '';
+        scAllMarkers.forEach(m => {
+          const top = MRK_PAD + m.rowIdx * MRK_H;
+          if (m.type === 'goal') {
+            scMarkersHtml += `<div style="position:absolute;left:${m.pct}%;top:${top}px;height:${MRK_H}px;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:default;" title="🎯 ${m.label}${m.val?' — '+m.val:''}">
+              <span style="font-size:15px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));">🎯</span>
+              ${m.val?`<span style="font-size:9px;font-weight:700;color:#D97706;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);">${m.val}</span>`:''}
+            </div>`;
+          } else if (m.type === 'lt') {
+            scMarkersHtml += `<div style="position:absolute;left:${m.pct}%;top:${top}px;height:${MRK_H}px;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:default;" title="🏁 ${m.label}${m.val?' — '+m.val:''}">
+              <span style="font-size:13px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18));">🏁</span>
+              ${m.val?`<span style="font-size:9px;font-weight:700;color:#059669;white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);">${m.val}</span>`:''}
+            </div>`;
+          } else if (m.type === 'kt') {
+            scMarkersHtml += `<div style="position:absolute;left:${m.pct}%;top:${top}px;height:${MRK_H}px;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:default;" title="◆ Target${m.val?' '+m.val:''}">
+              <div style="width:12px;height:12px;background:#F59E0B;transform:rotate(45deg);border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,.25);"></div>
+              ${m.val?`<div style="font-size:8px;font-weight:700;color:#7C3AED;white-space:nowrap;text-align:center;">${m.val}</div>`:''}
+            </div>`;
+          }
+        });
+
+        html += `<div style="display:flex;border-bottom:1px solid var(--gy100);min-height:${scLaneH}px;background:var(--gy50);align-items:center;">
           <div style="width:${LABEL_W}px;flex-shrink:0;padding:4px 12px 4px 28px;border-right:1px solid var(--gy200);display:flex;align-items:center;gap:5px;cursor:pointer;" onclick="openStrategicChangeModal('${sc.id}','${sc.subcategory_id}')" onmouseover="this.style.background='var(--gy100)'" onmouseout="this.style.background=''">
             <span style="font-size:11px;font-weight:700;color:var(--gy600);">${sc.name}</span>${goalBadge}
           </div>
-          <div style="flex:1;background:var(--gy50);position:relative;min-height:${hasScMarkers?'36':'24'}px;">${colGridLines()}${scGoalMarker}${scDstMarkers}</div>
+          <div style="flex:1;background:var(--gy50);position:relative;min-height:${scLaneH}px;">${colGridLines()}${scMarkersHtml}</div>
         </div>`;
         const hbs = hefbomenData.filter(hb => hb.strategic_change_id === sc.id);
         hbs.forEach(hb => {
