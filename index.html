@@ -3815,7 +3815,7 @@ function renderStrategischTijdslijn() {
 
   const todayPct = dateToPercent(new Date().toISOString().split('T')[0]);
 
-  function renderStlLane(labelHtml, laneItems, lts, kts, insps, barColor, bgColor, labelStyle) {
+  function renderStlLane(labelHtml, laneItems, lts, kts, insps, barColor, bgColor, labelStyle, labelOnClick) {
     // Filter items
     const visItems = laneItems.filter(it => {
       if (stlFilterStatuses.size && !stlFilterStatuses.has(it.status||'pending')) return false;
@@ -3908,8 +3908,11 @@ function renderStrategischTijdslijn() {
       </div>`;
     });
     cells += `</div>`;
+    const clickAttr = labelOnClick ? ` onclick="${labelOnClick}"` : '';
+    const clickStyle = labelOnClick ? 'cursor:pointer;' : '';
+    const hoverAttr = labelOnClick ? ` onmouseover="this.style.background='var(--gy100)'" onmouseout="this.style.background=''"` : '';
     return `<div style="display:flex;border-bottom:1px solid var(--gy200);background:${bgColor||'white'};align-items:stretch;">
-      <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;${labelStyle||''}">${labelHtml}</div>
+      <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;${labelStyle||''}${clickStyle}"${clickAttr}${hoverAttr}>${labelHtml}</div>
       ${cells}
     </div>`;
   }
@@ -3985,7 +3988,7 @@ function renderStrategischTijdslijn() {
         });
         const hasScMarkers = sc.goal_date || scDstsForTl.length;
         html += `<div style="display:flex;border-bottom:1px solid var(--gy100);min-height:${hasScMarkers?'36':'24'}px;background:var(--gy50);align-items:center;">
-          <div style="width:${LABEL_W}px;flex-shrink:0;padding:4px 12px 4px 28px;border-right:1px solid var(--gy200);display:flex;align-items:center;gap:5px;">
+          <div style="width:${LABEL_W}px;flex-shrink:0;padding:4px 12px 4px 28px;border-right:1px solid var(--gy200);display:flex;align-items:center;gap:5px;cursor:pointer;" onclick="openStrategicChangeModal('${sc.id}','${sc.subcategory_id}')" onmouseover="this.style.background='var(--gy100)'" onmouseout="this.style.background=''">
             <span style="font-size:11px;font-weight:700;color:var(--gy600);">${sc.name}</span>${goalBadge}
           </div>
           <div style="flex:1;background:var(--gy50);position:relative;min-height:${hasScMarkers?'36':'24'}px;">${colGridLines()}${scGoalMarker}${scDstMarkers}</div>
@@ -3999,7 +4002,7 @@ function renderStrategischTijdslijn() {
           const acts = items.filter(it => linkedIds.includes(it.id));
           const barCol = sub.color || tr.color || '#6B7280';
           const lbl = `<span style="font-size:11px;color:var(--gy400);flex-shrink:0;">⚙️</span><span style="font-size:12px;font-weight:600;color:var(--gy800);padding-left:4px;">${hb.name}</span>`;
-          html += renderStlLane(lbl, acts, lts, kts, insps, barCol, 'white', 'padding-left:42px;');
+          html += renderStlLane(lbl, acts, lts, kts, insps, barCol, 'white', 'padding-left:42px;', `openHefboomModal('${hb.id}','${sc.id}')`);
         });
       });
     });
