@@ -187,6 +187,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <!-- Tabs -->
   <div class="tabs" id="tabs">
     <button class="tab active" onclick="switchTab('basis')">📋 Basis-info</button>
+    <button class="tab" onclick="switchTab('status')">🚦 Status</button>
     <button class="tab" onclick="switchTab('aanpak')">🎯 Aanpak</button>
     <button class="tab" id="tab-hefboom" onclick="switchTab('hefboom')" style="display:none">⚙️ Hefboom</button>
     <button class="tab" onclick="switchTab('taken')">✅ Taken <span class="cnt" id="cnt-taken">0</span></button>
@@ -212,15 +213,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             ⭐ Key activity
           </label>
         </div>
-        <div class="row2">
-          <div class="field">
-            <label class="label">Context / Scope</label>
-            <textarea class="textarea" id="b-context" style="min-height:70px;" placeholder="Korte situatieschets…"></textarea>
-          </div>
-          <div class="field">
-            <label class="label">Deliverables</label>
-            <textarea class="textarea" id="b-deliverables" style="min-height:70px;" placeholder="Wat moet opgeleverd worden?"></textarea>
-          </div>
+        <div class="field">
+          <label class="label">Context / Scope</label>
+          <textarea class="textarea" id="b-context" style="min-height:70px;" placeholder="Korte situatieschets…" maxlength="30"></textarea>
         </div>
         <div class="row2">
           <div class="field">
@@ -273,15 +268,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <input type="hidden" id="b-health" value="">
           </div>
         </div>
-        <div class="field">
-          <label class="label">💬 Status opmerking</label>
-          <textarea class="textarea" id="b-status-desc" placeholder="Huidige situatie, blokkades, voortgang…"></textarea>
-          <div style="font-size:11px;color:var(--gy500);margin-top:4px;">Elke opmerking wordt bij opslaan als historiek bewaard.</div>
-        </div>
-        <div id="b-history-wrap" style="display:none;">
-          <div style="font-size:12px;font-weight:700;color:var(--gy700);margin:4px 0 8px;">📜 Historiek <span id="b-history-count" style="font-size:11px;color:var(--gy500);font-weight:400;"></span></div>
-          <div id="b-history-list" style="border:1px solid var(--gy200);border-radius:8px;padding:8px 12px;background:var(--gy100);max-height:200px;overflow-y:auto;"></div>
-        </div>
+        <div style="font-size:12px;color:var(--gy500);margin-top:4px;">Voeg een status opmerking toe via het 🚦 Status tabblad.</div>
       </div>
 
       <div class="card">
@@ -297,8 +284,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- ══ TAB: STATUS ══ -->
+    <div class="panel" id="panel-status">
+      <div class="card">
+        <div class="card-title">💬 Status opmerking</div>
+        <div class="field">
+          <textarea class="textarea" id="st-desc" placeholder="Wat is de huidige situatie? Blokkades, voortgang, wijzigingen…" style="min-height:110px;"></textarea>
+          <div style="font-size:11px;color:var(--gy500);margin-top:4px;">Elke opmerking wordt bij opslaan als historiek bewaard.</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+          <button class="btn btn-p" onclick="saveStatusOpmerking()">💾 Opmerking opslaan</button>
+        </div>
+      </div>
+      <div class="card" id="st-history-card" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">📜 Historiek</div>
+          <span id="st-history-count" style="font-size:11px;color:var(--gy500);"></span>
+        </div>
+        <div id="st-history-list"></div>
+      </div>
+    </div>
+
     <!-- ══ TAB: AANPAK ══ -->
     <div class="panel" id="panel-aanpak">
+      <div class="card">
+        <div class="card-title">📦 Verwachte deliverables</div>
+        <div class="field">
+          <textarea class="textarea" id="aanpak-deliverables" placeholder="Wat moet er concreet opgeleverd worden?" style="min-height:100px;"></textarea>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-title">👤 Owner & Roadmap</div>
         <div class="field">
@@ -613,10 +628,10 @@ async function loadItem() {
   document.getElementById('b-name').value = data.title || '';
   document.getElementById('b-key').checked = !!data.key_activity;
   document.getElementById('b-context').value = data.context_scope || '';
-  document.getElementById('b-deliverables').value = data.deliverables || '';
+  // deliverables worden beheerd in de Aanpak tab
   document.getElementById('b-status').value = data.status || 'pending';
   document.getElementById('b-health').value = data.health_status || '';
-  document.getElementById('b-status-desc').value = '';
+  // status opmerking beheerd in Status tab
   document.getElementById('b-owner').value = data.owner || '';
 
   setHealth(data.health_status || '');
@@ -687,20 +702,7 @@ async function fillPhases(projectId, phaseId) {
 }
 
 async function loadHistory() {
-  const { data: hist } = await sb.from('item_status_history').select('*').eq('item_id', itemId).order('created_at', {ascending:false}).limit(20);
-  if (!hist || hist.length === 0) { document.getElementById('b-history-wrap').style.display = 'none'; return; }
-  document.getElementById('b-history-wrap').style.display = 'block';
-  document.getElementById('b-history-count').textContent = `(${hist.length})`;
-  const statusLabel = {pending:'Te doen',active:'Actief',done:'Klaar'};
-  const healthLabel = {sunny:'☀️ Goed',partly_cloudy:'⛅ Aandacht',cloudy:'☁️ Problemen',stormy:'⛈️ Kritiek'};
-  document.getElementById('b-history-list').innerHTML = hist.map(h => {
-    const d = new Date(h.created_at);
-    const ds = d.toLocaleDateString('nl-BE', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    return `<div style="padding:8px 0;border-bottom:1px solid var(--gy200);font-size:12px;">
-      <div style="color:var(--gy500);margin-bottom:3px;">${ds} &nbsp;·&nbsp; <b>${statusLabel[h.status]||h.status}</b>${h.health_status?' &nbsp;·&nbsp; '+healthLabel[h.health_status]:''}</div>
-      ${h.description ? `<div style="color:var(--gy700);">${h.description}</div>` : ''}
-    </div>`;
-  }).join('');
+  // historiek wordt getoond in het Status tabblad
 }
 
 function setHealth(val) {
@@ -724,7 +726,7 @@ async function saveBasis() {
     title: name,
     key_activity: document.getElementById('b-key').checked,
     context_scope: document.getElementById('b-context').value,
-    deliverables: document.getElementById('b-deliverables').value,
+    deliverables: currentItem?.deliverables ?? null, // beheerd via Aanpak tab
     track_id: trackId || null,
     subcategory_id: subcatId || null,
     phase_id: document.getElementById('b-phase').value || null,
@@ -736,23 +738,10 @@ async function saveBasis() {
     updated_at: new Date().toISOString()
   };
 
-  const statusDesc = document.getElementById('b-status-desc').value.trim();
-  if (statusDesc) {
-    updates.status_description = statusDesc;
-    // Save to history
-    await sb.from('item_status_history').insert({
-      item_id: itemId,
-      user_id: userId,
-      status: updates.status,
-      health_status: updates.health_status || null,
-      description: statusDesc
-    });
-  }
-
   const { error } = await sb.update(updates).from('roadmap_items').eq('id', itemId);
   if (error) { toast('❌ Fout bij opslaan: ' + error.message); return; }
 
-  document.getElementById('b-status-desc').value = '';
+  // status opmerking beheerd in Status tab
   toast('✅ Basis-info opgeslagen');
   await loadItem();
 }
@@ -1099,6 +1088,54 @@ async function deleteNote(id) {
   toast('🗑 Notitie verwijderd');
 }
 
+// ── STATUS OPMERKING ─────────────────────────────
+let statusLoaded = false;
+
+async function loadStatus() {
+  const { data: hist } = await sb.from('item_status_history')
+    .select('*').eq('item_id', itemId).order('created_at', {ascending: false}).limit(30);
+  renderStatusHistory(hist || []);
+}
+
+function renderStatusHistory(hist) {
+  const card = document.getElementById('st-history-card');
+  const list = document.getElementById('st-history-list');
+  const count = document.getElementById('st-history-count');
+  if (!hist.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  count.textContent = `(${hist.length})`;
+  const statusLabel = {pending:'○ Te doen', active:'▶ Actief', done:'✓ Klaar'};
+  const healthLabel = {sunny:'☀️', partly_cloudy:'⛅', cloudy:'☁️', stormy:'⛈️'};
+  list.innerHTML = hist.map(h => {
+    const d = new Date(h.created_at);
+    const ds = d.toLocaleDateString('nl-BE', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--gy200);">
+      <div style="font-size:11px;color:var(--gy500);margin-bottom:4px;display:flex;gap:8px;align-items:center;">
+        <span>${ds}</span>
+        <span class="badge ${h.status==='done'?'badge-done':h.status==='active'?'badge-active':'badge-pending'}" style="font-size:10px;padding:1px 7px;">${statusLabel[h.status]||h.status}</span>
+        ${h.health_status ? `<span>${healthLabel[h.health_status]||''}</span>` : ''}
+      </div>
+      ${h.description ? `<div style="font-size:13px;color:var(--gy900);line-height:1.5;">${esc(h.description)}</div>` : '<div style="font-size:12px;color:var(--gy400);font-style:italic;">Geen opmerking</div>'}
+    </div>`;
+  }).join('');
+}
+
+async function saveStatusOpmerking() {
+  const desc = document.getElementById('st-desc').value.trim();
+  if (!desc) { toast('❌ Opmerking is leeg'); return; }
+  const { error } = await sb.from('item_status_history').insert({
+    item_id: itemId,
+    user_id: userId,
+    status: currentItem?.status || 'pending',
+    health_status: currentItem?.health_status || null,
+    description: desc
+  });
+  if (error) { toast('❌ ' + error.message); return; }
+  document.getElementById('st-desc').value = '';
+  await loadStatus();
+  toast('✅ Opmerking opgeslagen');
+}
+
 // ── AANPAK ───────────────────────────────────────
 let aanpakPhasesTemp = [];
 let allProjectItems = [];
@@ -1107,6 +1144,8 @@ let hefbomenLinks = []; // [{id, roadmap_item_id, hefboom_id}]
 
 async function loadAanpak() {
   if (!currentItem) return;
+  // Deliverables
+  document.getElementById('aanpak-deliverables').value = currentItem.deliverables || '';
   // Owner
   document.getElementById('aanpak-owner').value = currentItem.owner || '';
   // Andere roadmap
@@ -1194,6 +1233,7 @@ function renderDeps(items, tracks, subcats, selectedIds) {
 async function saveAanpak() {
   const deps = Array.from(document.querySelectorAll('#aanpak-deps-container input[type=checkbox]:checked')).map(c => c.value);
   const updates = {
+    deliverables: document.getElementById('aanpak-deliverables').value,
     owner: document.getElementById('aanpak-owner').value.trim() || null,
     managed_in_other_roadmap: document.getElementById('aanpak-other-roadmap').checked,
     other_roadmap_name: document.getElementById('aanpak-other-roadmap-name').value.trim() || null,
@@ -1278,7 +1318,8 @@ function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => {
     if (t.getAttribute('onclick') === `switchTab('${name}')`) t.classList.add('active');
   });
-  // Lazy-load aanpak when first opened
+  // Lazy-load tabs bij eerste bezoek
+  if (name === 'status' && !statusLoaded) { statusLoaded = true; loadStatus(); }
   if (name === 'aanpak' && !aanpakLoaded) { aanpakLoaded = true; loadAanpak(); }
   if (name === 'hefboom' && !hefboomLoaded) { hefboomLoaded = true; loadHefboom(); }
 }

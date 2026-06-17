@@ -707,7 +707,6 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div class="modal-head"><span class="modal-title" id="mi-title">📝 Activiteit</span><button class="btn btn-sm" id="mi-detail-btn-head" onclick="openActivityDetail()" style="display:none;background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;margin-left:auto;margin-right:8px;" title="Open volledig detail in nieuw tabblad">📂 Open detail</button><button class="modal-close" onclick="closeModal('modal-item')">✕</button></div>
     <div class="item-tabs">
       <button class="itab active" id="itab-btn-general" onclick="switchItemTab('general')">📋 Algemeen</button>
-      <button class="itab" id="itab-btn-status" onclick="switchItemTab('status')">🚦 Status</button>
     </div>
     <div class="modal-body" style="padding-top:16px;">
 
@@ -723,8 +722,26 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
             ⭐ Key activity
           </label>
         </div>
+        <div class="input-row">
+          <div class="field"><label class="label">Status</label>
+            <select class="select" id="mi-status">
+              <option value="pending">○ Te doen</option>
+              <option value="active">▶ Actief</option>
+              <option value="done">✓ Klaar</option>
+            </select>
+          </div>
+          <div class="field"><label class="label">Gezondheidsstatus</label>
+            <div style="display:flex;gap:6px;margin-top:4px;" id="mi-health-picker">
+              <button type="button" class="health-btn" data-val="" onclick="setHealthStatus('')" title="Geen">—</button>
+              <button type="button" class="health-btn" data-val="sunny" onclick="setHealthStatus('sunny')">☀️</button>
+              <button type="button" class="health-btn" data-val="partly_cloudy" onclick="setHealthStatus('partly_cloudy')">⛅</button>
+              <button type="button" class="health-btn" data-val="cloudy" onclick="setHealthStatus('cloudy')">☁️</button>
+              <button type="button" class="health-btn" data-val="stormy" onclick="setHealthStatus('stormy')">⛈️</button>
+            </div>
+            <input type="hidden" id="mi-health" value="">
+          </div>
+        </div>
         <div class="field"><label class="label" style="display:flex;justify-content:space-between;">Context / Scope <span id="mi-context-count" style="font-weight:400;color:var(--gy500);">0/30</span></label><textarea class="textarea" id="mi-context" placeholder="Korte situatieschets en afbakening…" style="min-height:60px;" maxlength="30" oninput="document.getElementById('mi-context-count').textContent=this.value.length+'/30'"></textarea></div>
-        <div class="field"><label class="label">Verwachte deliverables</label><textarea class="textarea" id="mi-deliverables" placeholder="Wat moet er concreet opgeleverd worden?"></textarea></div>
         <div class="field">
           <label class="label">Stream & Subcategorie</label>
           <select class="select" id="mi-track-sub"><option value="">— Kies stream —</option></select>
@@ -743,37 +760,6 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
               <select class="select" id="mi-end-y" style="width:88px;"><option value="">Jaar</option></select>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- TAB 2: STATUS -->
-      <div id="itab-status" class="itab-panel">
-        <div class="field"><label class="label">Status</label>
-          <select class="select" id="mi-status">
-            <option value="pending">○ Te doen</option>
-            <option value="active">▶ Actief</option>
-            <option value="done">✓ Klaar</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="label">Gezondheidsstatus</label>
-          <div style="display:flex;gap:8px;margin-top:4px;" id="mi-health-picker">
-            <button type="button" class="health-btn" data-val="" onclick="setHealthStatus('')" title="Geen status">—</button>
-            <button type="button" class="health-btn" data-val="sunny" onclick="setHealthStatus('sunny')" title="Goed op koers">☀️</button>
-            <button type="button" class="health-btn" data-val="partly_cloudy" onclick="setHealthStatus('partly_cloudy')" title="Kleine aandachtspunten">⛅</button>
-            <button type="button" class="health-btn" data-val="cloudy" onclick="setHealthStatus('cloudy')" title="Problemen in zicht">☁️</button>
-            <button type="button" class="health-btn" data-val="stormy" onclick="setHealthStatus('stormy')" title="Kritieke problemen">⛈️</button>
-          </div>
-          <input type="hidden" id="mi-health" value="">
-        </div>
-        <div class="field">
-          <label class="label">💬 Status opmerking</label>
-          <textarea class="textarea" id="mi-status-desc" placeholder="Wat is de huidige situatie? Blokkades, voortgang, wijzigingen…" style="min-height:90px;"></textarea>
-          <div style="font-size:11px;color:var(--gy500);margin-top:4px;">Elke opmerking wordt bij opslaan als historiek bewaard.</div>
-        </div>
-        <div id="mi-history-wrap" style="display:none;">
-          <div style="font-size:12px;font-weight:700;color:var(--gy700);margin:4px 0 8px;display:flex;align-items:center;gap:6px;">📜 Historiek <span id="mi-history-count" style="font-size:11px;color:var(--gy500);font-weight:400;"></span></div>
-          <div id="mi-history-list" style="border:1px solid var(--gy200);border-radius:8px;padding:8px 12px;background:var(--gy50,#f9fafb);max-height:260px;overflow-y:auto;"></div>
         </div>
       </div>
 
@@ -1804,7 +1790,7 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     document.getElementById('mi-name-count').textContent = it.title.length + '/30';
     document.getElementById('mi-context').value = it.context_scope || '';
     document.getElementById('mi-context-count').textContent = (it.context_scope||'').length + '/30';
-    document.getElementById('mi-deliverables').value = it.deliverables || '';
+    // deliverables beheerd in de activiteit-detailpagina
     document.getElementById('mi-key').checked = !!it.key_activity;
     psel.value = it.phase_id || '';
     fillTrackSubDropdown(it.track_id, it.subcategory_id);
@@ -1813,21 +1799,21 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     // Tab 2
     document.getElementById('mi-status').value = it.status || 'pending';
     setHealthStatus(it.health_status || '');
-    document.getElementById('mi-status-desc').value = '';
+    // status opmerking beheerd in de activiteit-detailpagina
     // Tab 3
 
-    loadStatusHistory(editingItemId);
+    // historiek wordt getoond in de activiteit-detailpagina
   } else {
     document.getElementById('mi-name').value = '';
     document.getElementById('mi-name-count').textContent = '0/30';
     document.getElementById('mi-context').value = '';
     document.getElementById('mi-context-count').textContent = '0/30';
-    document.getElementById('mi-deliverables').value = '';
+    // deliverables beheerd in de activiteit-detailpagina
     document.getElementById('mi-key').checked = false;
     document.getElementById('mi-status').value = 'pending';
     setHealthStatus('');
-    document.getElementById('mi-status-desc').value = '';
-    document.getElementById('mi-history-wrap').style.display = 'none';
+    // status opmerking beheerd in de activiteit-detailpagina
+    // historiek wordt getoond in de activiteit-detailpagina
     psel.value = prefillPhaseId || '';
     fillTrackSubDropdown(prefillTrackId, prefillSubcatId);
 
@@ -1846,11 +1832,11 @@ async function saveItem() {
   const [track_id, subcategory_id] = trackSubVal ? trackSubVal.split('|') : ['', ''];
   const newStatus = document.getElementById('mi-status').value;
   const newHealth = document.getElementById('mi-health').value || null;
-  const statusDesc = document.getElementById('mi-status-desc').value.trim();
+  const statusDesc = ''; // opmerking beheerd in de activiteit-detailpagina
   const data = {
     title,
     context_scope: document.getElementById('mi-context').value,
-    deliverables: document.getElementById('mi-deliverables').value,
+    deliverables: editingItemId ? (items.find(x=>x.id===editingItemId)?.deliverables ?? null) : null,
     key_activity: document.getElementById('mi-key').checked,
     track_id: track_id || null,
     subcategory_id: subcategory_id || null,
@@ -2004,7 +1990,7 @@ function renderHbCheckboxes(itemId) {
 
 // ── ITEM DETAIL HELPERS ──────────────────────────────────────
 function switchItemTab(tab) {
-  ['general','status'].forEach(t => {
+  ['general'].forEach(t => {
     const panel = document.getElementById(`itab-${t}`);
     const btn = document.getElementById(`itab-btn-${t}`);
     if (panel) panel.classList.toggle('active', t === tab);
@@ -2022,7 +2008,7 @@ async function loadStatusHistory(itemId) {
   renderStatusHistory();
 }
 function renderStatusHistory() {
-  const wrap = document.getElementById('mi-history-wrap');
+  const wrap = document.getElementById('mi-history-wrap'); if (!wrap) return;
   const list = document.getElementById('mi-history-list');
   if (!itemStatusHistory.length) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
