@@ -202,31 +202,52 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <!-- ══ TAB: BASIS-INFO ══ -->
     <div class="panel active" id="panel-basis">
       <div class="card">
-        <div class="card-title">📋 Algemeen</div>
         <div class="field">
-          <label class="label">Activiteit naam</label>
-          <input class="input" id="b-name" placeholder="Naam van de activiteit…">
+          <label class="label" style="display:flex;justify-content:space-between;">
+            Activiteit naam <span id="b-name-count" style="font-weight:400;color:var(--gy500);">0/50</span>
+          </label>
+          <input class="input" id="b-name" placeholder="Naam van de activiteit…" maxlength="50"
+            oninput="document.getElementById('b-name-count').textContent=this.value.length+'/50'">
         </div>
-        <div class="field">
-          <label class="label" style="display:flex;align-items:center;gap:8px;">
-            <input type="checkbox" id="b-key" style="width:15px;height:15px;accent-color:var(--g700);cursor:pointer;">
+
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--gy700);cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" id="b-key" style="width:15px;height:15px;accent-color:var(--g700);cursor:pointer;flex-shrink:0;">
             ⭐ Key activity
           </label>
+          <select class="select" id="b-status" style="flex:1;min-width:120px;max-width:160px;">
+            <option value="pending">○ Te doen</option>
+            <option value="active">▶ Actief</option>
+            <option value="done">✓ Klaar</option>
+          </select>
+          <div style="display:flex;gap:5px;align-items:center;">
+            <button type="button" class="health-btn" data-val="" onclick="setHealth('')" title="Geen">—</button>
+            <button type="button" class="health-btn" data-val="sunny" onclick="setHealth('sunny')">☀️</button>
+            <button type="button" class="health-btn" data-val="partly_cloudy" onclick="setHealth('partly_cloudy')">⛅</button>
+            <button type="button" class="health-btn" data-val="cloudy" onclick="setHealth('cloudy')">☁️</button>
+            <button type="button" class="health-btn" data-val="stormy" onclick="setHealth('stormy')">⛈️</button>
+          </div>
+          <input type="hidden" id="b-health" value="">
         </div>
+
         <div class="field">
-          <label class="label">Context / Scope</label>
-          <textarea class="textarea" id="b-context" style="min-height:70px;" placeholder="Korte situatieschets…" maxlength="30"></textarea>
+          <label class="label" style="display:flex;justify-content:space-between;">
+            Context / Scope <span id="b-context-count" style="font-weight:400;color:var(--gy500);">0/30</span>
+          </label>
+          <input class="input" id="b-context" placeholder="Korte situatieschets en afbakening…" maxlength="30"
+            oninput="document.getElementById('b-context-count').textContent=this.value.length+'/30'">
         </div>
-        <div class="row2">
-          <div class="field">
-            <label class="label">Stream & Subcategorie</label>
-            <select class="select" id="b-track-sub"><option value="">— Kies stream —</option></select>
-          </div>
-          <div class="field">
-            <label class="label">Fase</label>
-            <select class="select" id="b-phase"><option value="">— Geen fase —</option></select>
-          </div>
+
+        <div class="field">
+          <label class="label">Stream & Subcategorie</label>
+          <select class="select" id="b-track-sub"><option value="">— Kies stream —</option></select>
         </div>
+
+        <div class="field">
+          <label class="label">Fase</label>
+          <select class="select" id="b-phase"><option value="">— Geen fase —</option></select>
+        </div>
+
         <div class="row2">
           <div class="field">
             <label class="label">Startmaand</label>
@@ -243,39 +264,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="card-title">🚦 Status</div>
-        <div class="row2">
-          <div class="field">
-            <label class="label">Status</label>
-            <select class="select" id="b-status">
-              <option value="pending">○ Te doen</option>
-              <option value="active">▶ Actief</option>
-              <option value="done">✓ Klaar</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="label">Gezondheidsstatus</label>
-            <div style="display:flex;gap:8px;margin-top:4px;">
-              <button type="button" class="health-btn" data-val="" onclick="setHealth('')" title="Geen">—</button>
-              <button type="button" class="health-btn" data-val="sunny" onclick="setHealth('sunny')">☀️</button>
-              <button type="button" class="health-btn" data-val="partly_cloudy" onclick="setHealth('partly_cloudy')">⛅</button>
-              <button type="button" class="health-btn" data-val="cloudy" onclick="setHealth('cloudy')">☁️</button>
-              <button type="button" class="health-btn" data-val="stormy" onclick="setHealth('stormy')">⛈️</button>
-            </div>
-            <input type="hidden" id="b-health" value="">
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--gy500);margin-top:4px;">Voeg een status opmerking toe via het 🚦 Status tabblad.</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">🎯 Aanpak</div>
-        <div class="field">
-          <label class="label">👤 Owner</label>
-          <input class="input" id="b-owner" placeholder="Naam of team verantwoordelijk…">
+        <div style="font-size:12px;color:var(--gy500);margin-top:2px;">
+          Status opmerking & historiek → 🚦 Status tab &nbsp;|&nbsp; Owner & deliverables → 🎯 Aanpak tab
         </div>
       </div>
 
@@ -628,11 +619,13 @@ async function loadItem() {
   document.getElementById('b-name').value = data.title || '';
   document.getElementById('b-key').checked = !!data.key_activity;
   document.getElementById('b-context').value = data.context_scope || '';
+  document.getElementById('b-context-count').textContent = (data.context_scope || '').length + '/30';
+  document.getElementById('b-name-count').textContent = (data.title || '').length + '/50';
   // deliverables worden beheerd in de Aanpak tab
   document.getElementById('b-status').value = data.status || 'pending';
   document.getElementById('b-health').value = data.health_status || '';
   // status opmerking beheerd in Status tab
-  document.getElementById('b-owner').value = data.owner || '';
+  // owner beheerd in Aanpak tab
 
   setHealth(data.health_status || '');
 
@@ -734,7 +727,7 @@ async function saveBasis() {
     end_date: (em && ey) ? `${ey}-${String(em).padStart(2,'0')}-01` : null,
     status: document.getElementById('b-status').value,
     health_status: document.getElementById('b-health').value || null,
-    owner: document.getElementById('b-owner').value,
+    owner: currentItem?.owner ?? null, // owner beheerd in Aanpak tab
     updated_at: new Date().toISOString()
   };
 

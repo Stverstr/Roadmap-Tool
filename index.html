@@ -716,32 +716,28 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
           <label class="label" style="display:flex;justify-content:space-between;">Activiteit <span id="mi-name-count" style="font-weight:400;color:var(--gy500);">0/30</span></label>
           <input class="input" id="mi-name" placeholder="Naam van de activiteit…" maxlength="30" oninput="document.getElementById('mi-name-count').textContent=this.value.length+'/30'">
         </div>
-        <div class="field">
-          <label class="label" style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--gy700);cursor:pointer;white-space:nowrap;">
             <input type="checkbox" id="mi-key" style="width:15px;height:15px;accent-color:var(--g700);cursor:pointer;flex-shrink:0;">
             ⭐ Key activity
           </label>
-        </div>
-        <div class="input-row">
-          <div class="field"><label class="label">Status</label>
-            <select class="select" id="mi-status">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <select class="select" id="mi-status" style="width:auto;padding-right:28px;">
               <option value="pending">○ Te doen</option>
               <option value="active">▶ Actief</option>
               <option value="done">✓ Klaar</option>
             </select>
           </div>
-          <div class="field"><label class="label">Gezondheidsstatus</label>
-            <div style="display:flex;gap:6px;margin-top:4px;" id="mi-health-picker">
-              <button type="button" class="health-btn" data-val="" onclick="setHealthStatus('')" title="Geen">—</button>
-              <button type="button" class="health-btn" data-val="sunny" onclick="setHealthStatus('sunny')">☀️</button>
-              <button type="button" class="health-btn" data-val="partly_cloudy" onclick="setHealthStatus('partly_cloudy')">⛅</button>
-              <button type="button" class="health-btn" data-val="cloudy" onclick="setHealthStatus('cloudy')">☁️</button>
-              <button type="button" class="health-btn" data-val="stormy" onclick="setHealthStatus('stormy')">⛈️</button>
-            </div>
-            <input type="hidden" id="mi-health" value="">
+          <div style="display:flex;gap:5px;" id="mi-health-picker">
+            <button type="button" class="health-btn" data-val="" onclick="setHealthStatus('')" title="Geen">—</button>
+            <button type="button" class="health-btn" data-val="sunny" onclick="setHealthStatus('sunny')">☀️</button>
+            <button type="button" class="health-btn" data-val="partly_cloudy" onclick="setHealthStatus('partly_cloudy')">⛅</button>
+            <button type="button" class="health-btn" data-val="cloudy" onclick="setHealthStatus('cloudy')">☁️</button>
+            <button type="button" class="health-btn" data-val="stormy" onclick="setHealthStatus('stormy')">⛈️</button>
           </div>
+          <input type="hidden" id="mi-health" value="">
         </div>
-        <div class="field"><label class="label" style="display:flex;justify-content:space-between;">Context / Scope <span id="mi-context-count" style="font-weight:400;color:var(--gy500);">0/30</span></label><textarea class="textarea" id="mi-context" placeholder="Korte situatieschets en afbakening…" style="min-height:60px;" maxlength="30" oninput="document.getElementById('mi-context-count').textContent=this.value.length+'/30'"></textarea></div>
+        <div class="field"><label class="label" style="display:flex;justify-content:space-between;">Context / Scope <span id="mi-context-count" style="font-weight:400;color:var(--gy500);">0/30</span></label><input class="input" id="mi-context" placeholder="Korte situatieschets en afbakening…" maxlength="30" oninput="document.getElementById('mi-context-count').textContent=this.value.length+'/30'"></div>
         <div class="field">
           <label class="label">Stream & Subcategorie</label>
           <select class="select" id="mi-track-sub"><option value="">— Kies stream —</option></select>
