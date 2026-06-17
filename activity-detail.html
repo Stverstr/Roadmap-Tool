@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activiteit Detail — Roadmap Studio</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --g900:#1B4332;--g800:#2D6A4F;--g700:#40916C;--g600:#52B788;
+  --g400:#74C69D;--g200:#B7E4C7;--g100:#D8F3DC;--g50:#F0FFF4;
+  --gy900:#111827;--gy700:#374151;--gy500:#6B7280;
+  --gy300:#D1D5DB;--gy200:#E5E7EB;--gy100:#F3F4F6;--white:#FFFFFF;
+  --blue:#3B82F6;--purple:#7C3AED;--orange:#F59E0B;--red:#EF4444;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#EFF3F1;color:var(--gy700);min-height:100vh;}
+
+/* ── AUTH GATE ── */
+#gate{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--g900),var(--g700));}
+.gate-box{background:white;border-radius:14px;padding:36px;width:min(360px,94vw);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.gate-logo{font-size:22px;font-weight:800;color:var(--g800);margin-bottom:8px;}
+.gate-msg{font-size:14px;color:var(--gy500);line-height:1.5;}
+.gate-btn{display:inline-block;margin-top:18px;background:var(--g700);color:white;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;}
+
+/* ── HEADER ── */
+#app{display:none;min-height:100vh;}
+.hdr{background:var(--g800);color:white;padding:0 20px;display:flex;align-items:center;gap:10px;height:54px;box-shadow:0 2px 8px rgba(0,0,0,.25);position:sticky;top:0;z-index:200;}
+.hdr-back{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.hdr-back:hover{background:rgba(255,255,255,.25);}
+.hdr-title{font-size:15px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-proj{font-size:11px;opacity:.7;white-space:nowrap;}
+.hdr-badges{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.badge-done{background:var(--g200);color:var(--g900);}
+.badge-active{background:#DBEAFE;color:#1E40AF;}
+.badge-pending{background:var(--gy100);color:var(--gy700);}
+.hdr-save{background:var(--g600);border:none;color:white;border-radius:7px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.hdr-save:hover{background:var(--g400);}
+
+/* ── TABS ── */
+.tabs{background:white;border-bottom:2px solid var(--gy200);display:flex;padding:0 16px;position:sticky;top:54px;z-index:100;overflow-x:auto;}
+.tab{padding:11px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--gy500);border-bottom:3px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px;margin-bottom:-2px;transition:all .15s;}
+.tab:hover{color:var(--g700);}
+.tab.active{color:var(--g800);border-bottom-color:var(--g700);font-weight:700;}
+.cnt{background:var(--g200);color:var(--g800);border-radius:10px;font-size:10px;padding:1px 6px;font-weight:700;}
+
+/* ── CONTENT ── */
+.content{padding:22px;max-width:900px;margin:0 auto;}
+.panel{display:none;}.panel.active{display:block;}
+
+/* ── CARDS & FORMS ── */
+.card{background:white;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:16px;}
+.card-title{font-size:13px;font-weight:700;color:var(--gy900);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.field{margin-bottom:14px;}
+.label{font-size:12px;font-weight:600;color:var(--gy700);display:block;margin-bottom:5px;}
+.input{width:100%;border:1px solid var(--gy300);border-radius:8px;padding:8px 11px;font-size:14px;font-family:inherit;color:var(--gy900);}
+.input:focus{outline:none;border-color:var(--g600);box-shadow:0 0 0 3px rgba(64,145,108,.12);}
+.textarea{width:100%;border:1px solid var(--gy300);border-radius:8px;padding:8px 11px;font-size:14px;font-family:inherit;color:var(--gy900);min-height:80px;resize:vertical;}
+.textarea:focus{outline:none;border-color:var(--g600);box-shadow:0 0 0 3px rgba(64,145,108,.12);}
+.select{width:100%;border:1px solid var(--gy300);border-radius:8px;padding:8px 11px;font-size:14px;font-family:inherit;color:var(--gy900);background:white;}
+.select:focus{outline:none;border-color:var(--g600);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.sep{border:none;border-top:1px solid var(--gy200);margin:14px 0;}
+
+/* ── BUTTONS ── */
+.btn{border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.btn-p{background:var(--g700);color:white;}
+.btn-p:hover{background:var(--g800);}
+.btn-s{background:var(--gy100);color:var(--gy700);}
+.btn-s:hover{background:var(--gy200);}
+.btn-danger{background:#FEE2E2;color:var(--red);}
+.btn-danger:hover{background:#FECACA;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-icon{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:6px;color:var(--gy500);font-size:14px;}
+.btn-icon:hover{background:var(--gy100);}
+
+/* ── TASKS ── */
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:9px;border:1px solid var(--gy200);margin-bottom:8px;background:white;transition:border-color .15s;}
+.task-item:hover{border-color:var(--g400);}
+.task-check{width:16px;height:16px;accent-color:var(--g700);cursor:pointer;flex-shrink:0;margin-top:2px;}
+.task-body{flex:1;min-width:0;}
+.task-title{font-size:14px;font-weight:600;color:var(--gy900);word-break:break-word;}
+.task-title.done-text{text-decoration:line-through;color:var(--gy500);}
+.task-meta{font-size:11px;color:var(--gy500);margin-top:3px;display:flex;flex-wrap:wrap;gap:8px;}
+.prio-badge{padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;}
+.prio-high{background:#FEE2E2;color:#991B1B;}
+.prio-medium{background:#FEF3C7;color:#92400E;}
+.prio-low{background:var(--g100);color:var(--g800);}
+
+/* ── STAKEHOLDERS ── */
+.sh-card{padding:12px 14px;border:1px solid var(--gy200);border-radius:9px;background:white;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;}
+.sh-avatar{width:34px;height:34px;border-radius:50%;background:var(--g100);color:var(--g800);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+.sh-info{flex:1;min-width:0;}
+.sh-name{font-size:14px;font-weight:700;color:var(--gy900);}
+.sh-role{font-size:12px;color:var(--gy500);margin-top:2px;}
+.sh-email{font-size:12px;color:var(--blue);margin-top:2px;}
+.sh-notes{font-size:12px;color:var(--gy500);margin-top:4px;font-style:italic;}
+
+/* ── BUDGET ── */
+.budget-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.budget-num{font-size:24px;font-weight:800;color:var(--gy900);}
+.budget-label-sm{font-size:11px;color:var(--gy500);margin-top:2px;}
+.progress-bar{height:8px;border-radius:4px;background:var(--gy200);overflow:hidden;margin-top:8px;}
+.progress-fill{height:100%;border-radius:4px;background:var(--g600);transition:width .4s;}
+.progress-fill.over{background:var(--red);}
+
+/* ── DOCUMENTS ── */
+.doc-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gy200);border-radius:9px;background:white;margin-bottom:8px;}
+.doc-icon{font-size:18px;flex-shrink:0;}
+.doc-body{flex:1;min-width:0;}
+.doc-title{font-size:14px;font-weight:600;color:var(--gy900);}
+.doc-url{font-size:12px;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+.doc-url:hover{text-decoration:underline;}
+.doc-desc{font-size:12px;color:var(--gy500);margin-top:2px;}
+
+/* ── NOTES ── */
+.note-item{background:var(--gy50,#f9fafb);border:1px solid var(--gy200);border-radius:9px;padding:12px 14px;margin-bottom:8px;}
+.note-date{font-size:11px;color:var(--gy500);margin-bottom:6px;}
+.note-content{font-size:14px;color:var(--gy900);white-space:pre-wrap;line-height:1.5;}
+.note-actions{display:flex;gap:4px;margin-top:8px;}
+
+/* ── HEALTH PICKER ── */
+.health-btn{background:none;border:2px solid transparent;border-radius:8px;padding:4px 8px;font-size:18px;cursor:pointer;transition:all .15s;}
+.health-btn.active{border-color:var(--g600);background:var(--g50);}
+
+/* ── INLINE FORM ── */
+.inline-form{background:var(--gy50,#f9fafb);border:1px solid var(--gy200);border-radius:10px;padding:14px;margin-bottom:12px;}
+
+/* ── LOADING / EMPTY ── */
+.loading{text-align:center;padding:40px;color:var(--gy500);}
+.empty{text-align:center;padding:30px;color:var(--gy400);font-size:13px;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--g800);color:white;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;}
+#toast.show{opacity:1;}
+
+@media(max-width:600px){
+  .row2{grid-template-columns:1fr;}
+  .budget-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- Auth gate -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">🗺️ Roadmap Studio</div>
+    <p class="gate-msg">Controleren of je ingelogd bent…</p>
+    <a href="index.html" class="gate-btn" id="gate-link" style="display:none">← Open Roadmap Studio</a>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <!-- Header -->
+  <div class="hdr">
+    <button class="hdr-back" onclick="window.close()">← Sluiten</button>
+    <div style="flex:1;min-width:0;">
+      <div class="hdr-title" id="hdr-title">Activiteit laden…</div>
+      <div class="hdr-proj" id="hdr-proj"></div>
+    </div>
+    <div class="hdr-badges">
+      <span class="badge" id="hdr-health" style="display:none"></span>
+      <span class="badge" id="hdr-status"></span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabs">
+    <button class="tab active" onclick="switchTab('basis')">📋 Basis-info</button>
+    <button class="tab" onclick="switchTab('taken')">✅ Taken <span class="cnt" id="cnt-taken">0</span></button>
+    <button class="tab" onclick="switchTab('stakeholders')">🧑‍🤝‍🧑 Stakeholders <span class="cnt" id="cnt-sh">0</span></button>
+    <button class="tab" onclick="switchTab('budget')">💰 Budget</button>
+    <button class="tab" onclick="switchTab('documenten')">📎 Documenten <span class="cnt" id="cnt-docs">0</span></button>
+    <button class="tab" onclick="switchTab('notities')">📝 Notities <span class="cnt" id="cnt-notes">0</span></button>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ TAB: BASIS-INFO ══ -->
+    <div class="panel active" id="panel-basis">
+      <div class="card">
+        <div class="card-title">📋 Algemeen</div>
+        <div class="field">
+          <label class="label">Activiteit naam</label>
+          <input class="input" id="b-name" placeholder="Naam van de activiteit…">
+        </div>
+        <div class="field">
+          <label class="label" style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="b-key" style="width:15px;height:15px;accent-color:var(--g700);cursor:pointer;">
+            ⭐ Key activity
+          </label>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label class="label">Context / Scope</label>
+            <textarea class="textarea" id="b-context" style="min-height:70px;" placeholder="Korte situatieschets…"></textarea>
+          </div>
+          <div class="field">
+            <label class="label">Deliverables</label>
+            <textarea class="textarea" id="b-deliverables" style="min-height:70px;" placeholder="Wat moet opgeleverd worden?"></textarea>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label class="label">Stream & Subcategorie</label>
+            <select class="select" id="b-track-sub"><option value="">— Kies stream —</option></select>
+          </div>
+          <div class="field">
+            <label class="label">Fase</label>
+            <select class="select" id="b-phase"><option value="">— Geen fase —</option></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label class="label">Startmaand</label>
+            <div style="display:flex;gap:6px;">
+              <select class="select" id="b-start-m" style="flex:1;"><option value="">Maand</option></select>
+              <select class="select" id="b-start-y" style="width:88px;"><option value="">Jaar</option></select>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Eindmaand</label>
+            <div style="display:flex;gap:6px;">
+              <select class="select" id="b-end-m" style="flex:1;"><option value="">Maand</option></select>
+              <select class="select" id="b-end-y" style="width:88px;"><option value="">Jaar</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🚦 Status</div>
+        <div class="row2">
+          <div class="field">
+            <label class="label">Status</label>
+            <select class="select" id="b-status">
+              <option value="pending">○ Te doen</option>
+              <option value="active">▶ Actief</option>
+              <option value="done">✓ Klaar</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label">Gezondheidsstatus</label>
+            <div style="display:flex;gap:8px;margin-top:4px;">
+              <button type="button" class="health-btn" data-val="" onclick="setHealth('')" title="Geen">—</button>
+              <button type="button" class="health-btn" data-val="sunny" onclick="setHealth('sunny')">☀️</button>
+              <button type="button" class="health-btn" data-val="partly_cloudy" onclick="setHealth('partly_cloudy')">⛅</button>
+              <button type="button" class="health-btn" data-val="cloudy" onclick="setHealth('cloudy')">☁️</button>
+              <button type="button" class="health-btn" data-val="stormy" onclick="setHealth('stormy')">⛈️</button>
+            </div>
+            <input type="hidden" id="b-health" value="">
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">💬 Status opmerking</label>
+          <textarea class="textarea" id="b-status-desc" placeholder="Huidige situatie, blokkades, voortgang…"></textarea>
+          <div style="font-size:11px;color:var(--gy500);margin-top:4px;">Elke opmerking wordt bij opslaan als historiek bewaard.</div>
+        </div>
+        <div id="b-history-wrap" style="display:none;">
+          <div style="font-size:12px;font-weight:700;color:var(--gy700);margin:4px 0 8px;">📜 Historiek <span id="b-history-count" style="font-size:11px;color:var(--gy500);font-weight:400;"></span></div>
+          <div id="b-history-list" style="border:1px solid var(--gy200);border-radius:8px;padding:8px 12px;background:var(--gy100);max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎯 Aanpak</div>
+        <div class="field">
+          <label class="label">👤 Owner</label>
+          <input class="input" id="b-owner" placeholder="Naam of team verantwoordelijk…">
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;">
+        <button class="btn btn-p" onclick="saveBasis()">💾 Basis-info opslaan</button>
+      </div>
+    </div>
+
+    <!-- ══ TAB: TAKEN ══ -->
+    <div class="panel" id="panel-taken">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">✅ Taken & Actiepunten</div>
+          <button class="btn btn-p btn-sm" onclick="showTaskForm()">＋ Nieuwe taak</button>
+        </div>
+        <div id="task-form" style="display:none;">
+          <div class="inline-form">
+            <div class="field"><label class="label">Taak</label><input class="input" id="tf-title" placeholder="Beschrijving van de taak…"></div>
+            <div class="row2">
+              <div class="field"><label class="label">Owner</label><input class="input" id="tf-owner" placeholder="Verantwoordelijke…"></div>
+              <div class="field"><label class="label">Deadline</label><input class="input" id="tf-due" type="date"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label class="label">Prioriteit</label>
+                <select class="select" id="tf-priority">
+                  <option value="high">🔴 Hoog</option>
+                  <option value="medium" selected>🟡 Gemiddeld</option>
+                  <option value="low">🟢 Laag</option>
+                </select>
+              </div>
+              <div class="field"><label class="label">Status</label>
+                <select class="select" id="tf-status">
+                  <option value="todo">○ Te doen</option>
+                  <option value="in_progress">▶ In uitvoering</option>
+                  <option value="done">✓ Klaar</option>
+                </select>
+              </div>
+            </div>
+            <div class="field"><label class="label">Beschrijving (optioneel)</label><textarea class="textarea" id="tf-desc" placeholder="Extra context…" style="min-height:55px;"></textarea></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="btn btn-s btn-sm" onclick="hideTaskForm()">Annuleer</button>
+              <button class="btn btn-p btn-sm" onclick="saveTask()">Opslaan</button>
+            </div>
+          </div>
+        </div>
+        <div id="task-list"><div class="loading">Taken laden…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: STAKEHOLDERS ══ -->
+    <div class="panel" id="panel-stakeholders">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">🧑‍🤝‍🧑 Stakeholders & Betrokkenen</div>
+          <button class="btn btn-p btn-sm" onclick="showShForm()">＋ Stakeholder</button>
+        </div>
+        <div id="sh-form" style="display:none;">
+          <div class="inline-form">
+            <div class="row2">
+              <div class="field"><label class="label">Naam</label><input class="input" id="sf-name" placeholder="Volledige naam…"></div>
+              <div class="field"><label class="label">Rol</label><input class="input" id="sf-role" placeholder="bijv. Projectsponsor, Expert…"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label class="label">E-mail (optioneel)</label><input class="input" id="sf-email" type="email" placeholder="naam@organisatie.be"></div>
+              <div class="field"><label class="label">Notities (optioneel)</label><input class="input" id="sf-notes" placeholder="Extra info…"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="btn btn-s btn-sm" onclick="hideShForm()">Annuleer</button>
+              <button class="btn btn-p btn-sm" onclick="saveStakeholder()">Opslaan</button>
+            </div>
+          </div>
+        </div>
+        <div id="sh-list"><div class="loading">Stakeholders laden…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: BUDGET ══ -->
+    <div class="panel" id="panel-budget">
+      <div class="card">
+        <div class="card-title">💰 Budget Overzicht</div>
+        <div class="budget-grid" id="budget-summary" style="display:none;margin-bottom:20px;">
+          <div>
+            <div class="budget-num" id="bsum-total">—</div>
+            <div class="budget-label-sm">Budget totaal</div>
+          </div>
+          <div>
+            <div class="budget-num" id="bsum-used">—</div>
+            <div class="budget-label-sm">Reeds gebruikt</div>
+          </div>
+          <div>
+            <div class="budget-num" id="bsum-fte-est">—</div>
+            <div class="budget-label-sm">FTE estimate</div>
+          </div>
+          <div>
+            <div class="budget-num" id="bsum-fte-now">—</div>
+            <div class="budget-label-sm">FTE huidig</div>
+          </div>
+        </div>
+        <div id="budget-progress" style="display:none;margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gy500);margin-bottom:4px;">
+            <span>Budgetverbruik</span><span id="bpct">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="bbar" style="width:0%"></div></div>
+        </div>
+        <sep class="sep"></sep>
+        <div class="card-title" style="margin-top:4px;">✏️ Budget bewerken</div>
+        <div class="row2">
+          <div class="field"><label class="label">Budget totaal</label><input class="input" id="bg-total" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label class="label">Budget gebruikt</label><input class="input" id="bg-used" type="number" step="0.01" placeholder="0.00"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label class="label">Valuta</label>
+            <select class="select" id="bg-currency">
+              <option value="EUR">€ EUR</option>
+              <option value="USD">$ USD</option>
+              <option value="GBP">£ GBP</option>
+            </select>
+          </div>
+          <div class="field"><label class="label">FTE estimate</label><input class="input" id="bg-fte-est" type="number" step="0.1" placeholder="bijv. 2.5"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label class="label">FTE huidig ingezet</label><input class="input" id="bg-fte-now" type="number" step="0.1" placeholder="bijv. 1.8"></div>
+          <div></div>
+        </div>
+        <div class="field"><label class="label">📝 Notities (budget)</label><textarea class="textarea" id="bg-notes" placeholder="Context rond budget, beperkingen, opmerkingen…"></textarea></div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-p" onclick="saveBudget()">💾 Budget opslaan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: DOCUMENTEN ══ -->
+    <div class="panel" id="panel-documenten">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">📎 Documenten & Links</div>
+          <button class="btn btn-p btn-sm" onclick="showDocForm()">＋ Document</button>
+        </div>
+        <div id="doc-form" style="display:none;">
+          <div class="inline-form">
+            <div class="row2">
+              <div class="field"><label class="label">Titel</label><input class="input" id="df-title" placeholder="Naam van het document…"></div>
+              <div class="field"><label class="label">Type</label>
+                <select class="select" id="df-type">
+                  <option value="link">🔗 Link</option>
+                  <option value="sharepoint">📁 SharePoint</option>
+                  <option value="confluence">📘 Confluence</option>
+                  <option value="teams">💬 Teams</option>
+                  <option value="file">📄 Bestand</option>
+                  <option value="other">📎 Ander</option>
+                </select>
+              </div>
+            </div>
+            <div class="field"><label class="label">URL</label><input class="input" id="df-url" type="url" placeholder="https://…"></div>
+            <div class="field"><label class="label">Beschrijving (optioneel)</label><input class="input" id="df-desc" placeholder="Wat staat er in dit document?"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="btn btn-s btn-sm" onclick="hideDocForm()">Annuleer</button>
+              <button class="btn btn-p btn-sm" onclick="saveDoc()">Opslaan</button>
+            </div>
+          </div>
+        </div>
+        <div id="doc-list"><div class="loading">Documenten laden…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: NOTITIES ══ -->
+    <div class="panel" id="panel-notities">
+      <div class="card">
+        <div class="card-title">📝 Notities & Logboek</div>
+        <div class="inline-form" style="margin-bottom:16px;">
+          <div class="field" style="margin-bottom:8px;"><label class="label">Nieuwe notitie</label>
+            <textarea class="textarea" id="note-new" placeholder="Schrijf een notitie, aantekening of logboekentry…" style="min-height:90px;"></textarea>
+          </div>
+          <div style="display:flex;justify-content:flex-end;">
+            <button class="btn btn-p btn-sm" onclick="saveNote()">➕ Toevoegen</button>
+          </div>
+        </div>
+        <div id="note-list"><div class="loading">Notities laden…</div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<div id="toast"></div>
+
+<script>
+const SUPA_URL = 'https://uvodxrrxsxnjlinqrjlw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2b2R4cnJ4c3huamxpbnFyamx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjg4MzYsImV4cCI6MjA5NTEwNDgzNn0.1lX4o9zuV0VZJG7S53rdqfbRuic6YnT7g-YPnePavnI';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const MONTHS = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+const DOC_ICONS = {link:'🔗',sharepoint:'📁',confluence:'📘',teams:'💬',file:'📄',other:'📎'};
+
+let itemId = null;
+let userId = null;
+let currentItem = null;
+let editingTaskId = null;
+let editingShId = null;
+let editingDocId = null;
+let editingNoteId = null;
+
+// ── INIT ──────────────────────────────────────────
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    document.querySelector('.gate-msg').textContent = 'Je bent niet ingelogd. Open Roadmap Studio eerst.';
+    document.getElementById('gate-link').style.display = 'inline-block';
+    return;
+  }
+  userId = session.user.id;
+  const params = new URLSearchParams(location.search);
+  itemId = params.get('id');
+  if (!itemId) {
+    document.querySelector('.gate-msg').textContent = 'Geen activiteit opgegeven in de URL.';
+    document.getElementById('gate-link').style.display = 'inline-block';
+    return;
+  }
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  await loadAll();
+}
+
+async function loadAll() {
+  await Promise.all([
+    loadItem(),
+    loadTasks(),
+    loadStakeholders(),
+    loadBudget(),
+    loadDocuments(),
+    loadNotes()
+  ]);
+}
+
+// ── ITEM (BASIS) ───────────────────────────────────
+async function loadItem() {
+  const { data, error } = await sb.from('roadmap_items').select(`
+    *,
+    tracks(name,color),
+    subcategories(name),
+    phases(name)
+  `).eq('id', itemId).single();
+  if (error || !data) { toast('❌ Activiteit niet gevonden'); return; }
+  currentItem = data;
+
+  // Header
+  document.title = data.title + ' — Roadmap Studio';
+  document.getElementById('hdr-title').textContent = data.title || 'Naamloos';
+
+  // Load project name
+  if (data.project_id) {
+    const { data: proj } = await sb.from('projects').select('name').eq('id', data.project_id).single();
+    if (proj) document.getElementById('hdr-proj').textContent = proj.name;
+  }
+
+  // Status badge
+  const sBadge = document.getElementById('hdr-status');
+  const statusMap = {pending:'badge-pending',active:'badge-active',done:'badge-done'};
+  const statusLabel = {pending:'Te doen',active:'Actief',done:'Klaar'};
+  sBadge.className = 'badge ' + (statusMap[data.status] || 'badge-pending');
+  sBadge.textContent = statusLabel[data.status] || data.status;
+
+  // Health badge
+  const hBadge = document.getElementById('hdr-health');
+  const healthEmoji = {sunny:'☀️',partly_cloudy:'⛅',cloudy:'☁️',stormy:'⛈️'};
+  if (data.health_status && healthEmoji[data.health_status]) {
+    hBadge.style.display = '';
+    hBadge.textContent = healthEmoji[data.health_status];
+  } else { hBadge.style.display = 'none'; }
+
+  // Fill basis form
+  document.getElementById('b-name').value = data.title || '';
+  document.getElementById('b-key').checked = !!data.key_activity;
+  document.getElementById('b-context').value = data.context_scope || '';
+  document.getElementById('b-deliverables').value = data.deliverables || '';
+  document.getElementById('b-status').value = data.status || 'pending';
+  document.getElementById('b-health').value = data.health_status || '';
+  document.getElementById('b-status-desc').value = '';
+  document.getElementById('b-owner').value = data.owner || '';
+
+  setHealth(data.health_status || '');
+
+  // Month/year selects
+  fillMonthYear();
+  if (data.start_date) {
+    const [y,m] = data.start_date.split('-');
+    document.getElementById('b-start-m').value = parseInt(m);
+    document.getElementById('b-start-y').value = y;
+  }
+  if (data.end_date) {
+    const [y,m] = data.end_date.split('-');
+    document.getElementById('b-end-m').value = parseInt(m);
+    document.getElementById('b-end-y').value = y;
+  }
+
+  // Tracks/subcats
+  await fillTrackSub(data.project_id, data.track_id, data.subcategory_id);
+  // Phases
+  await fillPhases(data.project_id, data.phase_id);
+
+  // History
+  await loadHistory();
+}
+
+function fillMonthYear() {
+  const now = new Date();
+  const yr = now.getFullYear();
+  ['b-start-m','b-end-m'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.options.length > 1) return;
+    MONTHS.forEach((m,i) => { const o = new Option(m, i+1); el.add(o); });
+  });
+  ['b-start-y','b-end-y'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.options.length > 1) return;
+    for (let y = yr-2; y <= yr+5; y++) el.add(new Option(y, y));
+  });
+}
+
+async function fillTrackSub(projectId, trackId, subcatId) {
+  const el = document.getElementById('b-track-sub');
+  el.innerHTML = '<option value="">— Kies stream —</option>';
+  const { data: tracks } = await sb.from('tracks').select('id,name,color,subcategories(id,name)').eq('project_id', projectId).order('position');
+  if (!tracks) return;
+  tracks.forEach(t => {
+    if (!t.subcategories || t.subcategories.length === 0) {
+      const o = new Option(`${t.name}`, t.id + '|');
+      el.add(o);
+    } else {
+      t.subcategories.forEach(s => {
+        const o = new Option(`${t.name} › ${s.name}`, t.id + '|' + s.id);
+        el.add(o);
+      });
+    }
+  });
+  const val = (trackId || '') + '|' + (subcatId || '');
+  el.value = val;
+}
+
+async function fillPhases(projectId, phaseId) {
+  const el = document.getElementById('b-phase');
+  el.innerHTML = '<option value="">— Geen fase —</option>';
+  const { data: phases } = await sb.from('phases').select('id,name').eq('project_id', projectId).order('position');
+  if (phases) phases.forEach(p => el.add(new Option(p.name, p.id)));
+  if (phaseId) el.value = phaseId;
+}
+
+async function loadHistory() {
+  const { data: hist } = await sb.from('item_status_history').select('*').eq('item_id', itemId).order('created_at', {ascending:false}).limit(20);
+  if (!hist || hist.length === 0) { document.getElementById('b-history-wrap').style.display = 'none'; return; }
+  document.getElementById('b-history-wrap').style.display = 'block';
+  document.getElementById('b-history-count').textContent = `(${hist.length})`;
+  const statusLabel = {pending:'Te doen',active:'Actief',done:'Klaar'};
+  const healthLabel = {sunny:'☀️ Goed',partly_cloudy:'⛅ Aandacht',cloudy:'☁️ Problemen',stormy:'⛈️ Kritiek'};
+  document.getElementById('b-history-list').innerHTML = hist.map(h => {
+    const d = new Date(h.created_at);
+    const ds = d.toLocaleDateString('nl-BE', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--gy200);font-size:12px;">
+      <div style="color:var(--gy500);margin-bottom:3px;">${ds} &nbsp;·&nbsp; <b>${statusLabel[h.status]||h.status}</b>${h.health_status?' &nbsp;·&nbsp; '+healthLabel[h.health_status]:''}</div>
+      ${h.description ? `<div style="color:var(--gy700);">${h.description}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function setHealth(val) {
+  document.getElementById('b-health').value = val;
+  document.querySelectorAll('.health-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === val);
+  });
+}
+
+async function saveBasis() {
+  const name = document.getElementById('b-name').value.trim();
+  if (!name) { toast('❌ Naam is verplicht'); return; }
+
+  const [trackId, subcatId] = (document.getElementById('b-track-sub').value || '|').split('|');
+  const sm = document.getElementById('b-start-m').value;
+  const sy = document.getElementById('b-start-y').value;
+  const em = document.getElementById('b-end-m').value;
+  const ey = document.getElementById('b-end-y').value;
+
+  const updates = {
+    title: name,
+    key_activity: document.getElementById('b-key').checked,
+    context_scope: document.getElementById('b-context').value,
+    deliverables: document.getElementById('b-deliverables').value,
+    track_id: trackId || null,
+    subcategory_id: subcatId || null,
+    phase_id: document.getElementById('b-phase').value || null,
+    start_date: (sm && sy) ? `${sy}-${String(sm).padStart(2,'0')}-01` : null,
+    end_date: (em && ey) ? `${ey}-${String(em).padStart(2,'0')}-01` : null,
+    status: document.getElementById('b-status').value,
+    health_status: document.getElementById('b-health').value || null,
+    owner: document.getElementById('b-owner').value,
+    updated_at: new Date().toISOString()
+  };
+
+  const statusDesc = document.getElementById('b-status-desc').value.trim();
+  if (statusDesc) {
+    updates.status_description = statusDesc;
+    // Save to history
+    await sb.from('item_status_history').insert({
+      item_id: itemId,
+      user_id: userId,
+      status: updates.status,
+      health_status: updates.health_status || null,
+      description: statusDesc
+    });
+  }
+
+  const { error } = await sb.update(updates).from('roadmap_items').eq('id', itemId);
+  if (error) { toast('❌ Fout bij opslaan: ' + error.message); return; }
+
+  document.getElementById('b-status-desc').value = '';
+  toast('✅ Basis-info opgeslagen');
+  await loadItem();
+}
+
+// ── TASKS ─────────────────────────────────────────
+async function loadTasks() {
+  const { data, error } = await sb.from('activity_tasks').select('*').eq('item_id', itemId).order('position').order('created_at');
+  document.getElementById('cnt-taken').textContent = data ? data.length : 0;
+  if (error) { document.getElementById('task-list').innerHTML = '<div class="empty">Fout bij laden taken.</div>'; return; }
+  renderTasks(data || []);
+}
+
+function renderTasks(tasks) {
+  const el = document.getElementById('task-list');
+  if (tasks.length === 0) { el.innerHTML = '<div class="empty">Nog geen taken. Voeg er een toe!</div>'; return; }
+  el.innerHTML = tasks.map(t => {
+    const doneClass = t.status === 'done' ? 'done-text' : '';
+    const prioClass = t.priority === 'high' ? 'prio-high' : t.priority === 'low' ? 'prio-low' : 'prio-medium';
+    const prioLabel = t.priority === 'high' ? '🔴 Hoog' : t.priority === 'low' ? '🟢 Laag' : '🟡 Gemiddeld';
+    const statusLabel = {todo:'Te doen',in_progress:'In uitvoering',done:'Klaar'}[t.status] || t.status;
+    const due = t.due_date ? `📅 ${new Date(t.due_date+'T00:00:00').toLocaleDateString('nl-BE',{day:'2-digit',month:'short'})}` : '';
+    const owner = t.owner ? `👤 ${t.owner}` : '';
+    return `<div class="task-item" id="task-${t.id}">
+      <input type="checkbox" class="task-check" ${t.status==='done'?'checked':''} onchange="toggleTaskDone('${t.id}',this.checked)">
+      <div class="task-body">
+        <div class="task-title ${doneClass}">${esc(t.title)}</div>
+        ${t.description ? `<div style="font-size:12px;color:var(--gy500);margin-top:2px;">${esc(t.description)}</div>` : ''}
+        <div class="task-meta">
+          <span class="prio-badge ${prioClass}">${prioLabel}</span>
+          <span>${statusLabel}</span>
+          ${owner ? `<span>${owner}</span>` : ''}
+          ${due ? `<span>${due}</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:2px;">
+        <button class="btn-icon" onclick="editTask('${t.id}')" title="Bewerken">✏️</button>
+        <button class="btn-icon" onclick="deleteTask('${t.id}')" title="Verwijderen">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showTaskForm(task) {
+  editingTaskId = task ? task.id : null;
+  document.getElementById('tf-title').value = task ? task.title : '';
+  document.getElementById('tf-owner').value = task ? (task.owner||'') : '';
+  document.getElementById('tf-due').value = task ? (task.due_date||'') : '';
+  document.getElementById('tf-priority').value = task ? (task.priority||'medium') : 'medium';
+  document.getElementById('tf-status').value = task ? (task.status||'todo') : 'todo';
+  document.getElementById('tf-desc').value = task ? (task.description||'') : '';
+  document.getElementById('task-form').style.display = 'block';
+  document.getElementById('tf-title').focus();
+}
+function hideTaskForm() {
+  editingTaskId = null;
+  document.getElementById('task-form').style.display = 'none';
+}
+
+async function editTask(id) {
+  const { data } = await sb.from('activity_tasks').select('*').eq('id', id).single();
+  if (data) showTaskForm(data);
+  document.getElementById('task-form').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function saveTask() {
+  const title = document.getElementById('tf-title').value.trim();
+  if (!title) { toast('❌ Taaknaam is verplicht'); return; }
+  const payload = {
+    item_id: itemId, user_id: userId,
+    title,
+    owner: document.getElementById('tf-owner').value,
+    due_date: document.getElementById('tf-due').value || null,
+    priority: document.getElementById('tf-priority').value,
+    status: document.getElementById('tf-status').value,
+    description: document.getElementById('tf-desc').value
+  };
+  let error;
+  if (editingTaskId) {
+    ({ error } = await sb.from('activity_tasks').update(payload).eq('id', editingTaskId));
+  } else {
+    ({ error } = await sb.from('activity_tasks').insert(payload));
+  }
+  if (error) { toast('❌ ' + error.message); return; }
+  hideTaskForm();
+  await loadTasks();
+  toast('✅ Taak opgeslagen');
+}
+
+async function toggleTaskDone(id, checked) {
+  const status = checked ? 'done' : 'todo';
+  await sb.from('activity_tasks').update({status}).eq('id', id);
+  await loadTasks();
+}
+
+async function deleteTask(id) {
+  if (!confirm('Taak verwijderen?')) return;
+  await sb.from('activity_tasks').delete().eq('id', id);
+  await loadTasks();
+  toast('🗑 Taak verwijderd');
+}
+
+// ── STAKEHOLDERS ──────────────────────────────────
+async function loadStakeholders() {
+  const { data, error } = await sb.from('activity_stakeholders').select('*').eq('item_id', itemId).order('position').order('created_at');
+  document.getElementById('cnt-sh').textContent = data ? data.length : 0;
+  if (error) { document.getElementById('sh-list').innerHTML = '<div class="empty">Fout bij laden.</div>'; return; }
+  renderStakeholders(data || []);
+}
+
+function renderStakeholders(list) {
+  const el = document.getElementById('sh-list');
+  if (list.length === 0) { el.innerHTML = '<div class="empty">Nog geen stakeholders toegevoegd.</div>'; return; }
+  el.innerHTML = list.map(s => {
+    const initials = s.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    return `<div class="sh-card">
+      <div class="sh-avatar">${initials}</div>
+      <div class="sh-info">
+        <div class="sh-name">${esc(s.name)}</div>
+        ${s.role ? `<div class="sh-role">📌 ${esc(s.role)}</div>` : ''}
+        ${s.email ? `<div class="sh-email">✉️ <a href="mailto:${esc(s.email)}" style="color:var(--blue)">${esc(s.email)}</a></div>` : ''}
+        ${s.notes ? `<div class="sh-notes">${esc(s.notes)}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:2px;">
+        <button class="btn-icon" onclick="editSh('${s.id}')" title="Bewerken">✏️</button>
+        <button class="btn-icon" onclick="deleteSh('${s.id}')" title="Verwijderen">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showShForm(sh) {
+  editingShId = sh ? sh.id : null;
+  document.getElementById('sf-name').value = sh ? sh.name : '';
+  document.getElementById('sf-role').value = sh ? (sh.role||'') : '';
+  document.getElementById('sf-email').value = sh ? (sh.email||'') : '';
+  document.getElementById('sf-notes').value = sh ? (sh.notes||'') : '';
+  document.getElementById('sh-form').style.display = 'block';
+  document.getElementById('sf-name').focus();
+}
+function hideShForm() { editingShId = null; document.getElementById('sh-form').style.display = 'none'; }
+
+async function editSh(id) {
+  const { data } = await sb.from('activity_stakeholders').select('*').eq('id', id).single();
+  if (data) showShForm(data);
+}
+
+async function saveStakeholder() {
+  const name = document.getElementById('sf-name').value.trim();
+  if (!name) { toast('❌ Naam is verplicht'); return; }
+  const payload = {
+    item_id: itemId, user_id: userId,
+    name,
+    role: document.getElementById('sf-role').value,
+    email: document.getElementById('sf-email').value,
+    notes: document.getElementById('sf-notes').value
+  };
+  let error;
+  if (editingShId) {
+    ({ error } = await sb.from('activity_stakeholders').update(payload).eq('id', editingShId));
+  } else {
+    ({ error } = await sb.from('activity_stakeholders').insert(payload));
+  }
+  if (error) { toast('❌ ' + error.message); return; }
+  hideShForm();
+  await loadStakeholders();
+  toast('✅ Stakeholder opgeslagen');
+}
+
+async function deleteSh(id) {
+  if (!confirm('Stakeholder verwijderen?')) return;
+  await sb.from('activity_stakeholders').delete().eq('id', id);
+  await loadStakeholders();
+  toast('🗑 Stakeholder verwijderd');
+}
+
+// ── BUDGET ────────────────────────────────────────
+async function loadBudget() {
+  const { data } = await sb.from('activity_budget').select('*').eq('item_id', itemId).single();
+  if (!data) return;
+  document.getElementById('bg-total').value = data.budget_total ?? '';
+  document.getElementById('bg-used').value = data.budget_used ?? '';
+  document.getElementById('bg-currency').value = data.budget_currency || 'EUR';
+  document.getElementById('bg-fte-est').value = data.fte_estimate ?? '';
+  document.getElementById('bg-fte-now').value = data.fte_current ?? '';
+  document.getElementById('bg-notes').value = data.budget_notes || '';
+  updateBudgetSummary(data);
+}
+
+function updateBudgetSummary(d) {
+  const sym = d.budget_currency === 'USD' ? '$' : d.budget_currency === 'GBP' ? '£' : '€';
+  const fmt = n => n != null ? sym + Number(n).toLocaleString('nl-BE',{minimumFractionDigits:0,maximumFractionDigits:0}) : '—';
+  document.getElementById('bsum-total').textContent = fmt(d.budget_total);
+  document.getElementById('bsum-used').textContent = fmt(d.budget_used);
+  document.getElementById('bsum-fte-est').textContent = d.fte_estimate != null ? d.fte_estimate + ' FTE' : '—';
+  document.getElementById('bsum-fte-now').textContent = d.fte_current != null ? d.fte_current + ' FTE' : '—';
+  document.getElementById('budget-summary').style.display = 'grid';
+  if (d.budget_total && d.budget_used != null) {
+    const pct = Math.min(100, Math.round(d.budget_used / d.budget_total * 100));
+    document.getElementById('bpct').textContent = pct + '%';
+    const bar = document.getElementById('bbar');
+    bar.style.width = pct + '%';
+    bar.classList.toggle('over', pct >= 100);
+    document.getElementById('budget-progress').style.display = 'block';
+  }
+}
+
+async function saveBudget() {
+  const payload = {
+    item_id: itemId, user_id: userId,
+    budget_total: parseFloat(document.getElementById('bg-total').value) || null,
+    budget_used: parseFloat(document.getElementById('bg-used').value) || null,
+    budget_currency: document.getElementById('bg-currency').value,
+    fte_estimate: parseFloat(document.getElementById('bg-fte-est').value) || null,
+    fte_current: parseFloat(document.getElementById('bg-fte-now').value) || null,
+    budget_notes: document.getElementById('bg-notes').value,
+    updated_at: new Date().toISOString()
+  };
+  const { error } = await sb.from('activity_budget').upsert(payload, {onConflict:'item_id'});
+  if (error) { toast('❌ ' + error.message); return; }
+  await loadBudget();
+  toast('✅ Budget opgeslagen');
+}
+
+// ── DOCUMENTS ─────────────────────────────────────
+async function loadDocuments() {
+  const { data, error } = await sb.from('activity_documents').select('*').eq('item_id', itemId).order('position').order('created_at');
+  document.getElementById('cnt-docs').textContent = data ? data.length : 0;
+  if (error) { document.getElementById('doc-list').innerHTML = '<div class="empty">Fout bij laden.</div>'; return; }
+  renderDocuments(data || []);
+}
+
+function renderDocuments(list) {
+  const el = document.getElementById('doc-list');
+  if (list.length === 0) { el.innerHTML = '<div class="empty">Nog geen documenten of links toegevoegd.</div>'; return; }
+  el.innerHTML = list.map(d => `<div class="doc-item">
+    <div class="doc-icon">${DOC_ICONS[d.doc_type] || '📎'}</div>
+    <div class="doc-body">
+      <div class="doc-title">${esc(d.title)}</div>
+      ${d.url ? `<div class="doc-url" onclick="window.open('${esc(d.url)}','_blank')">${esc(d.url)}</div>` : ''}
+      ${d.description ? `<div class="doc-desc">${esc(d.description)}</div>` : ''}
+    </div>
+    <div style="display:flex;gap:2px;">
+      <button class="btn-icon" onclick="editDoc('${d.id}')" title="Bewerken">✏️</button>
+      <button class="btn-icon" onclick="deleteDoc('${d.id}')" title="Verwijderen">🗑</button>
+    </div>
+  </div>`).join('');
+}
+
+function showDocForm(doc) {
+  editingDocId = doc ? doc.id : null;
+  document.getElementById('df-title').value = doc ? doc.title : '';
+  document.getElementById('df-type').value = doc ? (doc.doc_type||'link') : 'link';
+  document.getElementById('df-url').value = doc ? (doc.url||'') : '';
+  document.getElementById('df-desc').value = doc ? (doc.description||'') : '';
+  document.getElementById('doc-form').style.display = 'block';
+  document.getElementById('df-title').focus();
+}
+function hideDocForm() { editingDocId = null; document.getElementById('doc-form').style.display = 'none'; }
+
+async function editDoc(id) {
+  const { data } = await sb.from('activity_documents').select('*').eq('id', id).single();
+  if (data) showDocForm(data);
+}
+
+async function saveDoc() {
+  const title = document.getElementById('df-title').value.trim();
+  if (!title) { toast('❌ Titel is verplicht'); return; }
+  const payload = {
+    item_id: itemId, user_id: userId,
+    title,
+    doc_type: document.getElementById('df-type').value,
+    url: document.getElementById('df-url').value,
+    description: document.getElementById('df-desc').value
+  };
+  let error;
+  if (editingDocId) {
+    ({ error } = await sb.from('activity_documents').update(payload).eq('id', editingDocId));
+  } else {
+    ({ error } = await sb.from('activity_documents').insert(payload));
+  }
+  if (error) { toast('❌ ' + error.message); return; }
+  hideDocForm();
+  await loadDocuments();
+  toast('✅ Document opgeslagen');
+}
+
+async function deleteDoc(id) {
+  if (!confirm('Document verwijderen?')) return;
+  await sb.from('activity_documents').delete().eq('id', id);
+  await loadDocuments();
+  toast('🗑 Document verwijderd');
+}
+
+// ── NOTES ─────────────────────────────────────────
+async function loadNotes() {
+  const { data, error } = await sb.from('activity_notes').select('*').eq('item_id', itemId).order('created_at', {ascending:false});
+  document.getElementById('cnt-notes').textContent = data ? data.length : 0;
+  if (error) { document.getElementById('note-list').innerHTML = '<div class="empty">Fout bij laden.</div>'; return; }
+  renderNotes(data || []);
+}
+
+function renderNotes(list) {
+  const el = document.getElementById('note-list');
+  if (list.length === 0) { el.innerHTML = '<div class="empty">Nog geen notities. Schrijf de eerste!</div>'; return; }
+  el.innerHTML = list.map(n => {
+    const d = new Date(n.created_at);
+    const ds = d.toLocaleDateString('nl-BE',{weekday:'long',day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div class="note-item" id="note-${n.id}">
+      <div class="note-date">${ds}</div>
+      <div class="note-content" id="nc-${n.id}">${esc(n.content)}</div>
+      <div class="note-actions">
+        <button class="btn btn-s btn-sm" onclick="editNote('${n.id}')">✏️ Bewerken</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}')">🗑 Verwijderen</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function saveNote() {
+  const content = document.getElementById('note-new').value.trim();
+  if (!content) { toast('❌ Notitie is leeg'); return; }
+  const { error } = await sb.from('activity_notes').insert({item_id:itemId, user_id:userId, content});
+  if (error) { toast('❌ ' + error.message); return; }
+  document.getElementById('note-new').value = '';
+  await loadNotes();
+  toast('✅ Notitie toegevoegd');
+}
+
+async function editNote(id) {
+  const { data } = await sb.from('activity_notes').select('*').eq('id', id).single();
+  if (!data) return;
+  const newContent = prompt('Notitie bewerken:', data.content);
+  if (newContent === null) return;
+  const { error } = await sb.from('activity_notes').update({content:newContent, updated_at:new Date().toISOString()}).eq('id', id);
+  if (error) { toast('❌ ' + error.message); return; }
+  await loadNotes();
+  toast('✅ Notitie bijgewerkt');
+}
+
+async function deleteNote(id) {
+  if (!confirm('Notitie verwijderen?')) return;
+  await sb.from('activity_notes').delete().eq('id', id);
+  await loadNotes();
+  toast('🗑 Notitie verwijderd');
+}
+
+// ── UI HELPERS ────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  const tabMap = {basis:0,taken:1,stakeholders:2,budget:3,documenten:4,notities:5};
+  document.querySelectorAll('.tab')[tabMap[name]]?.classList.add('active');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── HISTORY TABLE (check if exists) ──────────────
+async function ensureHistoryTable() {
+  // item_status_history is the correct table name
+}
+
+// Patch loadHistory to handle missing table gracefully
+const _origLoadHistory = loadHistory;
+async function loadHistory() {
+  try { await _origLoadHistory(); } catch(e) {
+    document.getElementById('b-history-wrap').style.display = 'none';
+  }
+}
+
+// ── KICK OFF ──────────────────────────────────────
+init();
+</script>
+</body>
+</html>
