@@ -2008,9 +2008,8 @@ function renderHbCheckboxes(itemId) {
     const checked = checkedIds.has(hb.id) ? 'checked' : '';
     const bg = checked ? '#FFFBF0' : 'white';
     const border = checked ? 'var(--orange)' : 'var(--gy200)';
-    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid ${border};background:${bg};cursor:pointer;margin-bottom:4px;transition:all .1s;"
-      onclick="this.querySelector('input').click();event.preventDefault();">
-      <input type="checkbox" value="${hb.id}" ${checked} style="accent-color:var(--orange);width:15px;height:15px;cursor:pointer;"
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid ${border};background:${bg};cursor:pointer;margin-bottom:4px;transition:all .1s;">
+      <input type="checkbox" value="${hb.id}" ${checked} style="accent-color:var(--orange);width:15px;height:15px;cursor:pointer;flex-shrink:0;"
         onchange="this.closest('label').style.borderColor=this.checked?'var(--orange)':'var(--gy200)';this.closest('label').style.background=this.checked?'#FFFBF0':'white'">
       <div style="flex:1;">
         <span style="font-size:13px;font-weight:600;color:var(--gy800);">⚙️ ${hb.name}</span>
@@ -4018,8 +4017,8 @@ function renderStrategischTijdslijn() {
           const linkedIds = itemHefbomenLinks.filter(l => l.hefboom_id === hb.id).map(l => l.roadmap_item_id);
           const acts = items.filter(it => linkedIds.includes(it.id));
           const barCol = sub.color || tr.color || '#6B7280';
-          const lbl = `<span style="font-size:11px;color:var(--gy400);flex-shrink:0;">⚙️</span><span style="font-size:12px;font-weight:600;color:var(--gy800);padding-left:4px;">${hb.name}</span>`;
-          html += renderStlLane(lbl, acts, lts, kts, insps, barCol, 'white', 'padding-left:42px;', `openHefboomModal('${hb.id}','${sc.id}')`);
+          const lbl = `<span style="font-size:11px;color:var(--gy400);flex-shrink:0;">⚙️</span><span style="font-size:12px;font-weight:600;color:var(--gy800);padding-left:4px;flex:1;">${hb.name}</span><button onclick="event.stopPropagation();openAddItemPrefill('${tr.id}','${sub.id}',null)" title="Activiteit toevoegen aan deze subcategorie" style="flex-shrink:0;background:none;border:1px dashed var(--gy300);color:var(--gy500);border-radius:5px;padding:1px 7px;font-size:11px;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='var(--gy500)';this.style.color='var(--gy800)'" onmouseout="this.style.borderColor='var(--gy300)';this.style.color='var(--gy500)'">＋</button>`;
+          html += renderStlLane(lbl, acts, lts, kts, insps, barCol, 'white', 'padding-left:42px;display:flex;align-items:center;gap:4px;', `openHefboomModal('${hb.id}','${sc.id}')`);
         });
       });
     });
@@ -4443,13 +4442,13 @@ async function linkItemToHefboom(itemId, hefboomId) {
     roadmap_item_id: itemId, hefboom_id: hefboomId, project_id: currentProjectId
   }).select().single();
   if (data) itemHefbomenLinks.push(data);
-  renderStrategie(); toast('Gekoppeld aan ' + hb.name + ' ✓');
+  renderStrategie(); renderStrategischTijdslijn(); toast('Gekoppeld aan ' + hb.name + ' ✓');
 }
 async function unlinkItemFromHefboom(itemId, hefboomId) {
   await sb.from('roadmap_item_hefbomen').delete()
     .eq('roadmap_item_id', itemId).eq('hefboom_id', hefboomId);
   itemHefbomenLinks = itemHefbomenLinks.filter(l => !(l.roadmap_item_id === itemId && l.hefboom_id === hefboomId));
-  renderStrategie(); toast('Koppeling verwijderd');
+  renderStrategie(); renderStrategischTijdslijn(); toast('Koppeling verwijderd');
 }
 
 // ── Activities sidebar toggle ──
@@ -4681,7 +4680,7 @@ async function saveStrategicChange() {
   scInspFields = inspanningsverbintenissen.filter(x => x.strategic_change_id === savedScId && !x.hefboom_id && !x.lt_doelstelling_id).map(x => ({...x}));
   renderScDstFields();
   renderScInspFields();
-  renderStrategie(); toast('Opgeslagen ✓');
+  renderStrategie(); renderStrategischTijdslijn(); toast('Opgeslagen ✓');
 }
 async function deleteStrategicChange() {
   if (!confirm('Verwijderen?')) return;
@@ -4694,7 +4693,7 @@ async function deleteStrategicChange() {
   ktTargets = ktTargets.filter(x => !scDstIds.includes(x.lt_doelstelling_id));
   inspanningsverbintenissen = inspanningsverbintenissen.filter(x => x.strategic_change_id !== editingScId && !scDstIds.includes(x.lt_doelstelling_id));
   document.getElementById('modal-strategic-change').classList.remove('open');
-  renderStrategie(); toast('Verwijderd');
+  renderStrategie(); renderStrategischTijdslijn(); toast('Verwijderd');
 }
 
 // ═══════════════════════════════════════════
@@ -4853,7 +4852,7 @@ async function saveHefboom() {
   for (const ex of existingInsp) { if (!hbInspFields.find(f=>f.id===ex.id)) { await sb.from('inspanningsverbintenissen').delete().eq('id',ex.id); inspanningsverbintenissen=inspanningsverbintenissen.filter(x=>x.id!==ex.id); } }
   document.getElementById('modal-hefboom').classList.remove('open');
   updateHefboomTabVisibility();
-  renderStrategie(); toast('Hefboom opgeslagen ✓');
+  renderStrategie(); renderStrategischTijdslijn(); toast('Hefboom opgeslagen ✓');
 }
 async function deleteHefboom() {
   if (!confirm('Hefboom verwijderen?')) return;
@@ -4864,7 +4863,7 @@ async function deleteHefboom() {
   inspanningsverbintenissen = inspanningsverbintenissen.filter(x => x.hefboom_id !== editingHbId);
   document.getElementById('modal-hefboom').classList.remove('open');
   updateHefboomTabVisibility();
-  renderStrategie(); toast('Verwijderd');
+  renderStrategie(); renderStrategischTijdslijn(); toast('Verwijderd');
 }
 
 const TAB_GROUPS = {setup:'setup', strategie:'strategie', roadmap:'strategie', storyboard:'activiteiten', timeline:'activiteiten'};
