@@ -275,6 +275,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <!-- ══ TAB: STATUS ══ -->
     <div class="panel" id="panel-status">
+      <!-- Governance meeting links -->
+      <div class="card" id="st-meetings-card">
+        <div class="card-title">🏛 Meetings</div>
+        <div id="st-meetings-list" style="margin-bottom:12px;"></div>
+        <details style="margin-top:4px;">
+          <summary style="font-size:12px;font-weight:600;color:var(--gy700);cursor:pointer;padding:4px 0;">＋ Toevoegen aan meeting</summary>
+          <div style="padding:10px 0 0;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
+            <div style="flex:1;min-width:150px;">
+              <label style="font-size:11px;font-weight:600;color:var(--gy500);display:block;margin-bottom:4px;">Meeting</label>
+              <select class="select" id="st-meeting-sel" onchange="updateStDateSel()" style="width:100%;">
+                <option value="">— Kies meeting —</option>
+              </select>
+            </div>
+            <div style="flex:1;min-width:140px;">
+              <label style="font-size:11px;font-weight:600;color:var(--gy500);display:block;margin-bottom:4px;">Datum</label>
+              <select class="select" id="st-date-sel" disabled style="width:100%;">
+                <option value="">— Kies datum —</option>
+              </select>
+            </div>
+            <button class="btn btn-p btn-sm" onclick="saveStatusMeetingLink()" style="white-space:nowrap;">Toevoegen</button>
+          </div>
+        </details>
+      </div>
       <div class="card">
         <div class="card-title">💬 Status opmerking</div>
         <div class="field">
@@ -496,6 +519,10 @@ async function init() {
   await loadAll();
 }
 
+let govMeetingsAll = [];
+let govMeetingDatesAll = [];
+let govAgendaItemsAll = [];
+
 async function loadAll() {
   await Promise.all([
     loadItem(),
@@ -503,6 +530,19 @@ async function loadAll() {
     loadStakeholders(),
     loadDocuments()
   ]);
+  // Load governance data after item is loaded (need project_id)
+  if (currentItem?.project_id) {
+    const pid = currentItem.project_id;
+    const [gm, gmd, gai] = await Promise.all([
+      sb.from('gov_rm_meetings').select('*').eq('project_id', pid).order('created_at'),
+      sb.from('gov_rm_meeting_dates').select('*').eq('project_id', pid).order('date'),
+      sb.from('gov_rm_agenda_items').select('*').eq('project_id', pid)
+    ]);
+    govMeetingsAll = gm.data || [];
+    govMeetingDatesAll = gmd.data || [];
+    govAgendaItemsAll = gai.data || [];
+    renderStatusMeetings();
+  }
 }
 
 // ── ITEM (BASIS) ───────────────────────────────────
@@ -943,6 +983,84 @@ function renderStatusHistory(hist) {
       ${h.description ? `<div style="font-size:13px;color:var(--gy900);line-height:1.5;">${esc(h.description)}</div>` : '<div style="font-size:12px;color:var(--gy400);font-style:italic;">Geen opmerking</div>'}
     </div>`;
   }).join('');
+}
+
+function formatDateShortAD(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+function renderStatusMeetings() {
+  const listEl = document.getElementById('st-meetings-list');
+  const mSel   = document.getElementById('st-meeting-sel');
+  if (!listEl) return;
+
+  const links = govAgendaItemsAll.filter(a => a.roadmap_item_id === itemId && a.type === 'activity');
+  if (!links.length) {
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--gy500);font-style:italic;">Nog geen meetings gepland voor deze activiteit.</div>';
+  } else {
+    listEl.innerHTML = links.map(a => {
+      const m = govMeetingsAll.find(x => x.id === a.meeting_id);
+      const d = govMeetingDatesAll.find(x => x.id === a.meeting_date_id);
+      if (!m) return '';
+      const color = m.color || '#1E40AF';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:var(--gy100);margin-bottom:6px;border-left:3px solid ${color};">
+        <span style="font-size:14px;">${m.icon||'📅'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:${color};">${esc(m.title)}</div>
+          ${d ? `<div style="font-size:11px;color:var(--gy500);">📆 ${formatDateShortAD(d.date)}</div>` : ''}
+        </div>
+        <button onclick="removeStatusMeetingLink('${a.id}')" style="background:none;border:none;color:var(--gy400);cursor:pointer;font-size:14px;padding:2px 4px;" title="Verwijder koppeling">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  // Fill meeting select
+  if (mSel) {
+    mSel.innerHTML = '<option value="">— Kies meeting —</option>' +
+      govMeetingsAll.map(m => `<option value="${m.id}">${m.icon||'📅'} ${esc(m.title)}</option>`).join('');
+  }
+}
+
+function updateStDateSel() {
+  const mid  = document.getElementById('st-meeting-sel')?.value;
+  const dSel = document.getElementById('st-date-sel');
+  if (!dSel) return;
+  if (!mid) { dSel.innerHTML = '<option value="">— Kies datum —</option>'; dSel.disabled = true; return; }
+  const dates = govMeetingDatesAll.filter(d => d.meeting_id === mid).sort((a,b)=>a.date.localeCompare(b.date));
+  dSel.innerHTML = '<option value="">— Kies datum —</option>' +
+    dates.map(d => `<option value="${d.id}">${formatDateShortAD(d.date)}</option>`).join('');
+  dSel.disabled = false;
+}
+
+async function saveStatusMeetingLink() {
+  const meetingId = document.getElementById('st-meeting-sel')?.value;
+  const dateId    = document.getElementById('st-date-sel')?.value;
+  if (!meetingId || !dateId) { toast('❌ Kies een meeting en datum'); return; }
+  if (govAgendaItemsAll.find(a => a.meeting_date_id === dateId && a.roadmap_item_id === itemId)) {
+    toast('Al toegevoegd aan deze meeting/datum'); return;
+  }
+  const pos = govAgendaItemsAll.filter(a => a.meeting_date_id === dateId).length;
+  const { data: nd, error } = await sb.from('gov_rm_agenda_items').insert({
+    meeting_date_id: dateId,
+    meeting_id: meetingId,
+    project_id: currentItem.project_id,
+    type: 'activity',
+    roadmap_item_id: itemId,
+    position: pos
+  }).select().single();
+  if (error) { toast('❌ ' + error.message); return; }
+  if (nd) govAgendaItemsAll.push(nd);
+  renderStatusMeetings();
+  toast('✅ Toegevoegd aan meeting');
+}
+
+async function removeStatusMeetingLink(agendaId) {
+  if (!confirm('Koppeling verwijderen?')) return;
+  await sb.from('gov_rm_agenda_items').delete().eq('id', agendaId);
+  govAgendaItemsAll = govAgendaItemsAll.filter(x => x.id !== agendaId);
+  renderStatusMeetings();
+  toast('Verwijderd');
 }
 
 async function saveStatusOpmerking() {

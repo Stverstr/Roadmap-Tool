@@ -322,6 +322,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gov-agenda-row.is-activity{background:#EDE9FE;}
 .gov-drag-handle{cursor:grab;color:var(--gy300);font-size:14px;flex-shrink:0;}
 .gov-agenda-type{font-size:10px;font-weight:700;color:var(--gy400);text-transform:uppercase;letter-spacing:.4px;min-width:52px;}
+/* Governance raster view */
+.gov-raster-table{border-collapse:collapse;width:100%;table-layout:fixed;}
+.gov-raster-col-label{padding:6px 8px;font-size:12px;font-weight:700;color:var(--gy600);text-align:center;vertical-align:bottom;}
+.gov-raster-col-label input{width:100%;border:none;background:transparent;font-size:12px;font-weight:700;color:var(--gy700);text-align:center;outline:none;padding:2px 4px;border-radius:4px;}
+.gov-raster-col-label input:focus{background:var(--gy100);}
+.gov-raster-row-label{padding:6px 8px;font-size:12px;font-weight:700;color:var(--gy600);vertical-align:middle;width:100px;white-space:nowrap;}
+.gov-raster-row-label input{width:90px;border:none;background:transparent;font-size:12px;font-weight:700;color:var(--gy700);outline:none;padding:2px 4px;border-radius:4px;}
+.gov-raster-row-label input:focus{background:var(--gy100);}
+.gov-raster-cell{border:1px solid var(--gy200);padding:8px;vertical-align:top;min-height:90px;transition:background .12s;}
+.gov-raster-cell.drag-over{background:#EFF6FF;border-color:#93C5FD;}
+.gov-raster-mini-card{border-radius:8px;padding:8px 10px;margin-bottom:4px;cursor:grab;background:white;border:1px solid var(--gy200);transition:box-shadow .12s;user-select:none;}
+.gov-raster-mini-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.12);}
+.gov-raster-mini-card.dragging{opacity:.4;}
+.gov-unpositioned-wrap{display:flex;flex-wrap:wrap;gap:10px;padding:12px;background:var(--gy50);border-radius:10px;border:1px dashed var(--gy300);min-height:70px;}
+.gov-unpositioned-wrap.drag-over{background:#EFF6FF;border-color:#93C5FD;}
 .gov-agenda-type.activity{color:#7C3AED;}
 
 /* ── EMPTY STATE ── */
@@ -572,16 +587,32 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div class="empty"><div class="empty-icon">🏛</div><div class="empty-title">Geen project geselecteerd</div></div>
     </div>
     <div id="governance-content" style="display:none">
-      <div class="card" style="padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div class="card" style="padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
         <span style="font-size:15px;font-weight:700;color:var(--gy900)">🏛 Governance — Meetings</span>
-        <button class="btn btn-p btn-sm" onclick="openGovMeetingModal()">＋ Meeting toevoegen</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <div style="display:flex;background:var(--gy100);border-radius:8px;padding:2px;gap:2px;">
+            <button id="gov-view-cards" onclick="setGovView('cards')"
+              style="padding:5px 12px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:white;color:var(--gy900);box-shadow:0 1px 3px rgba(0,0,0,.1);">
+              ⊞ Kaarten</button>
+            <button id="gov-view-grid" onclick="setGovView('grid')"
+              style="padding:5px 12px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--gy500);">
+              ⋮⋮ Raster</button>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="openGovMeetingModal()">＋ Meeting toevoegen</button>
+        </div>
       </div>
       <div id="gov-empty" class="empty" style="display:none">
         <div class="empty-icon">📅</div>
         <div class="empty-title">Nog geen meetings</div>
         <div class="empty-sub">Voeg een meeting toe om agendapunten en activiteiten te beheren.</div>
       </div>
+      <!-- Card view -->
       <div class="gov-grid" id="gov-grid"></div>
+      <!-- Grid/raster view -->
+      <div id="gov-raster-view" style="display:none;">
+        <div id="gov-raster-inner"></div>
+        <div id="gov-raster-unpositioned" style="margin-top:20px;"></div>
+      </div>
     </div>
   </div>
 
@@ -1080,6 +1111,10 @@ let govDetailMeetingId = null;
 let govDetailDateId = null;
 let sbFilterMeeting = null; // {meetingId, dateId}
 let tlFilterMeeting = null;
+let govViewMode = 'cards'; // 'cards' | 'grid'
+let govGridColLabels = ['','','',''];
+let govGridRowLabels = ['','','','',''];
+let govGridDragMeetingId = null;
 
 let strategicChanges = [];
 let hefbomenData = [];
@@ -1253,8 +1288,12 @@ async function loadProjectData() {
   govMeetingDates = gmd.data || [];
   govAgendaItems = gai.data || [];
 
-  // Load strategic data if enabled
+  // Load governance grid labels from project
   const proj = projects.find(p => p.id === pid);
+  if (proj) {
+    govGridColLabels = Array.isArray(proj.gov_grid_col_labels) ? proj.gov_grid_col_labels : ['','','',''];
+    govGridRowLabels = Array.isArray(proj.gov_grid_row_labels) ? proj.gov_grid_row_labels : ['','','','',''];
+  }
   if (proj && proj.strategic_mode) {
     await loadStrategicData(pid);
   } else {
@@ -3662,7 +3701,50 @@ function renderTimeline() {
     }
   });
 
-  // ── 14. Today line ────────────────────────────────────────────────────────
+  // ── 14. Governance meeting dates lane ────────────────────────────────────
+  const govDatesInView = govMeetingDates.filter(d => {
+    if (!d.date) return false;
+    const dt = new Date(d.date + 'T00:00:00');
+    return dt >= minDate && dt <= maxDate;
+  });
+  if (govDatesInView.length > 0) {
+    const GOV_BAR_H = 28, GOV_BAR_GAP = 4, GOV_TOP_PAD = 8;
+    const govSorted = [...govDatesInView].sort((a,b) => a.date.localeCompare(b.date));
+    const govRowEnds = []; const govBarRows = new Map();
+    govSorted.forEach(d => {
+      const startPct = dateToPercent(d.date); if (startPct === null) return;
+      const effectiveEnd = startPct + 2.5;
+      let rowIdx = 0;
+      while (rowIdx < govRowEnds.length && govRowEnds[rowIdx] > startPct) rowIdx++;
+      govRowEnds[rowIdx] = effectiveEnd;
+      govBarRows.set(d.id, { startPct, rowIdx });
+    });
+    const govNumRows = Math.max(1, govRowEnds.length);
+    const govLaneH = GOV_TOP_PAD + govNumRows * (GOV_BAR_H + GOV_BAR_GAP) + GOV_TOP_PAD;
+    html += `<div style="display:flex;border-bottom:1px solid var(--gy200);background:#F5F3FF;align-items:stretch;">
+      <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:#F5F3FF;font-weight:700;color:#5B21B6;">🏛 Governance</div>
+      <div data-tl-grid="1" style="flex:1;position:relative;min-height:${govLaneH}px;">${phaseBandsHtml}${colGridLines()}`;
+    govSorted.forEach(d => {
+      const bm = govBarRows.get(d.id); if (!bm) return;
+      const { startPct, rowIdx } = bm;
+      const top = GOV_TOP_PAD + rowIdx * (GOV_BAR_H + GOV_BAR_GAP);
+      const m = govMeetings.find(x => x.id === d.meeting_id);
+      const mColor = m ? (m.color || '#5B21B6') : '#5B21B6';
+      const mIcon  = m ? (m.icon  || '🏛') : '🏛';
+      const mTitle = m ? m.title : '?';
+      const safeTitle = (mTitle + ' — ' + formatDateLong(d.date)).replace(/"/g,'&quot;');
+      html += `<div style="position:absolute;left:${startPct}%;top:${top}px;height:${GOV_BAR_H}px;transform:translateX(-50%);z-index:4;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;gap:2px;"
+        onclick="openGovDetail('${d.meeting_id}','${d.id}')"
+        onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'"
+        title="${safeTitle}">
+        <span style="font-size:15px;line-height:1;color:${mColor};filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));">${mIcon}</span>
+        <span style="font-size:9px;font-weight:700;color:${mColor};white-space:nowrap;background:white;padding:1px 5px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);max-width:90px;overflow:hidden;text-overflow:ellipsis;">${escHtml(mTitle)}</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // ── 15. Today line ────────────────────────────────────────────────────────
   const todayPct = dateToPercent(new Date().toISOString().split('T')[0]);
   if (todayPct !== null && todayPct >= 0 && todayPct <= 100) {
     html += `<div style="position:relative;height:0;">
@@ -5903,6 +5985,157 @@ async function exportToPptx() {
 //  GOVERNANCE
 // ═══════════════════════════════════════════
 
+// ── View toggle ──
+function setGovView(mode) {
+  govViewMode = mode;
+  const cardsBtn = document.getElementById('gov-view-cards');
+  const gridBtn  = document.getElementById('gov-view-grid');
+  const cardView = document.getElementById('gov-grid');
+  const rasterView = document.getElementById('gov-raster-view');
+  if (cardsBtn) {
+    cardsBtn.style.background  = mode === 'cards' ? 'white' : 'transparent';
+    cardsBtn.style.color       = mode === 'cards' ? 'var(--gy900)' : 'var(--gy500)';
+    cardsBtn.style.boxShadow   = mode === 'cards' ? '0 1px 3px rgba(0,0,0,.1)' : 'none';
+    gridBtn.style.background   = mode === 'grid'  ? 'white' : 'transparent';
+    gridBtn.style.color        = mode === 'grid'  ? 'var(--gy900)' : 'var(--gy500)';
+    gridBtn.style.boxShadow    = mode === 'grid'  ? '0 1px 3px rgba(0,0,0,.1)' : 'none';
+  }
+  if (cardView)   cardView.style.display   = mode === 'cards' ? '' : 'none';
+  if (rasterView) rasterView.style.display = mode === 'grid'  ? '' : 'none';
+  if (mode === 'grid') renderGovGrid();
+}
+
+// ── Grid / Raster view ──
+function renderGovGrid() {
+  const inner = document.getElementById('gov-raster-inner');
+  const unpos  = document.getElementById('gov-raster-unpositioned');
+  if (!inner) return;
+
+  const COLS = 4, ROWS = 5;
+  // Build a map of positioned meetings
+  const cellMap = {}; // key: `${col},${row}` → [meeting]
+  const unpositioned = [];
+  govMeetings.forEach(m => {
+    const c = m.grid_col, r = m.grid_row;
+    if (c >= 1 && c <= COLS && r >= 1 && r <= ROWS) {
+      const key = `${c},${r}`;
+      if (!cellMap[key]) cellMap[key] = [];
+      cellMap[key].push(m);
+    } else {
+      unpositioned.push(m);
+    }
+  });
+
+  // Table
+  let html = `<table class="gov-raster-table"><thead><tr>
+    <th class="gov-raster-row-label" style="border:none;"></th>`;
+  for (let c = 1; c <= COLS; c++) {
+    html += `<th class="gov-raster-col-label">
+      <input value="${escHtml(govGridColLabels[c-1]||'')}" placeholder="Kolom ${c}"
+        onchange="saveGovGridLabel('col',${c-1},this.value)"
+        title="Kolomlabel bewerken">
+    </th>`;
+  }
+  html += `</tr></thead><tbody>`;
+
+  for (let r = 1; r <= ROWS; r++) {
+    html += `<tr>
+      <td class="gov-raster-row-label">
+        <input value="${escHtml(govGridRowLabels[r-1]||'')}" placeholder="Rij ${r}"
+          onchange="saveGovGridLabel('row',${r-1},this.value)"
+          title="Rijlabel bewerken">
+      </td>`;
+    for (let c = 1; c <= COLS; c++) {
+      const key = `${c},${r}`;
+      const cellMeetings = cellMap[key] || [];
+      html += `<td class="gov-raster-cell"
+        ondragover="govCellDragOver(event,this)" ondragleave="govCellDragLeave(event,this)"
+        ondrop="govCellDrop(event,${c},${r})">
+        ${cellMeetings.map(m => govMiniCard(m)).join('')}
+      </td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody></table>`;
+  inner.innerHTML = html;
+
+  // Unpositioned area
+  const upHtml = `<div style="font-size:12px;font-weight:700;color:var(--gy500);margin-bottom:8px;">Niet geplaatst</div>
+    <div class="gov-unpositioned-wrap"
+      ondragover="govCellDragOver(event,this)" ondragleave="govCellDragLeave(event,this)"
+      ondrop="govCellDrop(event,null,null)">
+      ${unpositioned.length ? unpositioned.map(m => govMiniCard(m)).join('') : '<span style="font-size:12px;color:var(--gy400);">Sleep meetings hierheen om ze uit het raster te verwijderen.</span>'}
+    </div>`;
+  unpos.innerHTML = upHtml;
+}
+
+function govMiniCard(m) {
+  const color = m.color || '#1E40AF';
+  const icon  = m.icon  || '📅';
+  const today = new Date().toISOString().slice(0,10);
+  const dates = govMeetingDates.filter(d => d.meeting_id === m.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const next  = dates.find(d => d.date >= today);
+  const nextLabel = next ? formatDateLong(next.date) : '';
+  return `<div class="gov-raster-mini-card" draggable="true" id="govmc-${m.id}"
+    style="border-left:3px solid ${color};"
+    ondragstart="govMiniDragStart(event,'${m.id}')"
+    ondragend="govMiniDragEnd(event,'${m.id}')">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <span style="font-size:14px;">${icon}</span>
+      <span style="font-size:12px;font-weight:700;color:${color};flex:1;min-width:0;overflow-wrap:break-word;">${escHtml(m.title)}</span>
+    </div>
+    ${nextLabel ? `<div style="font-size:10px;color:var(--gy500);">📆 ${nextLabel}</div>` : ''}
+    <div style="display:flex;gap:4px;margin-top:6px;">
+      <button class="btn btn-sm" style="font-size:10px;padding:2px 6px;background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE;" onclick="openGovDetail('${m.id}',null)">Agenda</button>
+      <button class="btn btn-sm btn-s" style="font-size:10px;padding:2px 6px;" onclick="openGovMeetingModal('${m.id}')">✏️</button>
+    </div>
+  </div>`;
+}
+
+function govMiniDragStart(e, meetingId) {
+  govGridDragMeetingId = meetingId;
+  setTimeout(() => { const el = document.getElementById('govmc-' + meetingId); if (el) el.classList.add('dragging'); }, 0);
+}
+function govMiniDragEnd(e, meetingId) {
+  govGridDragMeetingId = null;
+  const el = document.getElementById('govmc-' + meetingId); if (el) el.classList.remove('dragging');
+}
+function govCellDragOver(e, cellEl) {
+  e.preventDefault();
+  if (cellEl) cellEl.classList.add('drag-over');
+}
+function govCellDragLeave(e, cellEl) {
+  if (cellEl) cellEl.classList.remove('drag-over');
+}
+async function govCellDrop(e, col, row) {
+  e.preventDefault();
+  const cellEl = e.currentTarget;
+  if (cellEl) cellEl.classList.remove('drag-over');
+  const mid = govGridDragMeetingId;
+  if (!mid) return;
+  govGridDragMeetingId = null;
+  const m = govMeetings.find(x => x.id === mid);
+  if (!m) return;
+  m.grid_col = col;
+  m.grid_row = row;
+  await sb.from('gov_rm_meetings').update({grid_col: col, grid_row: row}).eq('id', mid);
+  renderGovGrid();
+}
+
+async function saveGovGridLabel(type, idx, value) {
+  if (type === 'col') {
+    govGridColLabels[idx] = value;
+    await sb.from('projects').update({gov_grid_col_labels: govGridColLabels}).eq('id', currentProjectId);
+    const p = projects.find(x => x.id === currentProjectId);
+    if (p) p.gov_grid_col_labels = [...govGridColLabels];
+  } else {
+    govGridRowLabels[idx] = value;
+    await sb.from('projects').update({gov_grid_row_labels: govGridRowLabels}).eq('id', currentProjectId);
+    const p = projects.find(x => x.id === currentProjectId);
+    if (p) p.gov_grid_row_labels = [...govGridRowLabels];
+  }
+}
+
 function renderGovernance() {
   const grid = document.getElementById('gov-grid');
   const empty = document.getElementById('gov-empty');
@@ -5981,7 +6214,10 @@ function formatDateBadge(dateStr) {
 }
 function formatDateLong(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('nl-BE', {weekday:'short', day:'numeric', month:'long', year:'numeric'});
+  const days = ['zo','ma','di','wo','do','vr','za'];
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  return `${days[d.getDay()]}. ${dd}/${mm}/${d.getFullYear()}`;
 }
 
 // ── Gov Meeting Modal (create/edit) ──
@@ -6100,8 +6336,40 @@ function saveGovDateAdhoc() {
 }
 
 async function addGovDateRow() {
-  const date = prompt('Datum (JJJJ-MM-DD):');
-  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { if (date !== null) alert('Ongeldig formaat. Gebruik JJJJ-MM-DD.'); return; }
+  showGovDatePicker();
+}
+
+function showGovDatePicker() {
+  const existing = document.getElementById('gov-dp-pop');
+  if (existing) existing.remove();
+  const bd = document.createElement('div');
+  bd.id = 'gov-dp-bd';
+  bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:3500;';
+  const pop = document.createElement('div');
+  pop.id = 'gov-dp-pop';
+  pop.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.25);z-index:3501;padding:22px 24px;min-width:300px;border:1px solid var(--gy200);';
+  pop.innerHTML = `
+    <div style="font-size:15px;font-weight:700;color:var(--gy900);margin-bottom:16px;">📆 Datum toevoegen</div>
+    <input type="date" id="gov-dp-input" style="width:100%;box-sizing:border-box;padding:9px 13px;border:1.5px solid var(--gy300);border-radius:9px;font-size:15px;color:var(--gy900);outline:none;transition:border .15s;"
+      value="${new Date().toISOString().slice(0,10)}"
+      onfocus="this.style.borderColor='var(--g500)'" onblur="this.style.borderColor='var(--gy300)'"
+      onkeydown="if(event.key==='Enter')confirmGovDatePicker()">
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end;">
+      <button onclick="['gov-dp-pop','gov-dp-bd'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();})"
+        style="padding:8px 16px;border:1px solid var(--gy300);border-radius:8px;background:white;font-size:13px;cursor:pointer;font-weight:500;">Annuleer</button>
+      <button onclick="confirmGovDatePicker()"
+        style="padding:8px 18px;border:none;border-radius:8px;background:var(--g700);color:white;font-size:13px;font-weight:700;cursor:pointer;">Toevoegen</button>
+    </div>`;
+  bd.onclick = e => { if (e.target === bd) { pop.remove(); bd.remove(); } };
+  document.body.appendChild(bd);
+  document.body.appendChild(pop);
+  setTimeout(() => document.getElementById('gov-dp-input')?.focus(), 50);
+}
+
+async function confirmGovDatePicker() {
+  const date = document.getElementById('gov-dp-input')?.value;
+  ['gov-dp-pop','gov-dp-bd'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+  if (!date) return;
   const { data: nd } = await sb.from('gov_rm_meeting_dates').insert({
     meeting_id: govDetailMeetingId,
     project_id: currentProjectId,
@@ -6138,20 +6406,47 @@ function renderGovAgendaList() {
     el.innerHTML = '<div style="font-size:12px;color:var(--gy400);padding:8px 0;text-align:center;">Nog geen agendapunten. Voeg een topic of activiteit toe.</div>';
     return;
   }
-  el.innerHTML = agenda.map((a, i) => {
+  el.innerHTML = agenda.map((a) => {
     const isAct = a.type === 'activity';
-    const ri = isAct ? items.find(x => x.id === a.roadmap_item_id) : null;
-    const label = isAct ? (ri ? ri.title : '⚠ Activiteit niet gevonden') : (a.title || '—');
-    const statusBadge = ri ? `<span class="sb-card-status status-${ri.status||'pending'}" style="margin-left:4px;">${ri.status==='done'?'✓':ri.status==='active'?'▶':'○'}</span>` : '';
-    return `<div class="gov-agenda-row ${isAct?'is-activity':''}">
-      <span class="gov-agenda-type ${isAct?'activity':''}">${isAct?'🔗 Activiteit':'📌 Topic'}</span>
-      ${isAct
-        ? `<span style="flex:1;font-size:13px;font-weight:600;color:var(--gy900);">${label}${statusBadge}</span>`
-        : `<input class="input" style="flex:1;font-size:13px;padding:4px 8px;" value="${escHtml(label)}"
-            onchange="updateGovAgendaTitle('${a.id}',this.value)" placeholder="Agendapunt…">`
-      }
-      <button class="btn btn-sm btn-danger" onclick="deleteGovAgendaItem('${a.id}')" title="Verwijder">✕</button>
-    </div>`;
+    if (isAct) {
+      const ri = items.find(x => x.id === a.roadmap_item_id);
+      if (!ri) return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+        <span style="font-size:11px;color:var(--gy400);">⚠ Activiteit verwijderd</span>
+        <button class="btn btn-sm btn-danger" onclick="deleteGovAgendaItem('${a.id}')" title="Verwijder">✕</button>
+      </div>`;
+      const tr = tracks.find(t => t.id === ri.track_id);
+      const sc = subcategories.find(s => s.id === ri.subcategory_id);
+      const color = sc ? sc.color : (tr ? tr.color : '#6B7280');
+      const st = ri.status || 'pending';
+      const statusIcon = {pending:'○',active:'▶',done:'✓'}[st] || '○';
+      const statusStyle = {pending:'color:var(--gy500)',active:'color:#1E40AF;font-weight:700',done:'color:#14532D;font-weight:700'}[st] || '';
+      const titleDeco = st === 'done' ? 'text-decoration:line-through;color:var(--gy400);' : '';
+      const titleFW = st === 'active' ? 'font-weight:800;' : 'font-weight:700;';
+      const subLabel = [tr?.name, sc?.name].filter(Boolean).join(' › ');
+      const detailUrl = (location.href.replace(/\/[^/]*$/, '/')) + 'activity-detail.html?id=' + ri.id;
+      return `<div style="display:flex;align-items:stretch;gap:0;margin-bottom:6px;border-radius:0 8px 8px 0;background:#fafafa;border:1px solid var(--gy200);border-left:3px solid ${color};overflow:hidden;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,.10)'" onmouseout="this.style.boxShadow=''">
+        <div style="flex:1;padding:8px 10px;cursor:pointer;" onclick="openModal('modal-item','${ri.id}','edit')">
+          <div style="font-size:12px;${titleFW}color:var(--gy900);${titleDeco}line-height:1.3;margin-bottom:3px;">${escHtml(ri.title)}${ri.key_activity?'<span style="font-size:11px;margin-left:4px;" title="Key activity">⭐</span>':''}</div>
+          ${ri.context_scope ? `<div style="font-size:11px;color:var(--gy500);margin-bottom:3px;">${escHtml(ri.context_scope)}</div>` : ''}
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;${statusStyle}">${statusIcon}</span>
+            ${subLabel ? `<span style="font-size:10px;color:var(--gy500);">${escHtml(subLabel)}</span>` : ''}
+            ${ri.health_status ? `<span style="font-size:12px;" title="${ri.health_status}">${({sunny:'☀️',partly_cloudy:'⛅',cloudy:'☁️',stormy:'⛈️'}[ri.health_status]||'')}</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 8px;border-left:1px solid var(--gy200);flex-shrink:0;">
+          <a href="${detailUrl}" target="_blank" title="Open activiteit detail" style="font-size:11px;color:var(--g700);text-decoration:none;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--g50);">→</a>
+          <button class="btn btn-sm btn-danger" onclick="deleteGovAgendaItem('${a.id}')" title="Verwijder van agenda" style="padding:2px 6px;">✕</button>
+        </div>
+      </div>`;
+    } else {
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gy100);">
+        <span style="font-size:10px;font-weight:700;color:var(--gy400);white-space:nowrap;min-width:56px;">📌 Topic</span>
+        <input class="input" style="flex:1;font-size:13px;padding:5px 9px;" value="${escHtml(a.title||'')}"
+          onchange="updateGovAgendaTitle('${a.id}',this.value)" placeholder="Agendapunt…">
+        <button class="btn btn-sm btn-danger" onclick="deleteGovAgendaItem('${a.id}')" title="Verwijder">✕</button>
+      </div>`;
+    }
   }).join('');
 }
 
