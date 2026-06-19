@@ -2087,6 +2087,7 @@ async function deleteItem() {
   if (!editingItemId || !confirm('Item verwijderen?')) return;
   await sb.from('roadmap_items').delete().eq('id', editingItemId);
   items = items.filter(x => x.id !== editingItemId);
+  govAgendaItems = govAgendaItems.filter(x => x.roadmap_item_id !== editingItemId);
   closeModal('modal-item');
   renderStoryboard(); renderTimeline();
   toast('Verwijderd');
@@ -2508,10 +2509,6 @@ function sbClearFilters() {
   sbFilterTracks.clear(); sbFilterSubcats.clear(); sbFilterPhases.clear();
   sbFilterStatuses.clear(); sbFilterHealthStatuses.clear(); sbFilterKeyOnly = false; sbFilterOtherRoadmap = false; sbFilterNoBacklog = false;
   sbFilterMeeting = null;
-  renderSbLegend(); renderStoryboard();
-}
-function sbSetMeetingFilter(meetingId, dateId) {
-  sbFilterMeeting = {meetingId, dateId};
   renderSbLegend(); renderStoryboard();
 }
 function sbClearMeetingFilter() { sbFilterMeeting = null; renderSbLegend(); renderStoryboard(); }
@@ -2950,7 +2947,6 @@ function toggleTlFilterPhase(id) {
   renderTimeline();
 }
 function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterHealthStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterOtherRoadmap = false; tlFilterNoBacklog = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); tlFilterMeeting = null; renderTimeline(); }
-function tlSetMeetingFilter(meetingId, dateId) { tlFilterMeeting = {meetingId, dateId}; renderTimeline(); }
 function tlClearMeetingFilter() { tlFilterMeeting = null; renderTimeline(); }
 function toggleTlFilterSubcat(id) { tlFilterSubcats.has(id) ? tlFilterSubcats.delete(id) : tlFilterSubcats.add(id); renderTimeline(); }
 function toggleTlFilterMeetingType(id) { tlFilterMeetingTypes.has(id) ? tlFilterMeetingTypes.delete(id) : tlFilterMeetingTypes.add(id); renderTimeline(); }
@@ -6092,11 +6088,12 @@ function selectGovDate(dateId) {
 let adhocSaveTimer = null;
 function saveGovDateAdhoc() {
   clearTimeout(adhocSaveTimer);
+  const capturedDateId = govDetailDateId; // close over current value
   adhocSaveTimer = setTimeout(async () => {
-    if (!govDetailDateId) return;
+    if (!capturedDateId) return;
     const val = document.getElementById('mgd-adhoc').value;
-    await sb.from('gov_rm_meeting_dates').update({adhoc_participants: val}).eq('id', govDetailDateId);
-    const d = govMeetingDates.find(x => x.id === govDetailDateId);
+    await sb.from('gov_rm_meeting_dates').update({adhoc_participants: val}).eq('id', capturedDateId);
+    const d = govMeetingDates.find(x => x.id === capturedDateId);
     if (d) d.adhoc_participants = val;
     renderGovDatesList();
   }, 800);
@@ -6346,21 +6343,20 @@ function applyGovFilter(meetingId, dateId) {
   if (bd) bd.remove();
   if (!meetingId) {
     sbFilterMeeting = null; tlFilterMeeting = null;
+    // Re-render whichever tab is currently active
+    if (document.getElementById('tab-storyboard')?.classList.contains('active')) { renderStoryboard(); if (sbLegendOpen) renderSbLegend(); }
+    else if (document.getElementById('tab-timeline')?.classList.contains('active')) renderTimeline();
+    toast('Filter gewist');
   } else {
     sbFilterMeeting = {meetingId, dateId};
     tlFilterMeeting = {meetingId, dateId};
+    switchTab('storyboard');
+    if (sbLegendOpen) renderSbLegend();
+    toast('🔍 Meeting filter toegepast');
   }
-  // Navigate to storyboard and apply
-  switchTab('storyboard');
-  if (sbLegendOpen) renderSbLegend();
-  toast(`🔍 Meeting filter toegepast`);
 }
 
 // ── Meeting filter on Storyboard/Timeline ──
-function govItemMeetingIds(itemId) {
-  return govAgendaItems.filter(a => a.roadmap_item_id === itemId && a.type === 'activity').map(a => ({mid: a.meeting_id, did: a.meeting_date_id}));
-}
-
 function itemMatchesMeetingFilter(item, filter) {
   if (!filter) return true;
   return govAgendaItems.some(a => a.roadmap_item_id === item.id && a.meeting_id === filter.meetingId && (!filter.dateId || a.meeting_date_id === filter.dateId));
