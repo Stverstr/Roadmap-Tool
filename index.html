@@ -5893,6 +5893,16 @@ async function exportToPptx() {
       s.addText('Roadmap Studio  ·  Export: ' + new Date().toLocaleDateString('nl-BE'), { x: 0.4, y: 7.15, w: 12.5, h: 0.24, fontSize: 9, color: C.gray, align: 'center', fontFace: 'Calibri' });
     }
 
+    // ─── Write file ─────────────────────────────────────────
+    const fileName = p.name.replace(/[/\\?%*:|"<>]/g, '-') + ' - Roadmap Export.pptx';
+    await pptx.writeFile({ fileName });
+    toast('✅ PowerPoint geëxporteerd!');
+  } catch (err) {
+    console.error('PPTX export error:', err);
+    toast('❌ Export mislukt: ' + err.message);
+  }
+}
+
 // ═══════════════════════════════════════════
 //  GOVERNANCE
 // ═══════════════════════════════════════════
@@ -6368,15 +6378,6 @@ function renderGovMeetingFilterBadge(containerId, filterRef, onClear) {
   </span>`;
 }
 
-    // ─── Write file ─────────────────────────────────────────
-    const fileName = p.name.replace(/[/\\?%*:|"<>]/g, '-') + ' - Roadmap Export.pptx';
-    await pptx.writeFile({ fileName });
-    toast('✅ PowerPoint geëxporteerd!');
-  } catch (err) {
-    console.error('PPTX export error:', err);
-    toast('❌ Export mislukt: ' + err.message);
-  }
-}
 </script>
 </body>
 </html>
