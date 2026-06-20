@@ -470,10 +470,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
           <div class="field"><label class="label">Einddatum</label><input class="input" id="s-proj-end" type="date" onchange="autoSaveProject()"></div>
         </div>
         <hr class="sep">
-        <div class="toggle-row">
-          <input type="checkbox" id="s-enable-meetings" onchange="autoSaveProject()">
-          <span class="toggle-label">📅 Meetings toevoegen aan tijdslijn</span>
-        </div>
+
         <div class="toggle-row">
           <input type="checkbox" id="s-enable-milestones" onchange="autoSaveProject()">
           <span class="toggle-label">🏁 Milestones toevoegen aan tijdslijn</span>
@@ -514,13 +511,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
           </div>
         </div>
 
-        <!-- Meeting Types -->
-        <div>
-          <div class="card">
-            <div class="card-row"><span class="card-title" style="margin:0">📅 Meeting Types</span><button class="btn btn-p btn-sm" onclick="openModal('modal-meettype','','new')">＋ Type</button></div>
-            <div id="meettypes-list"><div class="loading">Laden…</div></div>
-          </div>
-        </div>
+
 
       </div>
     </div>
@@ -628,7 +619,7 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
           <button class="btn btn-s btn-sm" id="tl-filter-toggle" onclick="tlToggleFilter()" title="Filters tonen/verbergen" style="background:var(--g100);">🔍 Filter</button>
           <button class="btn btn-s btn-sm" onclick="exportToPptx()" title="Exporteer naar PowerPoint">📊 Export PPT</button>
           <button class="btn btn-p btn-sm" onclick="openAddItem()">＋ Item</button>
-          <button style="background:none;border:none;color:#1E40AF;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'" onclick="openModal('modal-meeting','','new')" id="btn-add-meeting">＋ Meeting</button>
+
           <button style="background:none;border:none;color:#5B21B6;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'" onclick="openModal('modal-milestone','','new')" id="btn-add-milestone">＋ Milestone</button>
         </div>
       </div>
@@ -865,49 +856,9 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
   </div>
 </div>
 
-<!-- Meeting modal -->
-<div class="overlay" id="modal-meeting">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-head"><span class="modal-title" id="mm-title">📅 Meeting</span><button class="modal-close" onclick="closeModal('modal-meeting')">✕</button></div>
-    <div class="modal-body">
-      <div class="field"><label class="label">Type</label>
-        <select class="input" id="mm-type"><option value="">— geen type —</option></select>
-      </div>
-      <div class="field"><label class="label">Datum</label><input class="input" id="mm-date" type="date"></div>
-      <div class="field"><label class="label">Info <span style="font-size:11px;color:var(--gy400);font-weight:400;">(optioneel, max 20 tekens)</span></label><input class="input" id="mm-name" maxlength="20" placeholder="bijv. Stuurgroep, Sprint review…"></div>
-      <div class="field"><label class="label">Beschrijving</label><textarea class="textarea" id="mm-desc" placeholder="Agenda, context…"></textarea></div>
-      <div class="field"><label class="label">Deelnemers</label><input class="input" id="mm-participants" placeholder="bijv. Stijn, Ann, Tom"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-danger btn-sm" id="mm-del-btn" onclick="deleteMeeting()" style="margin-right:auto;display:none">🗑 Verwijder</button>
-      <button class="btn btn-s" onclick="closeModal('modal-meeting')">Annuleer</button>
-      <button class="btn btn-p" onclick="saveMeeting()">Opslaan</button>
-    </div>
-  </div>
-</div>
 
-<!-- Meeting Type modal -->
-<div class="overlay" id="modal-meettype">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-head"><span class="modal-title" id="mmmt-title">📅 Meeting Type</span><button class="modal-close" onclick="closeModal('modal-meettype')">✕</button></div>
-    <div class="modal-body">
-      <div class="field"><label class="label">Naam</label><input class="input" id="mmmt-name" placeholder="bijv. Stuurgroep, Werkgroep…"></div>
-      <div class="field"><label class="label">Icoon <span style="font-size:11px;color:var(--gy400)">(standaard ▶)</span></label>
-        <div class="icon-pick-wrap">
-          <button type="button" class="icon-pick-btn" id="mmmt-icon-btn" onclick="openIconPicker('mmmt-icon','mmmt-icon-btn')">▶</button>
-          <input type="hidden" id="mmmt-icon" value="▶">
-          <button type="button" class="icon-clear-btn" onclick="setIconBtn('mmmt-icon','mmmt-icon-btn','▶')" title="Reset naar ▶">↺ reset</button>
-        </div>
-      </div>
-      <div class="field"><label class="label">Kleur</label><input type="color" id="mmmt-color" value="#1E40AF"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-danger btn-sm" id="mmmt-del-btn" onclick="deleteMeetingType()" style="margin-right:auto;display:none">🗑 Verwijder</button>
-      <button class="btn btn-s" onclick="closeModal('modal-meettype')">Annuleer</button>
-      <button class="btn btn-p" onclick="saveMeetingType()">Opslaan</button>
-    </div>
-  </div>
-</div>
+
+
 
 <!-- Milestone modal -->
 <div class="overlay" id="modal-milestone">
@@ -1254,7 +1205,7 @@ async function onProjectChange(render = true) {
     renderTracksList();
     renderPhasesList();
     renderMilestoneTypesList();
-    renderMeetingTypesList();
+    
     // Default to Storyboard after project load — also updates subnav state
     switchTab('storyboard');
     renderTimeline();
@@ -1263,15 +1214,13 @@ async function onProjectChange(render = true) {
 
 async function loadProjectData() {
   const pid = currentProjectId;
-  const [t, s, ph, it, me, mi, mst, mst2, gm, gmd, gai] = await Promise.all([
+  const [t, s, ph, it, mi, mst, gm, gmd, gai] = await Promise.all([
     sb.from('tracks').select('*').eq('project_id', pid).order('position'),
     sb.from('subcategories').select('*').eq('project_id', pid).order('position'),
     sb.from('phases').select('*').eq('project_id', pid).order('position'),
     sb.from('roadmap_items').select('*').eq('project_id', pid).order('position'),
-    sb.from('meetings').select('*').eq('project_id', pid).order('date'),
     sb.from('milestones').select('*').eq('project_id', pid).order('date'),
     sb.from('milestone_types').select('*').eq('project_id', pid).order('position'),
-    sb.from('meeting_types').select('*').eq('project_id', pid).order('position'),
     sb.from('gov_rm_meetings').select('*').eq('project_id', pid).order('created_at'),
     sb.from('gov_rm_meeting_dates').select('*').eq('project_id', pid).order('date'),
     sb.from('gov_rm_agenda_items').select('*').eq('project_id', pid).order('position'),
@@ -1280,10 +1229,10 @@ async function loadProjectData() {
   subcategories = s.data || [];
   phases = ph.data || [];
   items = it.data || [];
-  meetings = me.data || [];
+  meetings = [];
   milestones = mi.data || [];
   milestoneTypes = mst.data || [];
-  meetingTypes = mst2.data || [];
+  meetingTypes = [];
   govMeetings = gm.data || [];
   govMeetingDates = gmd.data || [];
   govAgendaItems = gai.data || [];
@@ -1348,7 +1297,6 @@ function fillSetupForm() {
   document.getElementById('s-proj-desc').value = p.description || '';
   document.getElementById('s-proj-start').value = p.start_date || '';
   document.getElementById('s-proj-end').value = p.end_date || '';
-  document.getElementById('s-enable-meetings').checked = p.enable_meetings !== false;
   document.getElementById('s-enable-milestones').checked = p.enable_milestones !== false;
   document.getElementById('s-enable-strategic').checked = p.strategic_mode === true;
   document.getElementById('nav-strategie-btn').style.display = p.strategic_mode ? '' : 'none';
@@ -1358,7 +1306,6 @@ function fillSetupForm() {
 function updateMeetingMilestoneButtons() {
   const p = projects.find(x => x.id === currentProjectId);
   if (!p) return;
-  document.getElementById('btn-add-meeting').style.display = p.enable_meetings !== false ? 'inline-flex' : 'none';
   document.getElementById('btn-add-milestone').style.display = p.enable_milestones !== false ? 'inline-flex' : 'none';
 }
 
@@ -1375,7 +1322,6 @@ async function saveProject() {
     description: document.getElementById('s-proj-desc').value,
     start_date: document.getElementById('s-proj-start').value || null,
     end_date: document.getElementById('s-proj-end').value || null,
-    enable_meetings: document.getElementById('s-enable-meetings').checked,
     enable_milestones: document.getElementById('s-enable-milestones').checked,
     strategic_mode: document.getElementById('s-enable-strategic').checked,
     updated_at: new Date().toISOString()
@@ -2354,87 +2300,18 @@ async function copyItem(itemId) {
 // ═══════════════════════════════════════════
 //  MEETINGS
 // ═══════════════════════════════════════════
-async function saveMeeting() {
-  const title = document.getElementById('mm-name').value.trim().slice(0, 20);
-  const date = document.getElementById('mm-date').value;
-  if (!date) { alert('Datum is verplicht'); return; }
-  const data = {
-    title: title || '', date,
-    description: document.getElementById('mm-desc').value,
-    participants: document.getElementById('mm-participants').value,
-    type_id: document.getElementById('mm-type').value || null,
-  };
-  if (editingMeetingId) {
-    await sb.from('meetings').update(data).eq('id', editingMeetingId);
-    const idx = meetings.findIndex(x => x.id === editingMeetingId);
-    if (idx !== -1) Object.assign(meetings[idx], data);
-  } else {
-    const {data: nd} = await sb.from('meetings').insert({...data, project_id: currentProjectId}).select().single();
-    if (nd) meetings.push(nd);
-  }
-  closeModal('modal-meeting');
-  renderTimeline();
-  toast('Meeting opgeslagen ✓');
-}
 
-async function deleteMeeting() {
-  if (!editingMeetingId || !confirm('Meeting verwijderen?')) return;
-  await sb.from('meetings').delete().eq('id', editingMeetingId);
-  meetings = meetings.filter(x => x.id !== editingMeetingId);
-  closeModal('modal-meeting');
-  renderTimeline();
-  toast('Verwijderd');
-}
+
+
 
 // ═══════════════════════════════════════════
 //  MEETING TYPES
 // ═══════════════════════════════════════════
-function renderMeetingTypesList() {
-  const el = document.getElementById('meettypes-list');
-  if (!el) return;
-  if (!meetingTypes.length) {
-    el.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-icon">📅</div><div class="empty-sub">Nog geen types.</div></div>';
-    return;
-  }
-  el.innerHTML = meetingTypes.map(mt => `
-    <div class="phase-item" style="border-left-color:${mt.color||'#1E40AF'}">
-      <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:15px;color:${mt.color||'#1E40AF'};flex-shrink:0;">${mt.icon||'▶'}</div>
-      <div style="flex:1"><div class="phase-name">${mt.name}</div></div>
-      <button class="btn btn-sm btn-s" onclick="openModal('modal-meettype','${mt.id}','edit')">✏️</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteMeetingType('${mt.id}')">🗑</button>
-    </div>`).join('');
-}
 
-async function saveMeetingType() {
-  const name = document.getElementById('mmmt-name').value.trim();
-  if (!name) { alert('Naam is verplicht'); return; }
-  const data = {
-    name,
-    icon: document.getElementById('mmmt-icon').value || '▶',
-    color: document.getElementById('mmmt-color').value,
-  };
-  if (editingMeetingTypeId) {
-    await sb.from('meeting_types').update(data).eq('id', editingMeetingTypeId);
-    const mt = meetingTypes.find(x => x.id === editingMeetingTypeId);
-    if (mt) Object.assign(mt, data);
-  } else {
-    const {data: nd} = await sb.from('meeting_types').insert({...data, project_id: currentProjectId, position: meetingTypes.length}).select().single();
-    if (nd) meetingTypes.push(nd);
-  }
-  closeModal('modal-meettype');
-  renderMeetingTypesList();
-  toast('Meeting type opgeslagen ✓');
-}
 
-async function deleteMeetingType(id) {
-  const delId = id || editingMeetingTypeId;
-  if (!delId || !confirm('Type verwijderen?')) return;
-  await sb.from('meeting_types').delete().eq('id', delId);
-  meetingTypes = meetingTypes.filter(x => x.id !== delId);
-  closeModal('modal-meettype');
-  renderMeetingTypesList();
-  toast('Type verwijderd');
-}
+
+
+
 
 // ═══════════════════════════════════════════
 //  MILESTONES
@@ -2597,15 +2474,28 @@ function renderSbLegend() {
     row2.push(`<span onclick="sbClearFilters()" style="font-size:12px;color:#DC2626;cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;background:#FEE2E2;white-space:nowrap;">✕ Wissen</span>`);
   }
 
-  // Row 3: meetings filter badge (if active)
-  const row3 = sbFilterMeeting ? [renderGovMeetingFilterBadge('sb', sbFilterMeeting, 'sbClearMeetingFilter()')] : [];
+  // Row 3: governance meeting picker + active filter badge
+  const sbGovMeetingDateOpts = govMeetings.flatMap(gm => {
+    const dates = govMeetingDates.filter(d => d.meeting_id === gm.id).sort((a,b) => a.date < b.date ? -1 : 1);
+    return dates.map(d => ({meetingId: gm.id, dateId: d.id, label: (gm.name||'?') + ' — ' + formatDateLong(d.date)}));
+  });
+  const sbActiveMeetFilter = sbFilterMeeting;
+  const sbGovFilterRow = sbGovMeetingDateOpts.length ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+    <span style="font-size:10px;font-weight:700;color:#1E40AF;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;">📋 Agenda filter</span>
+    <select onchange="(function(v){ if(v){ const o=JSON.parse(v); sbFilterMeeting={meetingId:o.meetingId,dateId:o.dateId}; } else { sbFilterMeeting=null; } renderSbLegend(); renderStoryboard(); })(this.value)" style="padding:3px 7px;font-size:11px;border:1.5px solid ${sbActiveMeetFilter?'#1E40AF':'var(--gy300)'};border-radius:8px;background:${sbActiveMeetFilter?'#EFF6FF':'white'};color:${sbActiveMeetFilter?'#1E40AF':'var(--gy700)'};cursor:pointer;font-weight:${sbActiveMeetFilter?'700':'400'};">
+      <option value="">— Alle activiteiten —</option>
+      ${sbGovMeetingDateOpts.map(o => `<option value='${JSON.stringify({meetingId:o.meetingId,dateId:o.dateId})}' ${sbActiveMeetFilter&&sbActiveMeetFilter.meetingId===o.meetingId&&sbActiveMeetFilter.dateId===o.dateId?'selected':''}>🏛 ${o.label}</option>`).join('')}
+    </select>
+    ${sbActiveMeetFilter ? `<button onclick="sbClearMeetingFilter()" style="padding:2px 6px;font-size:11px;border-radius:5px;border:1px solid #BFDBFE;background:#EFF6FF;cursor:pointer;color:#1E40AF;">✕</button>` : ''}
+  </div>` : '';
+  const row3 = sbGovFilterRow ? [sbGovFilterRow] : [];
 
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:0;width:100%;">
     ${row1.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:10px;">${row1.join(vdiv)}</div>` : ''}
     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;${row1.length?'border-top:1px solid var(--gy100);padding-top:10px;':''}">
       ${row2.join(vdiv)}
     </div>
-    ${row3.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid var(--gy100);padding-top:8px;margin-top:4px;">${row3.join('')}</div>` : ''}
+    ${row3.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid var(--gy100);padding-top:8px;margin-top:4px;">${row3.join('')}${sbActiveMeetFilter ? `<span style="font-size:11px;background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF;font-weight:600;padding:2px 8px;border-radius:8px;">📋 Filter actief</span>` : ''}</div>` : ''}
   </div>`;
 }
 
@@ -2632,8 +2522,8 @@ let tlMinDate = null;
 let tlMaxDate = null;
 let tlDragItemId = null;
 let tlFilterSubcats = new Set();
-let tlFilterMeetingTypes = new Set();
 let tlFilterMilestoneTypes = new Set();
+let tlFilterGovMeetings = new Set(); // which gov meeting series to show on timeline
 let tlBarDrag = null;
 let tlBarDragged = false;
 
@@ -2985,10 +2875,11 @@ function toggleTlFilterPhase(id) {
   }
   renderTimeline();
 }
-function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterHealthStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterOtherRoadmap = false; tlFilterNoBacklog = false; tlFilterYears = new Set(); tlFilterMeetingTypes = new Set(); tlFilterMilestoneTypes = new Set(); tlFilterMeeting = null; renderTimeline(); }
+function tlClearFilters() { tlFilterStreams = new Set(); tlFilterPhases = new Set(); tlFilterStatuses = new Set(); tlFilterHealthStatuses = new Set(); tlFilterSubcats = new Set(); tlFilterKeyOnly = false; tlFilterOtherRoadmap = false; tlFilterNoBacklog = false; tlFilterYears = new Set(); tlFilterGovMeetings = new Set(); tlFilterMilestoneTypes = new Set(); tlFilterMeeting = null; renderTimeline(); }
 function tlClearMeetingFilter() { tlFilterMeeting = null; renderTimeline(); }
+function toggleTlFilterGovMeeting(id) { tlFilterGovMeetings.has(id) ? tlFilterGovMeetings.delete(id) : tlFilterGovMeetings.add(id); renderTimeline(); }
+function tlSetMeetingDateFilter(meetingId, dateId) { tlFilterMeeting = meetingId ? {meetingId, dateId} : null; renderTimeline(); }
 function toggleTlFilterSubcat(id) { tlFilterSubcats.has(id) ? tlFilterSubcats.delete(id) : tlFilterSubcats.add(id); renderTimeline(); }
-function toggleTlFilterMeetingType(id) { tlFilterMeetingTypes.has(id) ? tlFilterMeetingTypes.delete(id) : tlFilterMeetingTypes.add(id); renderTimeline(); }
 function toggleTlFilterMilestoneType(id) { tlFilterMilestoneTypes.has(id) ? tlFilterMilestoneTypes.delete(id) : tlFilterMilestoneTypes.add(id); renderTimeline(); }
 
 function tlBarMouseDown(e, id, mode) {
@@ -3391,10 +3282,27 @@ function renderTimeline() {
       return `<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;"><span style="font-size:10px;font-weight:700;color:${tr.color};white-space:nowrap;padding-right:1px;">${tr.name}</span>${chips}</span>`;
     }).join(`<span style="width:1px;height:16px;background:var(--gy300);display:inline-block;margin:0 4px;flex-shrink:0;align-self:center;"></span>`);
 
-  const meetTypeChips = meetingTypes.length ? meetingTypes.map(mt => {
-    const act = tlFilterMeetingTypes.has(mt.id);
-    return `<button onclick="toggleTlFilterMeetingType('${mt.id}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${act?(mt.color||'#1E40AF'):'var(--gy300)'};background:${act?(mt.color||'#1E40AF'):'white'};color:${act?'white':'var(--gy700)'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">${mt.icon||'▶'} ${mt.name}</button>`;
+  // ── Governance meeting series toggle chips ──
+  const govMeetingChips = govMeetings.length ? govMeetings.map(gm => {
+    const act = tlFilterGovMeetings.size === 0 || tlFilterGovMeetings.has(gm.id);
+    const color = gm.color || '#1E40AF';
+    return `<button onclick="toggleTlFilterGovMeeting('${gm.id}')" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterGovMeetings.has(gm.id)?color:'var(--gy300)'};background:${tlFilterGovMeetings.has(gm.id)?color:'white'};color:${tlFilterGovMeetings.has(gm.id)?'white':'var(--gy700)'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;" title="Toon/verberg ${(gm.name||'').replace(/"/g,'&quot;')} op tijdslijn">🏛 ${gm.name||'?'}</button>`;
   }).join('') : '';
+
+  // ── Governance meeting date filter selector ──
+  const govMeetingDateOptions = govMeetings.flatMap(gm => {
+    const dates = govMeetingDates.filter(d => d.meeting_id === gm.id).sort((a,b) => a.date < b.date ? -1 : 1);
+    return dates.map(d => ({meetingId: gm.id, dateId: d.id, label: (gm.name||'?') + ' — ' + formatDateLong(d.date)}));
+  });
+  const activeDateFilter = tlFilterMeeting;
+  const govDateFilterHtml = govMeetingDateOptions.length ? `<div style="display:flex;align-items:center;gap:6px;">
+    <span style="font-size:10px;font-weight:700;color:#1E40AF;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;">📋 Agenda filter</span>
+    <select onchange="tlSetMeetingDateFilter(this.value ? JSON.parse(this.value).meetingId : null, this.value ? JSON.parse(this.value).dateId : null)" style="padding:3px 7px;font-size:11px;border:1.5px solid ${activeDateFilter?'#1E40AF':'var(--gy300)'};border-radius:8px;background:${activeDateFilter?'#EFF6FF':'white'};color:${activeDateFilter?'#1E40AF':'var(--gy700)'};cursor:pointer;font-weight:${activeDateFilter?'700':'400'};">
+      <option value="">— Alle activiteiten —</option>
+      ${govMeetingDateOptions.map(o => `<option value='${JSON.stringify({meetingId:o.meetingId,dateId:o.dateId})}' ${activeDateFilter&&activeDateFilter.meetingId===o.meetingId&&activeDateFilter.dateId===o.dateId?'selected':''}>🏛 ${o.label}</option>`).join('')}
+    </select>
+    ${activeDateFilter ? `<button onclick="tlSetMeetingDateFilter(null,null)" style="padding:2px 6px;font-size:11px;border-radius:5px;border:1px solid #BFDBFE;background:#EFF6FF;cursor:pointer;color:#1E40AF;">✕</button>` : ''}
+  </div>` : '';
 
   const msTypeChips = milestoneTypes.length ? milestoneTypes.map(mt => {
     const act = tlFilterMilestoneTypes.has(mt.id);
@@ -3402,7 +3310,7 @@ function renderTimeline() {
   }).join('') : '';
 
   const hasDateFilter = tlFromDate || tlToDate || tlFilterYears.size;
-  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterHealthStatuses.size || tlFilterKeyOnly || tlFilterOtherRoadmap || tlFilterNoBacklog || tlFilterSubcats.size || tlFilterMeetingTypes.size || tlFilterMilestoneTypes.size || !!tlFilterMeeting;
+  const hasItemFilter = tlFilterStreams.size || tlFilterPhases.size || tlFilterStatuses.size || tlFilterHealthStatuses.size || tlFilterKeyOnly || tlFilterOtherRoadmap || tlFilterNoBacklog || tlFilterSubcats.size || tlFilterGovMeetings.size || tlFilterMilestoneTypes.size || !!tlFilterMeeting;
 
   const hasSidebar = false; // sidebar vervangen door backlog-sectie onderaan
   const SIDEBAR_W = 168;
@@ -3420,11 +3328,10 @@ function renderTimeline() {
     const healthDefs = [['sunny','☀️','#92400E','#FEF3C7'],['partly_cloudy','⛅','#1E40AF','#DBEAFE'],['cloudy','☁️','#374151','#F3F4F6'],['stormy','⛈️','#991B1B','#FEE2E2']];
     const healthChips = healthDefs.map(([v,l,color,bg]) => { const act = tlFilterHealthStatuses.has(v); return `<button onclick="toggleTlFilterHealth('${v}')" style="padding:3px 9px;font-size:13px;font-weight:600;border-radius:12px;border:1.5px solid ${act?color:'var(--gy300)'};background:${act?bg:'white'};color:${act?color:'var(--gy700)'};cursor:pointer;white-space:nowrap;">${l}</button>`; }).join('');
     tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Gezondheid')}${healthChips}</div>`);
-    if (meetTypeChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Meetings','#1E40AF')}${meetTypeChips}</div>`);
+    if (govMeetings.length) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Toon meetings','#1E40AF')}${govMeetingChips}</div>`);
+    if (govDateFilterHtml) tlRow2Groups.push(govDateFilterHtml);
     if (msTypeChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Mijlpalen','#5B21B6')}${msTypeChips}</div>`);
-    const tlMeetingBadge = tlFilterMeeting ? renderGovMeetingFilterBadge('tl', tlFilterMeeting, 'tlClearMeetingFilter()') : '';
-
-    filterBarEl.innerHTML = `${tlMeetingBadge ? `<div style="padding:6px 12px;background:#EFF6FF;border-bottom:1px solid #BFDBFE;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;font-weight:700;color:#1E40AF;">🏛 Meeting filter actief:</span>${tlMeetingBadge}</div>` : ''}
+    filterBarEl.innerHTML = `${tlFilterMeeting ? `<div style="padding:6px 12px;background:#EFF6FF;border-bottom:1px solid #BFDBFE;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;font-weight:700;color:#1E40AF;">📋 Agenda filter actief:</span><span style="font-size:12px;color:#1E40AF;font-weight:600;">${(()=>{ const gm=govMeetings.find(m=>m.id===tlFilterMeeting.meetingId); const gd=govMeetingDates.find(d=>d.id===tlFilterMeeting.dateId); return (gm?gm.name:'?')+(gd?' — '+formatDateLong(gd.date):''); })()}</span><button onclick="tlSetMeetingDateFilter(null,null)" style="padding:2px 6px;font-size:11px;border-radius:5px;border:1px solid #BFDBFE;background:white;cursor:pointer;color:#1E40AF;">✕ Wissen</button></div>` : ''}
     <div style="padding:7px 12px;border-bottom:1px solid var(--gy200);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
       <div style="display:flex;border:1px solid var(--gy300);border-radius:6px;overflow:hidden;flex-shrink:0;">${zoomBtns}</div>
       <div style="width:1px;height:20px;background:var(--gy300);flex-shrink:0;margin:0 2px;"></div>
@@ -3611,58 +3518,7 @@ function renderTimeline() {
     </div>`;
   }
 
-  // ── 11. Meetings lane ─────────────────────────────────────────────────────
-  if (p.enable_meetings !== false && meetings.length > 0) {
-    const visibleMeetings = meetings.filter(m => {
-      if (!m.date) return false;
-      const d = new Date(m.date);
-      if (d < minDate || d > maxDate) return false;
-      if (tlFilterMeetingTypes.size && !tlFilterMeetingTypes.has(m.type_id)) return false;
-      return true;
-    });
-    if (visibleMeetings.length > 0) {
-      const ME_BAR_H = 28, ME_BAR_GAP = 4, ME_TOP_PAD = 8;
-      const meSorted = [...visibleMeetings].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-      const ME_W = 2; // pseudo-width for stacking (point marker)
-      // recalculate stacking with point-marker width
-      const meRowEnds2 = [];
-      const meBarRows2 = new Map();
-      meSorted.forEach(me => {
-        const startPct = dateToPercent(me.date);
-        if (startPct === null) return;
-        const effectiveEnd = startPct + ME_W + 0.3;
-        let rowIdx = 0;
-        while (rowIdx < meRowEnds2.length && meRowEnds2[rowIdx] > startPct) rowIdx++;
-        meRowEnds2[rowIdx] = effectiveEnd;
-        meBarRows2.set(me.id, { startPct, rowIdx });
-      });
-      const meNumRows = Math.max(1, meRowEnds2.length);
-      const meLaneH = ME_TOP_PAD + meNumRows * (ME_BAR_H + ME_BAR_GAP) + ME_TOP_PAD;
-      html += `<div style="display:flex;border-bottom:1px solid var(--gy200);background:#EFF6FF;align-items:stretch;">
-        <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:#EFF6FF;font-weight:700;color:#1E40AF;">▶ Meetings</div>
-        <div data-tl-grid="1" style="flex:1;position:relative;min-height:${meLaneH}px;">${phaseBandsHtml}${colGridLines()}`;
-      meSorted.forEach(me => {
-        const bm = meBarRows2.get(me.id);
-        if (!bm) return;
-        const { startPct, rowIdx } = bm;
-        const top = ME_TOP_PAD + rowIdx * (ME_BAR_H + ME_BAR_GAP);
-        const mtype = meetingTypes.find(t => t.id === me.type_id);
-        const mColor = mtype ? mtype.color : '#1E40AF';
-        const mIcon = mtype ? (mtype.icon || '▶') : '▶';
-        const safeTitle = (me.title||'').replace(/"/g,'&quot;');
-        html += `<div data-tl-bar="${me.id}" style="position:absolute;left:${startPct}%;top:${top}px;height:${ME_BAR_H}px;transform:translateX(-50%);z-index:4;cursor:grab;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;gap:2px;"
-          onmousedown="tlBarMouseDown(event,'${me.id}','move')"
-          onclick="if(!tlBarDragged){openModal('modal-meeting','${me.id}','edit')}else{tlBarDragged=false;}"
-          onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'"
-          title="${safeTitle ? safeTitle + (mtype?' — '+mtype.name:'') : (mtype?mtype.name:'Meeting')}">
-          <span style="font-size:16px;line-height:1;color:${mColor};filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));">${mIcon}</span>
-          ${me.title ? `<span style="font-size:9px;font-weight:700;color:${mColor};white-space:nowrap;background:white;padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);max-width:80px;overflow:hidden;text-overflow:ellipsis;">${me.title}</span>` : ''}
-        </div>`;
-      });
-      const meSdCell = hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FFFBEB;"></div>` : '';
-      html += `</div>${meSdCell}</div>`;
-    }
-  }
+
 
   // ── 13. Track lanes ────────────────────────────────────────────────────────
   const keyContentFn = (it) => it.title;
@@ -3703,6 +3559,7 @@ function renderTimeline() {
 
   // ── 14. Governance meeting dates lane ────────────────────────────────────
   const govDatesInView = govMeetingDates.filter(d => {
+    if (tlFilterGovMeetings.size && !tlFilterGovMeetings.has(d.meeting_id)) return false;
     if (!d.date) return false;
     const dt = new Date(d.date + 'T00:00:00');
     return dt >= minDate && dt <= maxDate;
@@ -5147,7 +5004,7 @@ function switchTab(name) {
   // Render tab content
   if (name === 'storyboard'  && currentProjectId) { if (prev === 'timeline') syncFiltersToStoryboard(); renderStoryboard(); }
   if (name === 'timeline'    && currentProjectId) { if (prev === 'storyboard') syncFiltersToTimeline(); renderTimeline(); }
-  if (name === 'setup'       && currentProjectId) { renderTracksList(); renderPhasesList(); renderMilestoneTypesList(); renderMeetingTypesList(); }
+  if (name === 'setup'       && currentProjectId) { renderTracksList(); renderPhasesList(); renderMilestoneTypesList();  }
   if (name === 'strategie'   && currentProjectId) { renderStrategie(); }
   if (name === 'roadmap'     && currentProjectId) { renderStrategischTijdslijn(); }
   if (name === 'governance'  && currentProjectId) { renderGovernance(); }
@@ -5348,7 +5205,7 @@ async function exportToPptx() {
     if (tlFilterKeyOnly) filterLines.push('Enkel Key Activities');
     if (tlFilterNoBacklog) filterLines.push('Geen backlog (enkel geplande items)');
     if (tlFilterOtherRoadmap) filterLines.push('Enkel "Andere roadmap" items');
-    if (tlFilterMeetingTypes.size) filterLines.push('Meeting types: ' + meetingTypes.filter(m => tlFilterMeetingTypes.has(m.id)).map(m => m.name).join(', '));
+
     if (tlFilterMilestoneTypes.size) filterLines.push('Milestone types: ' + milestoneTypes.filter(m => tlFilterMilestoneTypes.has(m.id)).map(m => m.name).join(', '));
     if (tlFilterYears.size) filterLines.push('Jaren: ' + [...tlFilterYears].sort().join(', '));
     if (tlFromDate || tlToDate) filterLines.push('Periode: ' + (tlFromDate || '…') + ' → ' + (tlToDate || '…'));
@@ -5800,14 +5657,7 @@ async function exportToPptx() {
         });
       });
 
-      // Meetings lane at bottom (if enabled and any in range)
-      if (p.enable_meetings !== false) {
-        const visMeetings = meetings.filter(me => {
-          if (tlFilterMeetingTypes.size && !tlFilterMeetingTypes.has(me.type_id)) return false;
-          if (!me.date) return false;
-          const d = new Date(me.date);
-          return d >= minDate && d <= maxDate;
-        });
+);
         if (visMeetings.length > 0 && curY + 0.28 <= MAX_Y) {
           const ME_BH = 0.20, ME_BG = 0.03, ME_TP = 0.05, ME_MSW = 0.025;
           // Stack meetings
