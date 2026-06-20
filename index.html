@@ -5657,49 +5657,6 @@ async function exportToPptx() {
         });
       });
 
-);
-        if (visMeetings.length > 0 && curY + 0.28 <= MAX_Y) {
-          const ME_BH = 0.20, ME_BG = 0.03, ME_TP = 0.05, ME_MSW = 0.025;
-          // Stack meetings
-          const meSorted = [...visMeetings].sort((a, b) => (a.date < b.date ? -1 : 1));
-          const meRowEnds = [], meRowMap = new Map();
-          meSorted.forEach(me => {
-            const sp = d2pct(me.date);
-            if (sp === null) return;
-            const effEnd = sp + ME_MSW + 0.003;
-            let row = 0;
-            while (row < meRowEnds.length && meRowEnds[row] > sp) row++;
-            meRowEnds[row] = effEnd;
-            meRowMap.set(me.id, { sp, row });
-          });
-          const meNRows = Math.max(1, meRowEnds.length);
-          const meLaneH = Math.min(ME_TP + meNRows * (ME_BH + ME_BG) - ME_BG + ME_TP, MAX_Y - curY);
-
-          // Lane header
-          s.addShape(pptx.shapes.RECTANGLE, { x: LX, y: curY, w: 13.0 - LX, h: TRK_H, fill: { color: 'EFF6FF' }, line: { color: 'BFDBFE' } });
-          s.addText('▶ Meetings', { x: LX + 0.12, y: curY, w: LW, h: TRK_H, fontSize: 9, bold: true, color: '1E40AF', fontFace: 'Calibri', valign: 'middle', margin: 0 });
-          curY += TRK_H;
-
-          if (curY + 0.22 <= MAX_Y) {
-            s.addShape(pptx.shapes.LINE, { x: LX, y: curY + meLaneH, w: 13.0 - LX, h: 0, line: { color: 'BFDBFE', width: 0.5 } });
-            meSorted.forEach(me => {
-              const pos = meRowMap.get(me.id);
-              if (!pos) return;
-              const mx = TX + pos.sp * TW;
-              const by = curY + ME_TP + pos.row * (ME_BH + ME_BG);
-              if (by + ME_BH > curY + meLaneH) return;
-              const mtype = meetingTypes.find(t => t.id === me.type_id);
-              const mcolor = hx(mtype ? mtype.color : '#1E40AF');
-              const micon = mtype ? (mtype.icon || '▶') : '▶';
-              s.addText(micon, { x: mx - 0.13, y: by, w: 0.26, h: ME_BH, fontSize: 12, color: mcolor, align: 'center', valign: 'middle', margin: 0 });
-              if (me.title) {
-                s.addText(me.title, { x: Math.max(TX, mx - 0.5), y: by + ME_BH - 0.01, w: 1.0, h: 0.12, fontSize: 5.5, color: mcolor, align: 'center', margin: 0 });
-              }
-            });
-          }
-        }
-      }
-
       // ── Today line (drawn here so curY is known) ─────────────────────────
       if (todayP !== null) {
         const todayX = TX + todayP * TW;
