@@ -1139,15 +1139,16 @@ function renderAanpakPhases() {
 }
 
 // ── DATUM HELPERS ─────────────────────────────────
+// Gebruik Date.UTC om timezone-bugs te vermijden (België = UTC+2)
 function dateAddDays(dateStr, days) {
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days));
+  return dt.toISOString().split('T')[0];
 }
 function dateAddMonths(dateStr, months) {
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setMonth(d.getMonth() + months);
-  return d.toISOString().split('T')[0];
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1 + months, d));
+  return dt.toISOString().split('T')[0];
 }
 
 function clampPhaseDate(dateStr, field) {
