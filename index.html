@@ -1250,6 +1250,17 @@ async function loadProjectData() {
   }
 }
 
+// ── Auto-refresh wanneer activity-detail.html iets opslaat ─────────────
+(function() {
+  const bc = new BroadcastChannel('roadmap_refresh');
+  bc.onmessage = async (event) => {
+    if (event.data?.type === 'item_updated' && currentProjectId) {
+      const { data } = await sb.from('roadmap_items').select('*').eq('project_id', currentProjectId).order('position');
+      if (data) { items = data; renderStoryboard(); renderTimeline(); }
+    }
+  };
+})();
+
 async function loadStrategicData(pid) {
   const sc = await sb.from('strategic_changes').select('*').eq('project_id', pid).order('position');
   strategicChanges = sc.data || [];

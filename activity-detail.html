@@ -716,6 +716,7 @@ async function saveBasis() {
   const { error } = await sb.update(updates).from('roadmap_items').eq('id', itemId);
   if (error) { toast('❌ Fout bij opslaan: ' + error.message); return; }
 
+  new BroadcastChannel('roadmap_refresh').postMessage({ type: 'item_updated', itemId });
   // status opmerking beheerd in Status tab
   toast('✅ Basis-info opgeslagen');
   await loadItem();
@@ -1285,6 +1286,7 @@ async function saveAanpak() {
   if (error) { toast('❌ ' + error.message); return; }
   // Update cached currentItem
   Object.assign(currentItem, updates);
+  new BroadcastChannel('roadmap_refresh').postMessage({ type: 'item_updated', itemId });
   // Update header owner if shown
   toast('✅ Aanpak opgeslagen');
 }
