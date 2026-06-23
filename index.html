@@ -2535,6 +2535,7 @@ let tlDragItemId = null;
 let tlFilterSubcats = new Set();
 let tlFilterMilestoneTypes = new Set();
 let tlFilterGovMeetings = new Set(); // which gov meeting series to show on timeline
+let tlShowPhases = true; // toon/verberg fase-strips in tijdslijn
 let tlBarDrag = null;
 let tlBarDragged = false;
 let tlPhaseSplitDrag = null; // voor slepen van fase-splitsing
@@ -3345,6 +3346,7 @@ function renderTimeline() {
   }).join('');
 
   const keyChip = `<button onclick="setTlFilterKeyOnly(${!tlFilterKeyOnly})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterKeyOnly?'#D97706':'var(--gy300)'};background:${tlFilterKeyOnly?'#FFFBEB':'white'};color:${tlFilterKeyOnly?'#D97706':'var(--gy700)'};cursor:pointer;white-space:nowrap;">⭐ Key only</button>`;
+  const showPhasesChip = `<button onclick="tlShowPhases=!tlShowPhases;renderTimeline()" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlShowPhases?'#1D4ED8':'var(--gy300)'};background:${tlShowPhases?'#EFF6FF':'white'};color:${tlShowPhases?'#1D4ED8':'var(--gy700)'};cursor:pointer;white-space:nowrap;">▦ Fasen</button>`;
   const otherRoadmapChip = `<button onclick="setTlFilterOtherRoadmap(${!tlFilterOtherRoadmap})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterOtherRoadmap?'#6B7280':'var(--gy300)'};background:${tlFilterOtherRoadmap?'#F3F4F6':'white'};color:${tlFilterOtherRoadmap?'#374151':'var(--gy700)'};cursor:pointer;white-space:nowrap;">🔗 Andere roadmap</button>`;
   const noBacklogChip = `<button onclick="setTlFilterNoBacklog(${!tlFilterNoBacklog})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterNoBacklog?'#14532D':'var(--gy300)'};background:${tlFilterNoBacklog?'#F0FDF4':'white'};color:${tlFilterNoBacklog?'#14532D':'var(--gy700)'};cursor:pointer;white-space:nowrap;">📥 Geen backlog</button>`;
 
@@ -3410,7 +3412,7 @@ function renderTimeline() {
     if (tracks.length) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Streams')}${streamChips}</div>`);
     if (subcatChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Subcategorieën')}${subcatChips}</div>`);
     if (phaseChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Fasen')}${phaseChips}</div>`);
-    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}${otherRoadmapChip}${noBacklogChip}</div>`);
+    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}${otherRoadmapChip}${noBacklogChip}${showPhasesChip}</div>`);
     const healthDefs = [['sunny','☀️','#92400E','#FEF3C7'],['partly_cloudy','⛅','#1E40AF','#DBEAFE'],['cloudy','☁️','#374151','#F3F4F6'],['stormy','⛈️','#991B1B','#FEE2E2']];
     const healthChips = healthDefs.map(([v,l,color,bg]) => { const act = tlFilterHealthStatuses.has(v); return `<button onclick="toggleTlFilterHealth('${v}')" style="padding:3px 9px;font-size:13px;font-weight:600;border-radius:12px;border:1.5px solid ${act?color:'var(--gy300)'};background:${act?bg:'white'};color:${act?color:'var(--gy700)'};cursor:pointer;white-space:nowrap;">${l}</button>`; }).join('');
     tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Gezondheid')}${healthChips}</div>`);
@@ -3572,7 +3574,7 @@ function renderTimeline() {
       const safeTitle = (it.title||it.name||'').replace(/"/g,'&quot;');
       // ── fase strip embedded in bar (positie via end_pct) ─────────────────
       const rawPhases = it.item_phases || [];
-      const phasesWithPct = phaseWithPct(rawPhases, it.start_date, it.end_date);
+      const phasesWithPct = tlShowPhases ? phaseWithPct(rawPhases, it.start_date, it.end_date) : [];
       let phaseStripHtml = '';
       if (phasesWithPct.length > 0) {
         phaseStripHtml = `<div style="position:absolute;left:0;right:0;bottom:0;height:${PHASE_STRIP_H}px;overflow:hidden;border-radius:0 0 5px 5px;">`;
