@@ -1581,6 +1581,41 @@ function renderDepsMultiselect() {
   container.innerHTML = html || '<div style="color:var(--gy400);font-size:12px;font-style:italic;padding:6px 0;">Geen andere items.</div>';
 }
 
+// ── DATUM HELPERS ─────────────────────────────────
+function dateAddDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+function dateAddMonths(dateStr, months) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+
+function cascadeItemDates(fromIndex) {
+  for (let i = fromIndex; i < itemPhasesTemp.length; i++) {
+    if (i > 0 && itemPhasesTemp[i-1].end_date) {
+      itemPhasesTemp[i].start_date = dateAddDays(itemPhasesTemp[i-1].end_date, 1);
+    }
+    if (itemPhasesTemp[i].start_date) {
+      itemPhasesTemp[i].end_date = dateAddMonths(itemPhasesTemp[i].start_date, 1);
+    }
+  }
+  renderItemPhasesBuilder();
+}
+
+function onItemStartChange(i) {
+  if (itemPhasesTemp[i].start_date) {
+    itemPhasesTemp[i].end_date = dateAddMonths(itemPhasesTemp[i].start_date, 1);
+  }
+  cascadeItemDates(i + 1);
+}
+
+function onItemEndChange(i) {
+  cascadeItemDates(i + 1);
+}
+
 const PHASE_TEMPLATES = {
   'Innovaties': [
     { name: 'Explore',               label: 'Exp' },
@@ -1638,9 +1673,9 @@ function renderItemPhasesBuilder() {
       <input style="width:46px;border:1px solid var(--gy300);border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;color:var(--gy700);text-align:center;" maxlength="3" value="${(ph.label||'').replace(/"/g,'&quot;')}" placeholder="Lbl" title="Kort label voor tijdslijn (max 3 tekens)"
         oninput="itemPhasesTemp[${i}].label=this.value.slice(0,3)">
       <input class="iph-date" type="date" value="${ph.start_date||''}" title="Start"
-        onchange="itemPhasesTemp[${i}].start_date=this.value">
+        onchange="itemPhasesTemp[${i}].start_date=this.value;onItemStartChange(${i})">
       <input class="iph-date" type="date" value="${ph.end_date||''}" title="Eind"
-        onchange="itemPhasesTemp[${i}].end_date=this.value">
+        onchange="itemPhasesTemp[${i}].end_date=this.value;onItemEndChange(${i})">
       <button class="btn btn-danger btn-sm" title="Verwijder"
         onclick="itemPhasesTemp.splice(${i},1);renderItemPhasesBuilder()">✕</button>
     </div>`).join('');

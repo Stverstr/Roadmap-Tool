@@ -1131,11 +1131,46 @@ function renderAanpakPhases() {
       <input style="width:46px;border:1px solid var(--gy300);border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;color:var(--gy700);text-align:center;flex-shrink:0;" maxlength="3" value="${(ph.label||'').replace(/"/g,'&quot;')}" placeholder="Lbl" title="Kort label voor tijdslijn (max 3 tekens)"
         oninput="aanpakPhasesTemp[${i}].label=this.value.slice(0,3)">
       <input class="iph-date" type="date" value="${ph.start_date||''}" title="Start"
-        onchange="aanpakPhasesTemp[${i}].start_date=this.value">
+        onchange="aanpakPhasesTemp[${i}].start_date=this.value;onAanpakStartChange(${i})">
       <input class="iph-date" type="date" value="${ph.end_date||''}" title="Eind"
-        onchange="aanpakPhasesTemp[${i}].end_date=this.value">
+        onchange="aanpakPhasesTemp[${i}].end_date=this.value;onAanpakEndChange(${i})">
       <button class="btn btn-danger btn-sm" onclick="aanpakPhasesTemp.splice(${i},1);renderAanpakPhases()" title="Verwijder">✕</button>
     </div>`).join('');
+}
+
+// ── DATUM HELPERS ─────────────────────────────────
+function dateAddDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+function dateAddMonths(dateStr, months) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+
+function cascadeAanpakDates(fromIndex) {
+  for (let i = fromIndex; i < aanpakPhasesTemp.length; i++) {
+    if (i > 0 && aanpakPhasesTemp[i-1].end_date) {
+      aanpakPhasesTemp[i].start_date = dateAddDays(aanpakPhasesTemp[i-1].end_date, 1);
+    }
+    if (aanpakPhasesTemp[i].start_date) {
+      aanpakPhasesTemp[i].end_date = dateAddMonths(aanpakPhasesTemp[i].start_date, 1);
+    }
+  }
+  renderAanpakPhases();
+}
+
+function onAanpakStartChange(i) {
+  if (aanpakPhasesTemp[i].start_date) {
+    aanpakPhasesTemp[i].end_date = dateAddMonths(aanpakPhasesTemp[i].start_date, 1);
+  }
+  cascadeAanpakDates(i + 1);
+}
+
+function onAanpakEndChange(i) {
+  cascadeAanpakDates(i + 1);
 }
 
 const PHASE_TEMPLATES = {
