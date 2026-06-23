@@ -3505,7 +3505,7 @@ function renderTimeline() {
         phaseStripHtml += `</div>`;
       }
       const barDisplayH = EFFECTIVE_BAR_H;
-      cells += `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:${barDisplayH}px;top:${top}px;border-radius:5px;font-size:11px;color:${effectiveTextColor};background:${effectiveBarColor};z-index:2;transition:filter .15s;opacity:${opacity};${textDeco}${fw}cursor:grab;user-select:none;overflow:hidden;position:relative;"
+      cells += `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:${barDisplayH}px;top:${top}px;border-radius:5px;font-size:11px;color:${effectiveTextColor};background:${effectiveBarColor};z-index:2;transition:filter .15s;opacity:${opacity};${textDeco}${fw}cursor:grab;user-select:none;overflow:hidden;"
         onmousedown="tlBarMouseDown(event,'${it.id}','move')"
         onclick="if(!tlBarDragged){${onclickStr}}else{tlBarDragged=false;}"
         title="${safeTitle}"
