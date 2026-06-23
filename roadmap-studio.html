@@ -519,7 +519,16 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <div class="field">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
             <label class="label" style="margin:0;">📋 Fasen van dit item</label>
-            <button class="btn btn-sm btn-p" onclick="addItemPhase()">＋ Fase</button>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <div style="position:relative;">
+                <button class="btn btn-sm btn-s" onclick="toggleItemTplMenu(event)">📋 Template ▾</button>
+                <div id="item-tpl-menu" style="display:none;position:fixed;background:white;border:1px solid var(--gy300);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.15);z-index:3000;min-width:200px;overflow:hidden;">
+                  <div style="padding:8px 14px 4px;font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.06em;">Standaard templates</div>
+                  <button onclick="loadItemTemplate('Innovaties')" style="width:100%;text-align:left;padding:9px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--gy900);" onmouseover="this.style.background='var(--gy100)'" onmouseout="this.style.background='none'">🔬 Innovaties</button>
+                </div>
+              </div>
+              <button class="btn btn-sm btn-p" onclick="addItemPhase()">＋ Fase</button>
+            </div>
           </div>
           <div id="mi-phases-container"></div>
         </div>
@@ -1570,6 +1579,43 @@ function renderDepsMultiselect() {
     });
   }
   container.innerHTML = html || '<div style="color:var(--gy400);font-size:12px;font-style:italic;padding:6px 0;">Geen andere items.</div>';
+}
+
+const PHASE_TEMPLATES = {
+  'Innovaties': [
+    { name: 'Explore',               label: 'Exp' },
+    { name: 'Define Concept',        label: 'Con' },
+    { name: 'Proof of Concept',      label: 'Poc' },
+    { name: 'Pilot',                 label: 'Pil' },
+    { name: 'Pre-industrialisatie',  label: 'Pre' },
+    { name: 'Industrialisatie',      label: 'Ind' },
+  ]
+};
+
+function toggleItemTplMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('item-tpl-menu');
+  const rect = e.currentTarget.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = rect.left + 'px';
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', () => {
+  const m = document.getElementById('item-tpl-menu');
+  if (m) m.style.display = 'none';
+});
+
+function loadItemTemplate(name) {
+  document.getElementById('item-tpl-menu').style.display = 'none';
+  const tpl = PHASE_TEMPLATES[name];
+  if (!tpl) return;
+  if (itemPhasesTemp.length > 0 && !confirm(`Huidige fasen vervangen door template "${name}"?`)) return;
+  itemPhasesTemp = tpl.map((ph, i) => ({
+    id: (Date.now() + i).toString(), name: ph.name, label: ph.label,
+    start_date: '', end_date: '', completed: false
+  }));
+  renderItemPhasesBuilder();
+  toast(`📋 Template "${name}" geladen ✓`);
 }
 
 function addItemPhase() {
