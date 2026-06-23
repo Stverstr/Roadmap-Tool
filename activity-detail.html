@@ -1159,7 +1159,7 @@ function renderAanpakPhases() {
       <input style="width:46px;border:1px solid var(--gy300);border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;color:var(--gy700);text-align:center;flex-shrink:0;" maxlength="3" value="${(ph.label||'').replace(/"/g,'&quot;')}" placeholder="Lbl" title="Kort label voor tijdslijn (max 3 tekens)"
         oninput="aanpakPhasesTemp[${i}].label=this.value.slice(0,3)">
       <span style="font-size:11px;color:var(--gy500);flex-shrink:0;white-space:nowrap;" title="Automatisch berekend uit activiteitsdatums">${ph.start_date||'—'} → ${ph.end_date||'—'}</span>
-      <button class="btn btn-danger btn-sm" onclick="aanpakPhasesTemp.splice(${i},1);renderAanpakPhases()" title="Verwijder">✕</button>
+      <button class="btn btn-danger btn-sm" onclick="aanpakPhasesTemp.splice(${i},1);redistributePhasesPct();saveAanpak()" title="Verwijder">✕</button>
     </div>`).join('');
 }
 
@@ -1224,6 +1224,7 @@ function loadAanpakTemplate(name) {
 function addAanpakPhase() {
   aanpakPhasesTemp.push({ id: Date.now().toString(), name: '', label: '', end_pct: 100, start_date: '', end_date: '', completed: false });
   redistributePhasesPct();
+  saveAanpak();
 }
 
 function renderDeps(items, tracks, subcats, selectedIds) {
