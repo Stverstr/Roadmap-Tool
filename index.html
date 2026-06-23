@@ -3645,17 +3645,20 @@ function renderTimeline() {
 
   // ── 13. Track lanes ────────────────────────────────────────────────────────
   const keyContentFn = (it) => it.title;
-  tracks.forEach(tr => {
-    if (tlFilterStreams.size && !tlFilterStreams.has(tr.id)) return;
-    const subs = subcategories.filter(s => s.track_id === tr.id);
-    html += `<div style="display:flex;border-bottom:1px solid var(--gy300);min-height:36px;background:var(--gy100);align-items:center;">
+  const trackHeader = (tr) => `<div style="display:flex;border-bottom:1px solid var(--gy300);min-height:36px;background:var(--gy100);align-items:center;">
       <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;font-weight:700;color:var(--gy900);border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:var(--gy100);">
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${tr.color};flex-shrink:0;"></span>${renderIcon(tr.icon)}${tr.name}
       </div>
       <div style="flex:1;background:var(--gy100);"></div>
       ${hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FEF3C7;padding:4px 6px;display:flex;align-items:center;"><span style="font-size:9px;color:#B45309;font-style:italic;opacity:.7;">← sleep</span></div>` : ''}
     </div>`;
+  tracks.forEach(tr => {
+    if (tlFilterStreams.size && !tlFilterStreams.has(tr.id)) return;
+    const subs = subcategories.filter(s => s.track_id === tr.id);
     if (subs.length === 0) {
+      // Track zonder subcats: verberg alleen als subcat-filter actief is
+      if (tlFilterSubcats.size) return;
+      html += trackHeader(tr);
       const laneUnsched = unscheduled.filter(i => i.track_id === tr.id && !i.subcategory_id);
       const laneMs = p.enable_milestones !== false ? milestones.filter(ms => ms.track_id === tr.id && !ms.subcategory_id && (!tlFilterMilestoneTypes.size || tlFilterMilestoneTypes.has(ms.type_id))) : [];
       html += renderLane(
@@ -3666,7 +3669,11 @@ function renderTimeline() {
         keyContentFn, true, laneUnsched, tr.id, null, laneMs
       );
     } else {
-      subs.forEach(sub => {
+      // Alleen subcats tonen die door de filter komen
+      const visibleSubs = subs.filter(sub => !tlFilterSubcats.size || tlFilterSubcats.has(sub.id));
+      if (!visibleSubs.length) return; // geen zichtbare subcats → ook geen track-header
+      html += trackHeader(tr);
+      visibleSubs.forEach(sub => {
         const laneUnsched = unscheduled.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id);
         const laneMs = p.enable_milestones !== false ? milestones.filter(ms => ms.track_id === tr.id && ms.subcategory_id === sub.id && (!tlFilterMilestoneTypes.size || tlFilterMilestoneTypes.has(ms.type_id))) : [];
         html += renderLane(
