@@ -1150,26 +1150,39 @@ function dateAddMonths(dateStr, months) {
   return d.toISOString().split('T')[0];
 }
 
+function clampPhaseDate(dateStr, field) {
+  if (!dateStr || !currentItem) return dateStr;
+  const actStart = currentItem.start_date;
+  const actEnd = currentItem.end_date;
+  if (field === 'start_date' && actStart && dateStr < actStart) return actStart;
+  if (field === 'end_date'   && actEnd   && dateStr > actEnd)   return actEnd;
+  if (field === 'start_date' && actEnd   && dateStr > actEnd)   return actEnd;
+  if (field === 'end_date'   && actStart && dateStr < actStart) return actStart;
+  return dateStr;
+}
+
 function cascadeAanpakDates(fromIndex) {
   for (let i = fromIndex; i < aanpakPhasesTemp.length; i++) {
     if (i > 0 && aanpakPhasesTemp[i-1].end_date) {
-      aanpakPhasesTemp[i].start_date = dateAddDays(aanpakPhasesTemp[i-1].end_date, 1);
+      aanpakPhasesTemp[i].start_date = clampPhaseDate(dateAddDays(aanpakPhasesTemp[i-1].end_date, 1), 'start_date');
     }
     if (aanpakPhasesTemp[i].start_date) {
-      aanpakPhasesTemp[i].end_date = dateAddMonths(aanpakPhasesTemp[i].start_date, 1);
+      aanpakPhasesTemp[i].end_date = clampPhaseDate(dateAddMonths(aanpakPhasesTemp[i].start_date, 1), 'end_date');
     }
   }
   renderAanpakPhases();
 }
 
 function onAanpakStartChange(i) {
+  aanpakPhasesTemp[i].start_date = clampPhaseDate(aanpakPhasesTemp[i].start_date, 'start_date');
   if (aanpakPhasesTemp[i].start_date) {
-    aanpakPhasesTemp[i].end_date = dateAddMonths(aanpakPhasesTemp[i].start_date, 1);
+    aanpakPhasesTemp[i].end_date = clampPhaseDate(dateAddMonths(aanpakPhasesTemp[i].start_date, 1), 'end_date');
   }
   cascadeAanpakDates(i + 1);
 }
 
 function onAanpakEndChange(i) {
+  aanpakPhasesTemp[i].end_date = clampPhaseDate(aanpakPhasesTemp[i].end_date, 'end_date');
   cascadeAanpakDates(i + 1);
 }
 
