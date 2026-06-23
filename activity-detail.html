@@ -1119,6 +1119,8 @@ function renderAanpakPhases() {
         onchange="aanpakPhasesTemp[${i}].completed=this.checked" title="Afgerond">
       <input class="iph-name" value="${(ph.name||'').replace(/"/g,'&quot;')}" placeholder="Naam fase…"
         oninput="aanpakPhasesTemp[${i}].name=this.value">
+      <input style="width:46px;border:1px solid var(--gy300);border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;color:var(--gy700);text-align:center;flex-shrink:0;" maxlength="3" value="${(ph.label||'').replace(/"/g,'&quot;')}" placeholder="Lbl" title="Kort label voor tijdslijn (max 3 tekens)"
+        oninput="aanpakPhasesTemp[${i}].label=this.value.slice(0,3)">
       <input class="iph-date" type="date" value="${ph.start_date||''}" title="Start"
         onchange="aanpakPhasesTemp[${i}].start_date=this.value">
       <input class="iph-date" type="date" value="${ph.end_date||''}" title="Eind"
@@ -1128,7 +1130,7 @@ function renderAanpakPhases() {
 }
 
 function addAanpakPhase() {
-  aanpakPhasesTemp.push({ id: Date.now().toString(), name: '', start_date: '', end_date: '', completed: false });
+  aanpakPhasesTemp.push({ id: Date.now().toString(), name: '', label: '', start_date: '', end_date: '', completed: false });
   renderAanpakPhases();
 }
 
