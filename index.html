@@ -2537,6 +2537,39 @@ let tlFilterMilestoneTypes = new Set();
 let tlFilterGovMeetings = new Set(); // which gov meeting series to show on timeline
 let tlBarDrag = null;
 let tlBarDragged = false;
+let tlPhaseSplitDrag = null; // voor slepen van fase-splitsing
+
+function tlPhaseSplitMouseDown(e, itemId, splitIdx) {
+  e.stopPropagation();
+  e.preventDefault();
+  const it = items.find(i => i.id === itemId);
+  if (!it || !it.item_phases?.length) return;
+  const barEl = document.querySelector(`[data-tl-bar="${itemId}"]`);
+  if (!barEl) return;
+  const rect = barEl.getBoundingClientRect();
+  tlPhaseSplitDrag = { itemId, splitIdx, it, barLeft: rect.left, barWidth: rect.width };
+}
+
+document.addEventListener('mousemove', function(e) {
+  if (!tlPhaseSplitDrag) return;
+  const { it, splitIdx, barLeft, barWidth } = tlPhaseSplitDrag;
+  const phases = phaseWithPct(it.item_phases, it.start_date, it.end_date);
+  const relPct = Math.max(0, Math.min(100, (e.clientX - barLeft) / Math.max(1, barWidth) * 100));
+  const minPct = (splitIdx === 0 ? 0 : phases[splitIdx-1].end_pct) + 3;
+  const maxPct = (splitIdx >= phases.length - 2 ? 100 : phases[splitIdx+1].end_pct) - 3;
+  phases[splitIdx].end_pct = Math.min(maxPct, Math.max(minPct, relPct));
+  it.item_phases = phases;
+  renderTimeline();
+});
+
+document.addEventListener('mouseup', async function(e) {
+  if (!tlPhaseSplitDrag) return;
+  const { it } = tlPhaseSplitDrag;
+  tlPhaseSplitDrag = null;
+  recalcPhaseDates(it);
+  await sb.from('roadmap_items').update({ item_phases: it.item_phases }).eq('id', it.id);
+  renderTimeline();
+});
 
 // ── Strategisch Tijdslijn state ───────────────────────────────────────────
 // tlZoom / tlYearMode / tlFilterYears / tlFromDate / tlToDate are shared with activiteiten TL
@@ -3027,6 +3060,12 @@ async function tlBarMouseUp(e) {
       updates.end_date = projectedEnd;
     }
     if (Object.keys(updates).length) {
+      // Herbereken fase-datums op basis van opgeslagen end_pct
+      const itCopy = Object.assign({}, it, updates);
+      if (itCopy.item_phases?.length) {
+        recalcPhaseDates(itCopy);
+        updates.item_phases = itCopy.item_phases;
+      }
       await sb.from('roadmap_items').update(updates).eq('id', id);
       Object.assign(it, updates);
       renderTimeline();
@@ -3109,6 +3148,42 @@ async function tlLaneDrop(e) {
 }
 
 // ═══════════════════════════════════════════
+//  FASE HELPERS (globaal — ook gebruikt door drag handlers)
+// ═══════════════════════════════════════════
+function phaseWithPct(phases, actStart, actEnd) {
+  if (!phases?.length) return [];
+  let startMs = 0, totalMs = 1;
+  if (actStart && actEnd) {
+    const [sy,sm,sd] = actStart.split('-').map(Number);
+    const [ey,em,ed] = actEnd.split('-').map(Number);
+    startMs = Date.UTC(sy, sm-1, sd);
+    totalMs = Math.max(1, Date.UTC(ey, em-1, ed) - startMs);
+  }
+  return phases.map((ph, i) => {
+    if (ph.end_pct != null) return ph;
+    if (ph.end_date && actStart) {
+      const [py,pm,pd] = ph.end_date.split('-').map(Number);
+      return { ...ph, end_pct: Math.min(100, Math.max(0, (Date.UTC(py,pm-1,pd) - startMs) / totalMs * 100)) };
+    }
+    return { ...ph, end_pct: (i+1) / phases.length * 100 };
+  });
+}
+
+function recalcPhaseDates(it) {
+  if (!it.start_date || !it.end_date || !it.item_phases?.length) return;
+  const [sy,sm,sd] = it.start_date.split('-').map(Number);
+  const [ey,em,ed] = it.end_date.split('-').map(Number);
+  const startMs = Date.UTC(sy, sm-1, sd);
+  const totalMs = Math.max(1, Date.UTC(ey, em-1, ed) - startMs);
+  const phases = phaseWithPct(it.item_phases, it.start_date, it.end_date);
+  phases.forEach((ph, i) => {
+    const prevPct = i === 0 ? 0 : phases[i-1].end_pct;
+    ph.start_date = i === 0 ? it.start_date : new Date(startMs + totalMs * prevPct / 100).toISOString().split('T')[0];
+    ph.end_date = i === phases.length-1 ? it.end_date : new Date(startMs + totalMs * ph.end_pct / 100).toISOString().split('T')[0];
+  });
+  it.item_phases = phases;
+}
+
 //  TIMELINE RENDER
 // ═══════════════════════════════════════════
 function renderTimeline() {
@@ -3469,7 +3544,7 @@ function renderTimeline() {
     const numRows = Math.max(1, rowEnds.length);
     // ── fase-aware bar heights ─────────────────────────────────────────────
     const PHASE_STRIP_H = 14;
-    const hasPhaseItems = scheduled.some(it => (it.item_phases || []).some(ph => ph.start_date && ph.end_date));
+    const hasPhaseItems = scheduled.some(it => (it.item_phases || []).length > 0);
     const EFFECTIVE_BAR_H = hasPhaseItems ? BAR_H + PHASE_STRIP_H : BAR_H;
     const laneH = TOP_PAD + numRows * (EFFECTIVE_BAR_H + BAR_GAP) + TOP_PAD;
     // ───────────────────────────────────────────────────────────────────────
@@ -3495,23 +3570,25 @@ function renderTimeline() {
       const fw = isActive ? 'font-weight:800;' : 'font-weight:600;';
       const onclickStr = clickFn(it);
       const safeTitle = (it.title||it.name||'').replace(/"/g,'&quot;');
-      // ── fase strip embedded in bar ───────────────────────────────────────
-      const validPhases = (it.item_phases || []).filter(ph => ph.start_date && ph.end_date);
+      // ── fase strip embedded in bar (positie via end_pct) ─────────────────
+      const rawPhases = it.item_phases || [];
+      const phasesWithPct = phaseWithPct(rawPhases, it.start_date, it.end_date);
       let phaseStripHtml = '';
-      if (validPhases.length > 0) {
+      if (phasesWithPct.length > 0) {
         phaseStripHtml = `<div style="position:absolute;left:0;right:0;bottom:0;height:${PHASE_STRIP_H}px;overflow:hidden;border-radius:0 0 5px 5px;">`;
-        validPhases.forEach((ph, phIdx) => {
-          const ps = dateToPercent(ph.start_date), pe = dateToPercent(ph.end_date);
-          if (ps === null) return;
-          // clip to activity bounds
-          const cs = Math.max(ps, startPct), ce = Math.min(pe !== null ? pe : ps, startPct + w);
-          if (ce <= cs) return;
-          const phLeft = ((cs - startPct) / Math.max(w, 0.01)) * 100;
-          const phW = ((ce - cs) / Math.max(w, 0.01)) * 100;
+        phasesWithPct.forEach((ph, phIdx) => {
+          const phStart = phIdx === 0 ? 0 : phasesWithPct[phIdx-1].end_pct;
+          const phEnd = Math.min(100, ph.end_pct);
+          const phW = phEnd - phStart;
+          if (phW <= 0) return;
           const phColor = lightenHex(effectiveBarColor, 0.22 + phIdx * 0.12);
-          const phLabel = phW >= 10 && ph.label ? ph.label : '';
+          const phLabel = phW >= 8 && ph.label ? ph.label : '';
           const phName = (ph.name || ph.label || '').replace(/"/g, '&quot;');
-          phaseStripHtml += `<div style="position:absolute;left:${phLeft}%;width:${phW}%;height:100%;background:${phColor};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:rgba(255,255,255,.95);overflow:hidden;border-right:1px solid rgba(255,255,255,.3);" title="${phName}">${phLabel}</div>`;
+          phaseStripHtml += `<div style="position:absolute;left:${phStart}%;width:${phW}%;height:100%;background:${phColor};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:rgba(255,255,255,.95);overflow:hidden;" title="${phName}">${phLabel}</div>`;
+          // Drag handle tussen fasen (niet na de laatste)
+          if (phIdx < phasesWithPct.length - 1) {
+            phaseStripHtml += `<div onmousedown="tlPhaseSplitMouseDown(event,'${it.id}',${phIdx})" style="position:absolute;left:calc(${phEnd}% - 4px);top:0;bottom:0;width:8px;cursor:col-resize;z-index:10;background:rgba(255,255,255,.35);border-left:1px solid rgba(255,255,255,.5);border-right:1px solid rgba(255,255,255,.5);" title="Sleep om fase te vergroten/verkleinen"></div>`;
+          }
         });
         phaseStripHtml += `</div>`;
       }
