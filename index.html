@@ -1982,9 +1982,12 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     psel.value = prefillPhaseId || '';
     fillTrackSubDropdown(prefillTrackId, prefillSubcatId);
 
-    document.getElementById('mi-other-roadmap').checked = false;
-    document.getElementById('mi-other-roadmap-name').value = '';
-    document.getElementById('mi-other-roadmap-wrap').style.display = 'none';
+    const _orEl = document.getElementById('mi-other-roadmap');
+    const _orNameEl = document.getElementById('mi-other-roadmap-name');
+    const _orWrapEl = document.getElementById('mi-other-roadmap-wrap');
+    if (_orEl) _orEl.checked = false;
+    if (_orNameEl) _orNameEl.value = '';
+    if (_orWrapEl) _orWrapEl.style.display = 'none';
     itemStatusHistory = [];
   }
   // Fill gov meeting selects
@@ -2173,8 +2176,9 @@ function switchItemTab(tab) {
   });
 }
 function toggleOtherRoadmap() {
-  document.getElementById('mi-other-roadmap-wrap').style.display =
-    document.getElementById('mi-other-roadmap').checked ? 'block' : 'none';
+  const _orWrap = document.getElementById('mi-other-roadmap-wrap');
+  const _orChk = document.getElementById('mi-other-roadmap');
+  if (_orWrap && _orChk) _orWrap.style.display = _orChk.checked ? 'block' : 'none';
 }
 async function loadStatusHistory(itemId) {
   const { data } = await sb.from('item_status_history')
