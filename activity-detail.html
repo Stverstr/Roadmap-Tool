@@ -308,6 +308,61 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="btn btn-p" onclick="saveStatusOpmerking()">💾 Opmerking opslaan</button>
         </div>
       </div>
+      <!-- Inzichten -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">💡 Inzichten vandaag</div>
+          <button class="btn btn-p btn-sm" onclick="showInzichtForm()">＋ Inzicht</button>
+        </div>
+        <div id="inzicht-form" style="display:none;">
+          <div class="inline-form">
+            <div class="field"><label class="label">Inzicht / observatie</label><textarea class="textarea" id="inzicht-text" placeholder="Beschrijf het inzicht of de observatie…" style="min-height:65px;"></textarea></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="btn btn-s btn-sm" onclick="hideInzichtForm()">Annuleer</button>
+              <button class="btn btn-p btn-sm" onclick="saveInzicht()">Opslaan</button>
+            </div>
+          </div>
+        </div>
+        <div id="inzicht-list"><div class="empty">Nog geen inzichten toegevoegd.</div></div>
+      </div>
+
+      <!-- Planning verwachtingen -->
+      <div class="card">
+        <div class="card-title">📅 Algemene verwachtingen van de planning</div>
+        <div class="field">
+          <textarea class="textarea" id="st-planning" placeholder="Hoe evolueert de planning t.o.v. de verwachting? Zijn er risico's of verschuivingen voorzien?" style="min-height:100px;"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-p btn-sm" onclick="savePlanning()">💾 Opslaan</button>
+        </div>
+      </div>
+
+      <!-- Beslissingen / acties -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">⚡ Beslissingen & bijsturingen vereist</div>
+          <button class="btn btn-p btn-sm" onclick="showActieForm()">＋ Toevoegen</button>
+        </div>
+        <div id="actie-form" style="display:none;">
+          <div class="inline-form">
+            <div class="field"><label class="label">Beslissing / actie / bijsturing</label><textarea class="textarea" id="actie-text" placeholder="Omschrijf de vereiste beslissing of bijsturing…" style="min-height:65px;"></textarea></div>
+            <div class="field"><label class="label">Status</label>
+              <select class="select" id="actie-status">
+                <option value="open">🔴 Open</option>
+                <option value="in_progress">🟡 In behandeling</option>
+                <option value="done">🟢 Afgerond</option>
+                <option value="uitgesteld">⏸ Uitgesteld</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="btn btn-s btn-sm" onclick="hideActieForm()">Annuleer</button>
+              <button class="btn btn-p btn-sm" onclick="saveActie()">Opslaan</button>
+            </div>
+          </div>
+        </div>
+        <div id="actie-list"><div class="empty">Nog geen beslissingen of bijsturingen geregistreerd.</div></div>
+      </div>
+
       <div class="card" id="st-history-card" style="display:none;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
           <div class="card-title" style="margin:0;">📜 Historiek</div>
@@ -319,6 +374,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <!-- ══ TAB: AANPAK ══ -->
     <div class="panel" id="panel-aanpak">
+      <div class="card">
+        <div class="card-title">🎯 Verwachtingen</div>
+        <div class="field">
+          <label class="label">Doel</label>
+          <textarea class="textarea" id="aanpak-doel" placeholder="Wat is het doel van deze activiteit? Omschrijf uitgebreid de beoogde uitkomst en strategische relevantie…" style="min-height:110px;"></textarea>
+        </div>
+        <div class="field">
+          <label class="label">Wat willen we testen / leren?</label>
+          <textarea class="textarea" id="aanpak-leren" placeholder="Welke hypothesen willen we valideren? Wat moeten we bijleren als resultaat van deze activiteit?" style="min-height:90px;"></textarea>
+        </div>
+        <div class="field">
+          <label class="label">KPI verwachtingen</label>
+          <textarea class="textarea" id="aanpak-kpi" placeholder="Welke meetbare indicatoren definiëren succes? (bijv. conversie ≥ 5%, NPS +10, kostenbesparing X…)" style="min-height:80px;"></textarea>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-title">📦 Verwachte deliverables</div>
         <div class="field">
@@ -970,6 +1041,158 @@ async function loadStatus() {
   const { data: hist } = await sb.from('item_status_history')
     .select('*').eq('item_id', itemId).order('created_at', {ascending: false}).limit(30);
   renderStatusHistory(hist || []);
+  // Reload currentItem to get latest jsonb fields
+  const { data: fresh } = await sb.from('roadmap_items').select('status_inzichten,status_planning,status_acties').eq('id', itemId).single();
+  if (fresh) {
+    currentItem.status_inzichten = fresh.status_inzichten || [];
+    currentItem.status_planning  = fresh.status_planning  || '';
+    currentItem.status_acties    = fresh.status_acties    || [];
+  }
+  renderInzichten(currentItem.status_inzichten || []);
+  document.getElementById('st-planning').value = currentItem.status_planning || '';
+  renderActies(currentItem.status_acties || []);
+}
+
+// ── INZICHTEN ─────────────────────────────────────
+let editingInzichtId = null;
+
+function showInzichtForm(inzicht) {
+  editingInzichtId = inzicht ? inzicht.id : null;
+  document.getElementById('inzicht-text').value = inzicht ? inzicht.text : '';
+  document.getElementById('inzicht-form').style.display = 'block';
+  document.getElementById('inzicht-text').focus();
+}
+function hideInzichtForm() {
+  editingInzichtId = null;
+  document.getElementById('inzicht-form').style.display = 'none';
+}
+
+function renderInzichten(list) {
+  const el = document.getElementById('inzicht-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">Nog geen inzichten toegevoegd.</div>'; return; }
+  el.innerHTML = list.map((iz, i) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--gy200);border-radius:9px;margin-bottom:8px;background:white;">
+      <span style="font-size:16px;flex-shrink:0;margin-top:1px;">💡</span>
+      <div style="flex:1;font-size:14px;color:var(--gy900);line-height:1.5;white-space:pre-wrap;">${esc(iz.text)}</div>
+      <div style="display:flex;gap:2px;flex-shrink:0;">
+        <button class="btn-icon" onclick="editInzicht(${i})" title="Bewerken">✏️</button>
+        <button class="btn-icon" onclick="deleteInzicht(${i})" title="Verwijderen">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+async function saveInzicht() {
+  const text = document.getElementById('inzicht-text').value.trim();
+  if (!text) { toast('❌ Tekst is verplicht'); return; }
+  const list = [...(currentItem.status_inzichten || [])];
+  if (editingInzichtId !== null) {
+    list[editingInzichtId] = { ...list[editingInzichtId], text };
+  } else {
+    list.push({ id: Date.now(), text });
+  }
+  const { error } = await sb.from('roadmap_items').update({ status_inzichten: list, updated_at: new Date().toISOString() }).eq('id', itemId);
+  if (error) { toast('❌ ' + error.message); return; }
+  currentItem.status_inzichten = list;
+  renderInzichten(list);
+  hideInzichtForm();
+  toast('✅ Inzicht opgeslagen');
+}
+
+function editInzicht(idx) {
+  showInzichtForm({ id: idx, text: currentItem.status_inzichten[idx].text });
+}
+
+async function deleteInzicht(idx) {
+  if (!confirm('Inzicht verwijderen?')) return;
+  const list = currentItem.status_inzichten.filter((_, i) => i !== idx);
+  await sb.from('roadmap_items').update({ status_inzichten: list, updated_at: new Date().toISOString() }).eq('id', itemId);
+  currentItem.status_inzichten = list;
+  renderInzichten(list);
+  toast('🗑 Inzicht verwijderd');
+}
+
+// ── PLANNING VERWACHTINGEN ────────────────────────
+async function savePlanning() {
+  const val = document.getElementById('st-planning').value;
+  const { error } = await sb.from('roadmap_items').update({ status_planning: val, updated_at: new Date().toISOString() }).eq('id', itemId);
+  if (error) { toast('❌ ' + error.message); return; }
+  currentItem.status_planning = val;
+  toast('✅ Planning opgeslagen');
+}
+
+// ── BESLISSINGEN / ACTIES ─────────────────────────
+let editingActieId = null;
+const ACTIE_STATUS_LABELS = { open:'🔴 Open', in_progress:'🟡 In behandeling', done:'🟢 Afgerond', uitgesteld:'⏸ Uitgesteld' };
+
+function showActieForm(actie) {
+  editingActieId = actie ? actie._idx : null;
+  document.getElementById('actie-text').value = actie ? actie.text : '';
+  document.getElementById('actie-status').value = actie ? (actie.status || 'open') : 'open';
+  document.getElementById('actie-form').style.display = 'block';
+  document.getElementById('actie-text').focus();
+}
+function hideActieForm() {
+  editingActieId = null;
+  document.getElementById('actie-form').style.display = 'none';
+}
+
+function renderActies(list) {
+  const el = document.getElementById('actie-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">Nog geen beslissingen of bijsturingen geregistreerd.</div>'; return; }
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--gy200);">
+          <th style="text-align:left;padding:6px 8px;color:var(--gy500);font-weight:600;width:60%;">Beslissing / actie</th>
+          <th style="text-align:left;padding:6px 8px;color:var(--gy500);font-weight:600;width:25%;">Status</th>
+          <th style="width:15%;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.map((a, i) => `
+          <tr style="border-bottom:1px solid var(--gy200);">
+            <td style="padding:9px 8px;vertical-align:top;line-height:1.45;">${esc(a.text)}</td>
+            <td style="padding:9px 8px;vertical-align:top;">
+              <span style="font-size:12px;font-weight:600;">${ACTIE_STATUS_LABELS[a.status] || a.status}</span>
+            </td>
+            <td style="padding:6px 4px;vertical-align:top;text-align:right;white-space:nowrap;">
+              <button class="btn-icon" onclick="editActie(${i})" title="Bewerken">✏️</button>
+              <button class="btn-icon" onclick="deleteActie(${i})" title="Verwijderen">🗑</button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function saveActie() {
+  const text = document.getElementById('actie-text').value.trim();
+  if (!text) { toast('❌ Beschrijving is verplicht'); return; }
+  const status = document.getElementById('actie-status').value;
+  const list = [...(currentItem.status_acties || [])];
+  if (editingActieId !== null) {
+    list[editingActieId] = { ...list[editingActieId], text, status };
+  } else {
+    list.push({ id: Date.now(), text, status });
+  }
+  const { error } = await sb.from('roadmap_items').update({ status_acties: list, updated_at: new Date().toISOString() }).eq('id', itemId);
+  if (error) { toast('❌ ' + error.message); return; }
+  currentItem.status_acties = list;
+  renderActies(list);
+  hideActieForm();
+  toast('✅ Beslissing opgeslagen');
+}
+
+function editActie(idx) {
+  showActieForm({ ...currentItem.status_acties[idx], _idx: idx });
+}
+
+async function deleteActie(idx) {
+  if (!confirm('Verwijderen?')) return;
+  const list = currentItem.status_acties.filter((_, i) => i !== idx);
+  await sb.from('roadmap_items').update({ status_acties: list, updated_at: new Date().toISOString() }).eq('id', itemId);
+  currentItem.status_acties = list;
+  renderActies(list);
+  toast('🗑 Verwijderd');
 }
 
 function renderStatusHistory(hist) {
@@ -1097,6 +1320,10 @@ let hefbomenLinks = []; // [{id, roadmap_item_id, hefboom_id}]
 
 async function loadAanpak() {
   if (!currentItem) return;
+  // Verwachtingen
+  document.getElementById('aanpak-doel').value = currentItem.verwachtingen_doel || '';
+  document.getElementById('aanpak-leren').value = currentItem.verwachtingen_leren || '';
+  document.getElementById('aanpak-kpi').value = currentItem.verwachtingen_kpi || '';
   // Deliverables
   document.getElementById('aanpak-deliverables').value = currentItem.deliverables || '';
   // Owner
@@ -1271,6 +1498,9 @@ function renderDeps(items, tracks, subcats, selectedIds) {
 async function saveAanpak() {
   const deps = Array.from(document.querySelectorAll('#aanpak-deps-container input[type=checkbox]:checked')).map(c => c.value);
   const updates = {
+    verwachtingen_doel:  document.getElementById('aanpak-doel').value,
+    verwachtingen_leren: document.getElementById('aanpak-leren').value,
+    verwachtingen_kpi:   document.getElementById('aanpak-kpi').value,
     deliverables: document.getElementById('aanpak-deliverables').value,
     owner: document.getElementById('aanpak-owner').value.trim() || null,
     managed_in_other_roadmap: document.getElementById('aanpak-other-roadmap').checked,
