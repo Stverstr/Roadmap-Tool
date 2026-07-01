@@ -990,12 +990,6 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
           <span style="font-size:13px;font-weight:700;color:var(--gy900);" id="mgd-agenda-date-label">📋 Agenda</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <a id="mgd-prep-link" href="#" target="_blank" style="text-decoration:none;">
-              <button class="btn btn-sm" style="background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;">🎯 Meeting voorbereiden</button>
-            </a>
-            <a id="mgd-run-link" href="#" target="_blank" style="text-decoration:none;">
-              <button class="btn btn-sm" style="background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;">▶ Run</button>
-            </a>
             <button class="btn btn-sm" style="background:#F3F4F6;color:#374151;border:1px solid #D1D5DB;" onclick="openGovActivityPicker()">＋ Activiteit</button>
           </div>
         </div>
@@ -6118,10 +6112,7 @@ function renderGovernance() {
           <div style="margin-top:3px;">${agendaChips || '<span style="font-size:10px;color:var(--gy400);">Geen agenda</span>'}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
-          <button class="btn btn-sm" style="background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE;padding:3px 7px;" onclick="applyGovFilter('${m.id}','${d.id}')" title="Filter Storyboard &amp; Tijdslijn">🔍</button>
-          <a href="meeting-view.html?date_id=${d.id}&mode=prep" style="text-decoration:none;display:block;"><button class="btn btn-sm" style="background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;padding:3px 7px;width:100%;">🎯 Prep</button></a>
-          <a href="meeting-view.html?date_id=${d.id}&mode=run" style="text-decoration:none;display:block;"><button class="btn btn-sm" style="background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;padding:3px 7px;width:100%;">▶ Run</button></a>
-          <a href="meeting-view.html?date_id=${d.id}&mode=verslag" style="text-decoration:none;display:block;"><button class="btn btn-sm" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:3px 7px;width:100%;">📄 Verslag</button></a>
+          <button class="btn btn-sm" style="background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;padding:3px 10px;font-weight:600;" onclick="openMeetingPopup('${d.id}')">▶ Run</button>
         </div>
       </div>`;
     }).join('') : `<div style="font-size:12px;color:var(--gy400);padding:8px 0;">Nog geen datums gepland.</div>`;
@@ -6268,10 +6259,6 @@ function selectGovDate(dateId) {
   section.style.display = '';
   document.getElementById('mgd-agenda-date-label').textContent = `📋 Agenda — ${formatDateLong(d.date)}`;
   document.getElementById('mgd-adhoc').value = d.adhoc_participants || '';
-  const prepLink = document.getElementById('mgd-prep-link');
-  const runLink  = document.getElementById('mgd-run-link');
-  if (prepLink) prepLink.href = `meeting-view.html?date_id=${dateId}&mode=prep`;
-  if (runLink)  runLink.href  = `meeting-view.html?date_id=${dateId}&mode=run`;
   renderGovAgendaList();
   renderGovDatesList(); // re-render to update selected highlight
 }
@@ -6623,6 +6610,51 @@ function renderGovMeetingFilterBadge(containerId, filterRef, onClear) {
     <button onclick="${onClear}" style="background:none;border:none;color:#1E40AF;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;">✕</button>
   </span>`;
 }
+
+
+
+// ---- MEETING POPUP ----
+function openMeetingPopup(dateId) {
+  const url = `meeting-view.html?date_id=${dateId}`;
+  let overlay = document.getElementById('meeting-popup-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'meeting-popup-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;
+      display:flex;align-items:center;justify-content:center;
+    `;
+    overlay.innerHTML = `
+      <div style="position:relative;width:96vw;height:94vh;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6);">
+        <button onclick="closeMeetingPopup()" style="
+          position:absolute;top:12px;right:16px;z-index:10;
+          background:rgba(0,0,0,0.5);color:#fff;border:1px solid rgba(255,255,255,0.3);
+          border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;
+          backdrop-filter:blur(4px);
+        ">✕ Sluiten</button>
+        <iframe id="meeting-popup-frame" src="" style="width:100%;height:100%;border:none;border-radius:12px;"></iframe>
+      </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeMeetingPopup(); });
+    document.body.appendChild(overlay);
+  }
+  document.getElementById('meeting-popup-frame').src = url;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMeetingPopup() {
+  const overlay = document.getElementById('meeting-popup-overlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+    document.getElementById('meeting-popup-frame').src = '';
+  }
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeMeetingPopup();
+});
 
 </script>
 </body>
