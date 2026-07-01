@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting View — Roadmap Studio</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --g900:#1B4332;--g800:#2D6A4F;--g700:#40916C;--g600:#52B788;
+  --g400:#74C69D;--g200:#B7E4C7;--g100:#D8F3DC;--g50:#F0FFF4;
+  --gy900:#111827;--gy700:#374151;--gy500:#6B7280;
+  --gy300:#D1D5DB;--gy200:#E5E7EB;--gy100:#F3F4F6;--gy50:#F9FAFB;--white:#FFFFFF;
+  --blue:#3B82F6;--indigo:#6366F1;--purple:#7C3AED;--orange:#F59E0B;--red:#EF4444;
+  --amber:#F59E0B;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#EFF3F1;color:var(--gy700);min-height:100vh;}
+
+/* ── AUTH GATE ── */
+#gate{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--g900),var(--g700));}
+.gate-box{background:white;border-radius:14px;padding:36px;width:min(360px,94vw);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.gate-logo{font-size:22px;font-weight:800;color:var(--g800);margin-bottom:8px;}
+.gate-msg{font-size:14px;color:var(--gy500);line-height:1.5;}
+.gate-btn{display:inline-block;margin-top:18px;background:var(--g700);color:white;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;}
+
+/* ── APP ── */
+#app{display:none;min-height:100vh;}
+
+/* ── HEADER ── */
+.hdr{background:var(--g800);color:white;padding:0 16px;display:flex;align-items:center;gap:10px;height:54px;box-shadow:0 2px 8px rgba(0,0,0,.25);position:sticky;top:0;z-index:300;}
+.hdr-back{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none;}
+.hdr-back:hover{background:rgba(255,255,255,.25);}
+.hdr-title{font-size:15px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hdr-sub{font-size:11px;opacity:.7;}
+
+/* ── MODE SWITCHER ── */
+.mode-bar{background:white;border-bottom:2px solid var(--gy200);display:flex;padding:0 16px;position:sticky;top:54px;z-index:200;gap:0;}
+.mode-btn{padding:11px 20px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--gy500);border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:all .15s;}
+.mode-btn:hover{color:var(--g700);}
+.mode-btn.active{color:var(--g800);border-bottom-color:var(--g700);}
+.mode-dot{width:7px;height:7px;border-radius:50%;}
+.dot-prep{background:var(--indigo);}
+.dot-run{background:var(--g700);}
+.dot-verslag{background:var(--orange);}
+
+/* ── CONTENT ── */
+.content{padding:22px;max-width:960px;margin:0 auto;}
+.panel{display:none;}.panel.active{display:block;}
+
+/* ── CARDS ── */
+.card{background:white;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:16px;}
+.card-title{font-size:13px;font-weight:700;color:var(--gy900);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.field{margin-bottom:14px;}
+.label{font-size:12px;font-weight:600;color:var(--gy700);display:block;margin-bottom:5px;}
+.input{width:100%;border:1px solid var(--gy300);border-radius:8px;padding:8px 11px;font-size:14px;font-family:inherit;color:var(--gy900);}
+.input:focus{outline:none;border-color:var(--g600);box-shadow:0 0 0 3px rgba(64,145,108,.12);}
+.textarea{width:100%;border:1px solid var(--gy300);border-radius:8px;padding:8px 11px;font-size:14px;font-family:inherit;color:var(--gy900);resize:vertical;}
+.textarea:focus{outline:none;border-color:var(--g600);box-shadow:0 0 0 3px rgba(64,145,108,.12);}
+.select{width:100%;border:1px solid var(--gy300);border-radius:8px;padding:8px 11px;font-size:14px;font-family:inherit;background:white;}
+.select:focus{outline:none;border-color:var(--g600);}
+
+/* ── BUTTONS ── */
+.btn{border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .12s;}
+.btn-p{background:var(--g700);color:white;}
+.btn-p:hover{background:var(--g800);}
+.btn-s{background:var(--gy100);color:var(--gy700);}
+.btn-s:hover{background:var(--gy200);}
+.btn-run{background:var(--g700);color:white;font-size:14px;padding:10px 24px;}
+.btn-run:hover{background:var(--g800);}
+.btn-danger{background:#FEE2E2;color:var(--red);}
+.btn-danger:hover{background:#FECACA;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-icon{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:6px;color:var(--gy500);font-size:14px;}
+.btn-icon:hover{background:var(--gy100);}
+.inline-form{background:var(--gy50);border:1px solid var(--gy200);border-radius:10px;padding:14px;margin-bottom:12px;}
+
+/* ── PREP: TOPIC ── */
+.topic-block{border:1px solid var(--gy200);border-radius:10px;margin-bottom:12px;overflow:hidden;}
+.topic-head{background:var(--gy50);padding:10px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+.topic-head:hover{background:var(--gy100);}
+.topic-num{width:24px;height:24px;border-radius:50%;background:var(--g700);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.topic-title-inp{flex:1;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--gy900);font-family:inherit;outline:none;}
+.topic-body{padding:12px 14px;}
+
+/* ── PREP: SUBTOPIC ── */
+.subtopic-row{border:1px solid var(--gy200);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:white;}
+.subtopic-type-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.badge-text{background:#EDE9FE;color:#5B21B6;}
+.badge-activity{background:#D1FAE5;color:#065F46;}
+
+/* ── HIGHLIGHT FIELD CHECKBOXES ── */
+.field-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.field-chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid var(--gy300);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;user-select:none;transition:all .12s;}
+.field-chip:hover{border-color:var(--g600);}
+.field-chip.selected{background:var(--g50);border-color:var(--g600);color:var(--g800);font-weight:700;}
+.field-chip input{display:none;}
+
+/* ── RUN: LAYOUT ── */
+.run-layout{display:grid;grid-template-columns:220px 1fr;gap:0;min-height:calc(100vh - 108px);}
+.run-sidebar{background:white;border-right:1px solid var(--gy200);padding:16px 0;position:sticky;top:108px;height:calc(100vh - 108px);overflow-y:auto;}
+.run-main{padding:22px;overflow-y:auto;}
+.sidebar-topic{padding:8px 16px;font-size:13px;font-weight:600;color:var(--gy700);cursor:pointer;border-left:3px solid transparent;transition:all .12s;}
+.sidebar-topic:hover{background:var(--g50);color:var(--g800);}
+.sidebar-topic.active{background:var(--g50);color:var(--g800);border-left-color:var(--g700);}
+.sidebar-sub{padding:4px 16px 4px 28px;font-size:12px;color:var(--gy500);cursor:pointer;transition:background .12s;}
+.sidebar-sub:hover{background:var(--gy100);}
+.sidebar-sub.active{color:var(--g700);font-weight:600;}
+
+/* ── RUN: SECTION HEADERS ── */
+.run-section{margin-bottom:32px;scroll-margin-top:120px;}
+.run-section-title{font-size:17px;font-weight:800;color:var(--gy900);margin-bottom:4px;padding-bottom:10px;border-bottom:2px solid var(--gy200);}
+.run-sub-title{font-size:14px;font-weight:700;color:var(--gy700);margin:16px 0 10px;display:flex;align-items:center;gap:6px;}
+
+/* ── RUN: ACTIVITY CARD ── */
+.act-card{border:1px solid var(--gy200);border-radius:12px;margin-bottom:16px;overflow:hidden;background:white;}
+.act-card-head{padding:12px 16px;background:var(--gy50);display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--gy200);}
+.act-card-name{font-size:15px;font-weight:700;color:var(--gy900);flex:1;}
+.act-card-body{padding:14px 16px;}
+.act-field-block{margin-bottom:14px;}
+.act-field-block:last-child{margin-bottom:0;}
+.act-field-label{font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.act-field-value{font-size:14px;color:var(--gy900);line-height:1.5;white-space:pre-wrap;}
+.act-field-value.empty{color:var(--gy400);font-style:italic;}
+.highlighted{background:linear-gradient(135deg,#F0FFF4,#E8FFF1);border-left:3px solid var(--g600);padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:10px;}
+.dimmed{opacity:.45;}
+
+/* ── STATUS BADGES ── */
+.s-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.s-pending{background:var(--gy100);color:var(--gy700);}
+.s-active{background:#DBEAFE;color:#1E40AF;}
+.s-done{background:var(--g200);color:var(--g900);}
+.health-icon{font-size:16px;}
+
+/* ── VERSLAG ── */
+.verslag-section{margin-bottom:28px;}
+.verslag-title{font-size:16px;font-weight:800;color:var(--gy900);border-bottom:2px solid var(--gy200);padding-bottom:8px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.change-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:var(--gy50);border:1px solid var(--gy200);margin-bottom:6px;}
+.change-dot{width:8px;height:8px;border-radius:50%;background:var(--g600);flex-shrink:0;margin-top:5px;}
+.change-body{flex:1;font-size:13px;color:var(--gy900);line-height:1.4;}
+.change-meta{font-size:11px;color:var(--gy500);margin-top:2px;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--g800);color:white;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;}
+#toast.show{opacity:1;}
+
+/* ── LOADING ── */
+.loading{text-align:center;padding:40px;color:var(--gy500);}
+.empty{text-align:center;padding:24px;color:var(--gy400);font-size:13px;}
+
+/* ── INZICHTEN LIST ── */
+.inzicht-pill{display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:7px;background:var(--g50);border:1px solid var(--g200);margin-bottom:5px;font-size:13px;}
+/* ── ACTIES TABLE ── */
+.acties-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.acties-tbl th{text-align:left;padding:5px 8px;font-size:11px;font-weight:700;color:var(--gy500);border-bottom:1px solid var(--gy200);}
+.acties-tbl td{padding:7px 8px;border-bottom:1px solid var(--gy100);vertical-align:top;}
+
+/* ── PRINT CSS ── */
+@media print{
+  .hdr,.mode-bar,.no-print{display:none!important;}
+  body{background:white;}
+  .content{padding:0;max-width:100%;}
+  .card{box-shadow:none;border:1px solid #ddd;break-inside:avoid;}
+  .run-layout{display:block;}
+  .run-sidebar{display:none;}
+  .act-card{break-inside:avoid;}
+  .panel{display:block!important;}
+  #panel-verslag{display:block!important;}
+  #panel-prep,#panel-run{display:none!important;}
+}
+
+@media(max-width:700px){
+  .run-layout{grid-template-columns:1fr;}
+  .run-sidebar{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">🗺️ Roadmap Studio</div>
+    <p class="gate-msg" id="gate-msg">Controleren of je ingelogd bent…</p>
+    <a href="index.html" class="gate-btn" id="gate-link" style="display:none">← Open Roadmap Studio</a>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Header -->
+  <div class="hdr">
+    <a href="index.html" class="hdr-back">← Roadmap</a>
+    <div style="flex:1;min-width:0;">
+      <div class="hdr-title" id="hdr-title">Meeting laden…</div>
+      <div class="hdr-sub" id="hdr-sub"></div>
+    </div>
+    <div class="no-print" id="hdr-actions"></div>
+  </div>
+
+  <!-- Mode bar -->
+  <div class="mode-bar no-print">
+    <button class="mode-btn" id="btn-prep" onclick="switchMode('prep')"><span class="mode-dot dot-prep"></span> 🎯 Voorbereiding</button>
+    <button class="mode-btn" id="btn-run"  onclick="switchMode('run')"> <span class="mode-dot dot-run"></span>  ▶ Meeting</button>
+    <button class="mode-btn" id="btn-verslag" onclick="switchMode('verslag')"><span class="mode-dot dot-verslag"></span> 📄 Verslag</button>
+  </div>
+
+  <!-- ══ PREP PANEL ══ -->
+  <div class="panel active" id="panel-prep">
+    <div class="content">
+
+      <!-- Meeting doel -->
+      <div class="card">
+        <div class="card-title">🎯 Doel van de meeting</div>
+        <div class="field">
+          <textarea class="textarea" id="prep-goal" rows="3" placeholder="Wat willen we bereiken in deze meeting? Wat zijn de verwachtingen voor deelnemers?"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-p btn-sm" onclick="saveGoal()">💾 Opslaan</button>
+        </div>
+      </div>
+
+      <!-- Agenda opbouwen -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">📋 Agenda</div>
+          <button class="btn btn-p btn-sm" onclick="addTopic()">＋ Topic</button>
+        </div>
+        <div id="prep-agenda-list"><div class="empty">Nog geen agenda-topics. Klik + Topic.</div></div>
+      </div>
+
+      <!-- Start meeting knop -->
+      <div style="display:flex;justify-content:center;margin-top:8px;">
+        <button class="btn btn-run no-print" onclick="startMeeting()">▶ Meeting starten →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RUN PANEL ══ -->
+  <div class="panel" id="panel-run">
+    <div class="run-layout">
+      <div class="run-sidebar no-print" id="run-sidebar">
+        <div style="padding:10px 16px 6px;font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.06em;">Agenda</div>
+        <div id="sidebar-nav"></div>
+        <div style="padding:12px 16px;margin-top:8px;border-top:1px solid var(--gy200);">
+          <button class="btn btn-danger btn-sm" style="width:100%;" onclick="endMeeting()">⬛ Meeting afsluiten</button>
+        </div>
+      </div>
+      <div class="run-main" id="run-main">
+        <div class="loading">Meeting laden…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VERSLAG PANEL ══ -->
+  <div class="panel" id="panel-verslag">
+    <div class="content">
+      <!-- Header verslag (printbaar) -->
+      <div class="card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:20px;font-weight:800;color:var(--gy900);margin-bottom:4px;" id="vsl-meeting-title">—</div>
+            <div style="font-size:14px;color:var(--gy500);" id="vsl-date">—</div>
+            <div style="font-size:13px;color:var(--gy700);margin-top:6px;" id="vsl-participants"></div>
+          </div>
+          <button class="btn btn-p no-print" onclick="window.print()">🖨️ Print / PDF</button>
+        </div>
+        <div id="vsl-goal-block" style="margin-top:14px;display:none;">
+          <div style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Doel van de meeting</div>
+          <div style="font-size:14px;color:var(--gy900);line-height:1.5;" id="vsl-goal"></div>
+        </div>
+      </div>
+
+      <!-- Agenda samenvatting -->
+      <div class="verslag-section">
+        <div class="verslag-title">📋 Agenda</div>
+        <div id="vsl-agenda"></div>
+      </div>
+
+      <!-- Besproken activiteiten -->
+      <div class="verslag-section">
+        <div class="verslag-title">🗂 Besproken activiteiten</div>
+        <div id="vsl-activities"></div>
+      </div>
+
+      <!-- Wijzigingen -->
+      <div class="verslag-section">
+        <div class="verslag-title">🔄 Wijzigingen tijdens de meeting</div>
+        <div id="vsl-changes"><div class="empty">Nog geen wijzigingen gedetecteerd of meeting nog niet afgerond.</div></div>
+      </div>
+
+      <!-- Manuele notities -->
+      <div class="card">
+        <div class="card-title">💬 Aanvullende notities & besluiten</div>
+        <div class="field">
+          <textarea class="textarea" id="vsl-notes" rows="6" placeholder="Voeg hier aanvullende besluiten, acties of context toe die niet in de activiteiten staan…"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;" class="no-print">
+          <button class="btn btn-p btn-sm" onclick="saveNotes()">💾 Notities opslaan</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<div id="toast"></div>
+
+<script>
+const SUPA_URL = 'https://uvodxrrxsxnjlinqrjlw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2b2R4cnJ4c3huamxpbnFyamx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjg4MzYsImV4cCI6MjA5NTEwNDgzNn0.1lX4o9zuV0VZJG7S53rdqfbRuic6YnT7g-YPnePavnI';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const ALL_FIELDS = [
+  { id:'status',               label:'Status' },
+  { id:'health_status',        label:'Health' },
+  { id:'verwachtingen_doel',   label:'Doel' },
+  { id:'verwachtingen_leren',  label:'Testen/Leren' },
+  { id:'verwachtingen_kpi',    label:'KPI\'s' },
+  { id:'deliverables',         label:'Deliverables' },
+  { id:'owner',                label:'Owner' },
+  { id:'status_inzichten',     label:'Inzichten' },
+  { id:'status_planning',      label:'Planning' },
+  { id:'status_acties',        label:'Beslissingen' },
+];
+
+const HEALTH_EMOJI = {sunny:'☀️',partly_cloudy:'⛅',cloudy:'☁️',stormy:'⛈️'};
+const STATUS_LABEL = {pending:'○ Te doen',active:'▶ Actief',done:'✓ Klaar'};
+const STATUS_CLASS = {pending:'s-pending',active:'s-active',done:'s-done'};
+const ACTIE_STATUS = {open:'🔴 Open',in_progress:'🟡 In behandeling',done:'🟢 Afgerond',uitgesteld:'⏸ Uitgesteld'};
+
+let dateId = null, userId = null;
+let meetingDate = null, meeting = null;
+let agendaItems = [];
+let projectItems = [];
+let currentMode = 'prep';
+
+// ── INIT ──────────────────────────────────────────
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    document.getElementById('gate-msg').textContent = 'Je bent niet ingelogd. Open Roadmap Studio eerst.';
+    document.getElementById('gate-link').style.display = 'inline-block';
+    return;
+  }
+  userId = session.user.id;
+  const params = new URLSearchParams(location.search);
+  dateId = params.get('date_id');
+  const modeParam = params.get('mode') || 'prep';
+  if (!dateId) {
+    document.getElementById('gate-msg').textContent = 'Geen meeting datum opgegeven in de URL.';
+    document.getElementById('gate-link').style.display = 'inline-block';
+    return;
+  }
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  await loadAll();
+  switchMode(modeParam, true);
+}
+
+async function loadAll() {
+  const { data: md } = await sb.from('gov_rm_meeting_dates').select('*').eq('id', dateId).single();
+  if (!md) { toast('❌ Meeting datum niet gevonden'); return; }
+  meetingDate = md;
+
+  const { data: m } = await sb.from('gov_rm_meetings').select('*').eq('id', md.meeting_id).single();
+  meeting = m;
+
+  const { data: ai } = await sb.from('gov_rm_agenda_items').select('*').eq('meeting_date_id', dateId).order('position');
+  agendaItems = ai || [];
+
+  if (md.project_id) {
+    const { data: pi } = await sb.from('roadmap_items').select('*,tracks(name,color,icon),subcategories(name)').eq('project_id', md.project_id).order('title');
+    projectItems = pi || [];
+  }
+
+  // Header
+  const dateStr = formatDateLong(md.date);
+  document.title = (m?.title || 'Meeting') + ' — ' + dateStr;
+  document.getElementById('hdr-title').textContent = (m?.icon || '📅') + ' ' + (m?.title || 'Meeting');
+  document.getElementById('hdr-sub').textContent = dateStr + (md.adhoc_participants ? '  ·  ' + md.adhoc_participants : '');
+}
+
+// ── MODE SWITCHER ─────────────────────────────────
+function switchMode(mode, skipUrl) {
+  currentMode = mode;
+  ['prep','run','verslag'].forEach(m => {
+    document.getElementById('panel-' + m).classList.toggle('active', m === mode);
+    document.getElementById('btn-' + m).classList.toggle('active', m === mode);
+  });
+  if (!skipUrl) {
+    const url = new URL(location.href);
+    url.searchParams.set('mode', mode);
+    history.replaceState(null, '', url);
+  }
+  if (mode === 'prep')    renderPrep();
+  if (mode === 'run')     renderRun();
+  if (mode === 'verslag') renderVerslag();
+}
+
+// ══════════════════════════════════════════════════
+//  PREP MODE
+// ══════════════════════════════════════════════════
+function renderPrep() {
+  document.getElementById('prep-goal').value = meetingDate?.meeting_goal || '';
+  renderPrepAgenda();
+}
+
+function renderPrepAgenda() {
+  const el = document.getElementById('prep-agenda-list');
+  const topics = agendaItems.filter(a => a.type === 'topic').sort((a,b)=>a.position-b.position);
+  if (!topics.length) { el.innerHTML = '<div class="empty">Nog geen topics. Klik + Topic.</div>'; return; }
+  el.innerHTML = topics.map((t, idx) => renderTopicBlock(t, idx+1)).join('');
+}
+
+function renderTopicBlock(topic, num) {
+  const subs = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+  const subsHtml = subs.length
+    ? subs.map((s, si) => renderSubtopicRow(topic.id, s, si)).join('')
+    : '<div style="font-size:12px;color:var(--gy400);padding:6px 0;">Nog geen subtopics.</div>';
+
+  return `<div class="topic-block" id="topic-block-${topic.id}">
+    <div class="topic-head">
+      <div class="topic-num">${num}</div>
+      <input class="topic-title-inp" value="${esc(topic.title||'')}" placeholder="Topic naam…"
+        onblur="saveTopicTitle('${topic.id}',this.value)"
+        onkeydown="if(event.key==='Enter'){this.blur();}">
+      <button class="btn-icon" onclick="deleteTopic('${topic.id}')" title="Verwijder topic">🗑</button>
+    </div>
+    <div class="topic-body">
+      ${subsHtml}
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-s btn-sm" onclick="addSubtopic('${topic.id}','text')">＋ Tekst</button>
+        <button class="btn btn-s btn-sm" onclick="addSubtopic('${topic.id}','activity_block')">📊 Activiteiten block</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSubtopicRow(topicId, sub, idx) {
+  const typeLabel = sub.type === 'activity_block' ? '📊 Activiteiten' : '📝 Tekst';
+  const typeCls   = sub.type === 'activity_block' ? 'badge-activity' : 'badge-text';
+
+  let bodyHtml = '';
+  if (sub.type === 'text') {
+    bodyHtml = `<div style="margin-top:8px;">
+      <textarea class="textarea" style="min-height:55px;font-size:13px;" placeholder="Inhoud / toelichting…"
+        onblur="saveSubtopicField('${topicId}',${idx},'content',this.value)">${esc(sub.content||'')}</textarea>
+    </div>`;
+  } else {
+    // Activity block: pick activities + highlight fields
+    const activityIds = sub.activity_ids || [];
+    const highlightFields = sub.highlight_fields || [];
+    const actPicker = projectItems.map(p =>
+      `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 0;cursor:pointer;">
+        <input type="checkbox" ${activityIds.includes(p.id)?'checked':''}
+          onchange="toggleSubActivity('${topicId}',${idx},'${p.id}',this.checked)"
+          style="accent-color:var(--g700);">
+        <span>${esc(p.title)}</span>
+        ${p.tracks ? `<span style="font-size:10px;color:var(--gy400);">(${esc(p.tracks.name)})</span>` : ''}
+      </label>`).join('');
+
+    const fieldChips = ALL_FIELDS.map(f =>
+      `<label class="field-chip ${highlightFields.includes(f.id)?'selected':''}">
+        <input type="checkbox" ${highlightFields.includes(f.id)?'checked':''}
+          onchange="toggleSubField('${topicId}',${idx},'${f.id}',this.checked)">
+        ${f.label}
+      </label>`).join('');
+
+    bodyHtml = `<div style="margin-top:10px;">
+      <details style="margin-bottom:8px;">
+        <summary style="font-size:12px;font-weight:600;color:var(--gy700);cursor:pointer;padding:4px 0;">
+          Activiteiten <span style="color:var(--gy400);font-weight:400;">(${activityIds.length} geselecteerd)</span>
+        </summary>
+        <div style="max-height:180px;overflow-y:auto;margin-top:6px;padding:8px 10px;background:var(--gy50);border-radius:8px;border:1px solid var(--gy200);">
+          ${actPicker || '<div style="font-size:12px;color:var(--gy400);">Geen activiteiten in project.</div>'}
+        </div>
+      </details>
+      <div style="margin-top:6px;">
+        <div style="font-size:11px;font-weight:600;color:var(--gy700);margin-bottom:5px;">Toon in meeting:</div>
+        <div class="field-grid">${fieldChips}</div>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="subtopic-row">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="subtopic-type-badge ${typeCls}">${typeLabel}</span>
+      <input class="input" style="flex:1;font-size:13px;font-weight:600;height:32px;" value="${esc(sub.title||'')}" placeholder="Subtopic naam…"
+        onblur="saveSubtopicField('${topicId}',${idx},'title',this.value)">
+      <button class="btn-icon" onclick="deleteSubtopic('${topicId}',${idx})" title="Verwijder">🗑</button>
+    </div>
+    ${bodyHtml}
+  </div>`;
+}
+
+async function saveGoal() {
+  const val = document.getElementById('prep-goal').value;
+  await sb.from('gov_rm_meeting_dates').update({meeting_goal: val, updated_at: new Date().toISOString()}).eq('id', dateId);
+  meetingDate.meeting_goal = val;
+  toast('✅ Doel opgeslagen');
+}
+
+async function addTopic() {
+  const pos = agendaItems.filter(a=>a.type==='topic').length;
+  const { data: nd } = await sb.from('gov_rm_agenda_items').insert({
+    meeting_date_id: dateId,
+    meeting_id: meeting?.id,
+    project_id: meetingDate.project_id,
+    type: 'topic',
+    title: 'Nieuw topic',
+    position: pos,
+    subtopics: []
+  }).select().single();
+  if (nd) { agendaItems.push(nd); renderPrepAgenda(); }
+}
+
+async function saveTopicTitle(topicId, title) {
+  await sb.from('gov_rm_agenda_items').update({title}).eq('id', topicId);
+  const item = agendaItems.find(a => a.id === topicId);
+  if (item) item.title = title;
+}
+
+async function deleteTopic(topicId) {
+  if (!confirm('Topic en subtopics verwijderen?')) return;
+  await sb.from('gov_rm_agenda_items').delete().eq('id', topicId);
+  agendaItems = agendaItems.filter(a => a.id !== topicId);
+  renderPrepAgenda();
+}
+
+async function addSubtopic(topicId, type) {
+  const item = agendaItems.find(a => a.id === topicId);
+  if (!item) return;
+  const subs = Array.isArray(item.subtopics) ? [...item.subtopics] : [];
+  subs.push({ id: Date.now().toString(), title: type === 'activity_block' ? 'Activiteiten' : 'Subtopic', type, content: '', activity_ids: [], highlight_fields: ['status','verwachtingen_doel','verwachtingen_kpi','status_inzichten'], position: subs.length });
+  await sb.from('gov_rm_agenda_items').update({subtopics: subs}).eq('id', topicId);
+  item.subtopics = subs;
+  renderPrepAgenda();
+}
+
+async function saveSubtopicField(topicId, idx, field, value) {
+  const item = agendaItems.find(a => a.id === topicId);
+  if (!item || !item.subtopics[idx]) return;
+  item.subtopics[idx][field] = value;
+  await sb.from('gov_rm_agenda_items').update({subtopics: item.subtopics}).eq('id', topicId);
+}
+
+async function toggleSubActivity(topicId, idx, actId, checked) {
+  const item = agendaItems.find(a => a.id === topicId);
+  if (!item || !item.subtopics[idx]) return;
+  const ids = item.subtopics[idx].activity_ids || [];
+  item.subtopics[idx].activity_ids = checked ? [...ids, actId] : ids.filter(i => i !== actId);
+  await sb.from('gov_rm_agenda_items').update({subtopics: item.subtopics}).eq('id', topicId);
+  // update the count badge
+  const details = document.querySelector(`#topic-block-${topicId}`);
+  if (details) {
+    const cnt = details.querySelectorAll('input[type=checkbox]:checked').length;
+    // just silently save; UI stays live via checkboxes
+  }
+}
+
+async function toggleSubField(topicId, idx, fieldId, checked) {
+  const item = agendaItems.find(a => a.id === topicId);
+  if (!item || !item.subtopics[idx]) return;
+  const fields = item.subtopics[idx].highlight_fields || [];
+  item.subtopics[idx].highlight_fields = checked ? [...fields, fieldId] : fields.filter(f => f !== fieldId);
+  await sb.from('gov_rm_agenda_items').update({subtopics: item.subtopics}).eq('id', topicId);
+}
+
+async function deleteSubtopic(topicId, idx) {
+  if (!confirm('Subtopic verwijderen?')) return;
+  const item = agendaItems.find(a => a.id === topicId);
+  if (!item) return;
+  item.subtopics = item.subtopics.filter((_,i) => i !== idx);
+  await sb.from('gov_rm_agenda_items').update({subtopics: item.subtopics}).eq('id', topicId);
+  renderPrepAgenda();
+}
+
+async function startMeeting() {
+  // Save goal if dirty
+  const goal = document.getElementById('prep-goal').value;
+  if (goal !== meetingDate.meeting_goal) {
+    await sb.from('gov_rm_meeting_dates').update({meeting_goal: goal}).eq('id', dateId);
+    meetingDate.meeting_goal = goal;
+  }
+  // Set meeting_start_at if not already set
+  if (!meetingDate.meeting_start_at) {
+    const now = new Date().toISOString();
+    await sb.from('gov_rm_meeting_dates').update({meeting_start_at: now}).eq('id', dateId);
+    meetingDate.meeting_start_at = now;
+  }
+  switchMode('run');
+}
+
+// ══════════════════════════════════════════════════
+//  RUN MODE
+// ══════════════════════════════════════════════════
+// BroadcastChannel to listen for activity updates
+const bc = new BroadcastChannel('roadmap_refresh');
+bc.onmessage = async (e) => {
+  if (e.data?.type === 'item_updated' && currentMode === 'run') {
+    // Reload the changed item
+    const { data: fresh } = await sb.from('roadmap_items').select('*,tracks(name,color,icon),subcategories(name)').eq('id', e.data.itemId).single();
+    if (fresh) {
+      const idx = projectItems.findIndex(p => p.id === fresh.id);
+      if (idx >= 0) projectItems[idx] = fresh; else projectItems.push(fresh);
+      // Re-render only the card
+      const card = document.getElementById('act-card-' + fresh.id);
+      if (card) card.outerHTML = buildActivityCard(fresh, _currentHighlightFields[fresh.id] || []);
+    }
+    toast('🔄 Activiteit bijgewerkt');
+  }
+};
+const _currentHighlightFields = {};
+
+function renderRun() {
+  const sidebar = document.getElementById('sidebar-nav');
+  const main = document.getElementById('run-main');
+  const topics = agendaItems.filter(a => a.type === 'topic').sort((a,b) => a.position - b.position);
+
+  if (!topics.length) {
+    sidebar.innerHTML = '<div style="padding:8px 16px;font-size:12px;color:var(--gy400);">Geen agenda.</div>';
+    main.innerHTML = '<div class="empty" style="margin-top:40px;">Geen agenda. Ga naar Voorbereiding om topics toe te voegen.</div>';
+    return;
+  }
+
+  // Sidebar
+  sidebar.innerHTML = topics.map(t => {
+    const subs = Array.isArray(t.subtopics) ? t.subtopics : [];
+    const subsHtml = subs.map(s =>
+      `<div class="sidebar-sub" onclick="scrollToSection('${t.id}-${s.id}')">
+        ${s.type === 'activity_block' ? '📊' : '•'} ${esc(s.title || '—')}
+      </div>`).join('');
+    return `<div class="sidebar-topic" onclick="scrollToSection('topic-${t.id}')">${esc(t.title || 'Topic')}</div>${subsHtml}`;
+  }).join('');
+
+  // Main content
+  const goalHtml = meetingDate.meeting_goal
+    ? `<div class="card" style="margin-bottom:24px;border-left:4px solid var(--g700);">
+        <div style="font-size:11px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Doel van de meeting</div>
+        <div style="font-size:14px;color:var(--gy900);line-height:1.55;">${esc(meetingDate.meeting_goal)}</div>
+      </div>` : '';
+
+  const topicsHtml = topics.map(t => {
+    const subs = Array.isArray(t.subtopics) ? t.subtopics : [];
+    const subsHtml = subs.map(s => renderRunSubtopic(t.id, s)).join('');
+    return `<div class="run-section" id="topic-${t.id}">
+      <div class="run-section-title">📌 ${esc(t.title || 'Topic')}</div>
+      ${subsHtml || '<div class="empty">Geen subtopics voor dit topic.</div>'}
+    </div>`;
+  }).join('');
+
+  main.innerHTML = goalHtml + topicsHtml;
+}
+
+function renderRunSubtopic(topicId, sub) {
+  const sectionId = `${topicId}-${sub.id}`;
+  if (sub.type === 'text') {
+    return `<div class="run-section" id="${sectionId}" style="margin-bottom:20px;">
+      <div class="run-sub-title">📝 ${esc(sub.title || 'Subtopic')}</div>
+      ${sub.content ? `<div style="font-size:14px;color:var(--gy900);line-height:1.55;white-space:pre-wrap;">${esc(sub.content)}</div>` : '<div class="empty">Geen inhoud.</div>'}
+    </div>`;
+  }
+  // Activity block
+  const actIds = sub.activity_ids || [];
+  const highlightFields = sub.highlight_fields || [];
+  const activities = actIds.map(id => projectItems.find(p => p.id === id)).filter(Boolean);
+  // Store highlight fields per activity for BroadcastChannel refresh
+  activities.forEach(a => { _currentHighlightFields[a.id] = highlightFields; });
+
+  const cardsHtml = activities.length
+    ? activities.map(a => buildActivityCard(a, highlightFields)).join('')
+    : '<div class="empty">Geen activiteiten geselecteerd voor dit block.</div>';
+
+  return `<div class="run-section" id="${sectionId}">
+    <div class="run-sub-title">📊 ${esc(sub.title || 'Activiteiten')}</div>
+    <div style="font-size:12px;color:var(--gy500);margin-bottom:10px;">
+      ${activities.length} activiteit${activities.length !== 1 ? 'en' : ''} &nbsp;·&nbsp;
+      Toon: ${highlightFields.map(f => ALL_FIELDS.find(x => x.id === f)?.label).filter(Boolean).join(', ') || 'alle velden'}
+    </div>
+    ${cardsHtml}
+  </div>`;
+}
+
+function buildActivityCard(item, highlightFields) {
+  const hl = new Set(highlightFields);
+  const statusBadge = `<span class="s-badge ${STATUS_CLASS[item.status] || 's-pending'}">${STATUS_LABEL[item.status] || item.status}</span>`;
+  const healthBadge = item.health_status ? `<span class="health-icon">${HEALTH_EMOJI[item.health_status] || ''}</span>` : '';
+  const trackName = item.tracks?.name || '';
+  const detailUrl = `activity-detail.html?id=${item.id}`;
+
+  const renderField = (fieldId, content) => {
+    if (!content) return '';
+    const fieldDef = ALL_FIELDS.find(f => f.id === fieldId);
+    const isHighlighted = hl.size === 0 || hl.has(fieldId);
+    const cls = isHighlighted ? 'highlighted' : 'dimmed';
+    return `<div class="act-field-block ${cls}">
+      <div class="act-field-label">${fieldDef?.label || fieldId}</div>
+      <div class="act-field-value">${esc(String(content))}</div>
+    </div>`;
+  };
+
+  const renderListField = (fieldId, listData) => {
+    if (!listData || !listData.length) return '';
+    const isHighlighted = hl.size === 0 || hl.has(fieldId);
+    const cls = isHighlighted ? 'highlighted' : 'dimmed';
+    const fieldDef = ALL_FIELDS.find(f => f.id === fieldId);
+    const listHtml = listData.map(i => `<div class="inzicht-pill">💡 ${esc(i.text||'')}</div>`).join('');
+    return `<div class="act-field-block ${cls}">
+      <div class="act-field-label">${fieldDef?.label || fieldId}</div>
+      ${listHtml}
+    </div>`;
+  };
+
+  const renderActiesField = (fieldId, listData) => {
+    if (!listData || !listData.length) return '';
+    const isHighlighted = hl.size === 0 || hl.has(fieldId);
+    const cls = isHighlighted ? 'highlighted' : 'dimmed';
+    const rows = listData.map(a =>
+      `<tr><td>${esc(a.text||'')}</td><td style="white-space:nowrap;">${ACTIE_STATUS[a.status]||a.status}</td></tr>`).join('');
+    return `<div class="act-field-block ${cls}">
+      <div class="act-field-label">Beslissingen & bijsturingen</div>
+      <table class="acties-tbl"><thead><tr><th>Actie</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  };
+
+  const bodyHtml = [
+    renderField('verwachtingen_doel', item.verwachtingen_doel),
+    renderField('verwachtingen_leren', item.verwachtingen_leren),
+    renderField('verwachtingen_kpi', item.verwachtingen_kpi),
+    renderField('deliverables', item.deliverables),
+    renderField('owner', item.owner),
+    renderField('status_planning', item.status_planning),
+    renderListField('status_inzichten', item.status_inzichten),
+    renderActiesField('status_acties', item.status_acties),
+  ].filter(Boolean).join('') || '<div class="empty" style="padding:12px 0;">Geen inhoud voor de geselecteerde velden.</div>';
+
+  return `<div class="act-card" id="act-card-${item.id}">
+    <div class="act-card-head">
+      <div>
+        <div class="act-card-name">${item.key_activity ? '⭐ ' : ''}${esc(item.title)}</div>
+        <div style="font-size:11px;color:var(--gy500);margin-top:2px;">${trackName ? esc(trackName) + ' &nbsp;·&nbsp; ' : ''}${statusBadge} ${healthBadge}</div>
+      </div>
+      <a href="${detailUrl}" target="_blank" class="btn btn-s btn-sm" style="text-decoration:none;margin-left:auto;flex-shrink:0;">✏️ Bewerken</a>
+    </div>
+    <div class="act-card-body">${bodyHtml}</div>
+  </div>`;
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  document.querySelectorAll('.sidebar-topic,.sidebar-sub').forEach(e => e.classList.remove('active'));
+}
+
+async function endMeeting() {
+  if (!confirm('Meeting afsluiten? Dit stelt de eindtijd in voor het verslag.')) return;
+  const now = new Date().toISOString();
+  await sb.from('gov_rm_meeting_dates').update({meeting_end_at: now}).eq('id', dateId);
+  meetingDate.meeting_end_at = now;
+  toast('⬛ Meeting afgesloten');
+  setTimeout(() => switchMode('verslag'), 800);
+}
+
+// ══════════════════════════════════════════════════
+//  VERSLAG MODE
+// ══════════════════════════════════════════════════
+async function renderVerslag() {
+  // Header
+  document.getElementById('vsl-meeting-title').textContent = (meeting?.icon||'📅') + ' ' + (meeting?.title||'Meeting');
+  document.getElementById('vsl-date').textContent = '📆 ' + formatDateLong(meetingDate?.date||'') +
+    (meetingDate?.meeting_start_at ? '  ·  Start: ' + formatTime(meetingDate.meeting_start_at) : '') +
+    (meetingDate?.meeting_end_at   ? '  ·  Einde: ' + formatTime(meetingDate.meeting_end_at)   : '');
+  const participants = [meeting?.participants, meetingDate?.adhoc_participants].filter(Boolean).join('  ·  ');
+  document.getElementById('vsl-participants').textContent = participants ? '👥 ' + participants : '';
+
+  if (meetingDate?.meeting_goal) {
+    document.getElementById('vsl-goal-block').style.display = '';
+    document.getElementById('vsl-goal').textContent = meetingDate.meeting_goal;
+  }
+
+  // Agenda samenvatting
+  const topics = agendaItems.filter(a => a.type === 'topic').sort((a,b)=>a.position-b.position);
+  document.getElementById('vsl-agenda').innerHTML = topics.length
+    ? topics.map((t, i) => {
+        const subs = Array.isArray(t.subtopics) ? t.subtopics : [];
+        const subsHtml = subs.map(s => `<li style="font-size:13px;color:var(--gy700);margin:3px 0 3px 20px;">${s.type==='activity_block'?'📊':'•'} ${esc(s.title||'—')}</li>`).join('');
+        return `<div style="margin-bottom:8px;"><div style="font-size:14px;font-weight:700;color:var(--gy900);">${i+1}. ${esc(t.title||'Topic')}</div><ul style="list-style:none;">${subsHtml}</ul></div>`;
+      }).join('')
+    : '<div class="empty">Geen agenda opgebouwd.</div>';
+
+  // Besproken activiteiten
+  const allActIds = agendaItems.filter(a=>a.type==='topic').flatMap(t => (t.subtopics||[]).filter(s=>s.type==='activity_block').flatMap(s=>s.activity_ids||[]));
+  const uniqueActIds = [...new Set(allActIds)];
+  const discussedItems = uniqueActIds.map(id => projectItems.find(p => p.id === id)).filter(Boolean);
+  document.getElementById('vsl-activities').innerHTML = discussedItems.length
+    ? discussedItems.map(item => `
+        <div style="padding:10px 12px;border:1px solid var(--gy200);border-radius:9px;margin-bottom:8px;background:white;display:flex;align-items:center;gap:10px;">
+          <div style="flex:1;"><div style="font-size:14px;font-weight:600;">${item.key_activity?'⭐ ':''}${esc(item.title)}</div>
+          <div style="font-size:12px;color:var(--gy500);margin-top:2px;">${item.tracks?.name||''}</div></div>
+          <span class="s-badge ${STATUS_CLASS[item.status]||'s-pending'}">${STATUS_LABEL[item.status]||item.status}</span>
+          ${item.health_status ? `<span>${HEALTH_EMOJI[item.health_status]}</span>` : ''}
+        </div>`).join('')
+    : '<div class="empty">Geen activiteiten in de agenda.</div>';
+
+  // Wijzigingen
+  if (meetingDate?.meeting_start_at) {
+    const startAt = meetingDate.meeting_start_at;
+    const endAt = meetingDate.meeting_end_at || new Date().toISOString();
+    const { data: changed } = await sb.from('roadmap_items')
+      .select('id,title,updated_at,status,health_status')
+      .eq('project_id', meetingDate.project_id)
+      .gte('updated_at', startAt)
+      .lte('updated_at', endAt)
+      .order('updated_at', {ascending: false});
+    if (changed?.length) {
+      document.getElementById('vsl-changes').innerHTML = changed.map(c => `
+        <div class="change-item">
+          <div class="change-dot"></div>
+          <div class="change-body">
+            <span style="font-weight:600;">${esc(c.title)}</span> werd aangepast
+            <span class="s-badge ${STATUS_CLASS[c.status]||'s-pending'}" style="margin-left:6px;">${STATUS_LABEL[c.status]||c.status}</span>
+            <div class="change-meta">📅 ${formatTime(c.updated_at)}</div>
+          </div>
+          <a href="activity-detail.html?id=${c.id}" target="_blank" style="font-size:12px;color:var(--blue);text-decoration:none;flex-shrink:0;">Bekijk →</a>
+        </div>`).join('');
+    } else {
+      document.getElementById('vsl-changes').innerHTML = '<div class="empty">Geen activiteiten aangepast tijdens de meeting.</div>';
+    }
+  }
+
+  // Notes
+  document.getElementById('vsl-notes').value = meetingDate?.meeting_notes || '';
+}
+
+async function saveNotes() {
+  const notes = document.getElementById('vsl-notes').value;
+  await sb.from('gov_rm_meeting_dates').update({meeting_notes: notes}).eq('id', dateId);
+  meetingDate.meeting_notes = notes;
+  toast('✅ Notities opgeslagen');
+}
+
+// ── UTILS ─────────────────────────────────────────
+function formatDateLong(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  const days = ['zo','ma','di','wo','do','vr','za'];
+  return `${days[d.getDay()]}. ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+function formatTime(isoStr) {
+  if (!isoStr) return '';
+  const d = new Date(isoStr);
+  return d.toLocaleTimeString('nl-BE', {hour:'2-digit', minute:'2-digit'});
+}
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init();
+</script>
+</body>
+</html>
