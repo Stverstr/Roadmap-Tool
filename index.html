@@ -987,11 +987,16 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div id="mgd-dates-list"></div>
       <!-- Selected date agenda -->
       <div id="mgd-agenda-section" style="display:none;margin-top:18px;border-top:2px solid var(--gy200);padding-top:14px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
           <span style="font-size:13px;font-weight:700;color:var(--gy900);" id="mgd-agenda-date-label">📋 Agenda</span>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-sm btn-s" onclick="addGovAgendaTopic()">＋ Topic</button>
-            <button class="btn btn-sm" style="background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;" onclick="openGovActivityPicker()">＋ Activiteit</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a id="mgd-prep-link" href="#" target="_blank" style="text-decoration:none;">
+              <button class="btn btn-sm" style="background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;">🎯 Meeting voorbereiden</button>
+            </a>
+            <a id="mgd-run-link" href="#" target="_blank" style="text-decoration:none;">
+              <button class="btn btn-sm" style="background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;">▶ Run</button>
+            </a>
+            <button class="btn btn-sm" style="background:#F3F4F6;color:#374151;border:1px solid #D1D5DB;" onclick="openGovActivityPicker()">＋ Activiteit</button>
           </div>
         </div>
         <div style="margin-bottom:10px;">
@@ -6263,6 +6268,10 @@ function selectGovDate(dateId) {
   section.style.display = '';
   document.getElementById('mgd-agenda-date-label').textContent = `📋 Agenda — ${formatDateLong(d.date)}`;
   document.getElementById('mgd-adhoc').value = d.adhoc_participants || '';
+  const prepLink = document.getElementById('mgd-prep-link');
+  const runLink  = document.getElementById('mgd-run-link');
+  if (prepLink) prepLink.href = `meeting-view.html?date_id=${dateId}&mode=prep`;
+  if (runLink)  runLink.href  = `meeting-view.html?date_id=${dateId}&mode=run`;
   renderGovAgendaList();
   renderGovDatesList(); // re-render to update selected highlight
 }
