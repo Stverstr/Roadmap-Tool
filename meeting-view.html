@@ -696,19 +696,16 @@
   
   <!-- 13: Health Retail Concept -->
   <div class="slide image-slide" id="slide-13">
-    <button onclick="goToSlide(7)" style="position:absolute;top:16px;left:16px;z-index:10;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">← Roadmap</button>
     <img src="https://stverstr.github.io/Roadmap-Tool/assets/hr-concept.png" alt="Health Retail Concept — synthèse catégories produits">
   </div>
 
   <!-- 14: Health Retail Business Plan Y0-Y1 -->
   <div class="slide image-slide" id="slide-14">
-    <button onclick="goToSlide(7)" style="position:absolute;top:16px;left:16px;z-index:10;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">← Roadmap</button>
     <img src="https://stverstr.github.io/Roadmap-Tool/assets/hr-bp-y01.png" alt="Health Retail Business Plan — Year 0 & Year 1">
   </div>
 
   <!-- 15: Health Retail Business Plan Y2-Y3 -->
   <div class="slide image-slide" id="slide-15">
-    <button onclick="goToSlide(7)" style="position:absolute;top:16px;left:16px;z-index:10;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">← Roadmap</button>
     <img src="https://stverstr.github.io/Roadmap-Tool/assets/hr-bp-y23.png" alt="Health Retail Business Plan — Year 2 & Year 3">
   </div>
 
@@ -723,6 +720,9 @@
   <!-- Rendered by JS -->
 
 </div><!-- #deck -->
+
+<!-- Vaste ← Roadmap knop (toont enkel op detail slides 9-18) -->
+<button id="btn-roadmap" onclick="goToSlide(7)" style="display:none;position:fixed;top:18px;left:18px;z-index:9000;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px);">← Roadmap</button>
 
 <!-- Navigation -->
 <div id="nav">
@@ -746,7 +746,7 @@ const HEALTH = {
 };
 
 function healthInfo(s) {
-  return HEALTH[s] || { icon: '❓', label: '—', cls: '' };
+  return HEALTH[s] || { icon: '', label: '', cls: '' };
 }
 
 // ---- BUILD CONCEPT SLIDES ----
@@ -760,10 +760,9 @@ function buildConceptSlides() {
     div.innerHTML = `
       <div class="concept-sidebar">
         <div class="concept-color-bar" style="background:${c.color}"></div>
-        <button onclick="goToSlide(7)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;margin-bottom:8px;align-self:flex-start;">← Roadmap</button>
         <div class="concept-num">Concept ${i+1} van 5</div>
-        <div class="concept-status-big">${h.icon}</div>
-        <div class="concept-health-label">${h.label}</div>
+        <div class="concept-status-big" id="health-icon-${c.id}">${h.icon}</div>
+        <div class="concept-health-label" id="health-label-${c.id}">${h.label}</div>
         <div class="concept-name">${c.pptx_name}</div>
         <div class="concept-name-sub">${c.subtitle}</div>
         <div class="concept-meta-row">
@@ -821,7 +820,7 @@ async function fetchConcept(conceptId) {
   fetched[conceptId] = true;
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/roadmap_items?id=eq.${conceptId}&select=owner,verwachtingen_doel,verwachtingen_leren,status_inzichten,status_acties`,
+      `${SUPABASE_URL}/rest/v1/roadmap_items?id=eq.${conceptId}&select=owner,health_status,verwachtingen_doel,verwachtingen_leren,status_inzichten,status_acties`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
     );
     const data = await res.json();
@@ -843,6 +842,18 @@ async function fetchConcept(conceptId) {
     // PV from owner
     const pvEl = document.getElementById('pv-' + conceptId);
     if (pvEl && d.owner) pvEl.textContent = d.owner;
+
+    // Live health_status — update sidebar icon + label
+    if (d.health_status !== undefined) {
+      const h = healthInfo(d.health_status);
+      const iconEl = document.getElementById('health-icon-' + conceptId);
+      const labelEl = document.getElementById('health-label-' + conceptId);
+      if (iconEl) iconEl.textContent = h.icon;
+      if (labelEl) labelEl.textContent = h.label;
+      // Also update Gantt row icon
+      const ganttIconEl = document.getElementById('gantt-health-' + conceptId);
+      if (ganttIconEl) ganttIconEl.textContent = h.icon;
+    }
 
     // Inzichten
     const inzEl = document.getElementById('inzichten-' + conceptId);
@@ -967,6 +978,10 @@ function goToSlide(n) {
   // Update counter
   document.getElementById('slide-counter').textContent = `${current+1} / ${TOTAL}`;
   document.getElementById('progress').style.width = `${(current/(TOTAL-1))*100}%`;
+
+  // Toon/verberg vaste roadmap-knop op detail slides (9–18)
+  const roadmapBtn = document.getElementById('btn-roadmap');
+  if (roadmapBtn) roadmapBtn.style.display = (current >= 9) ? 'block' : 'none';
 
   // Lazy-load concept data
   const concept = concepts.find(c => c.slide_index === current);
