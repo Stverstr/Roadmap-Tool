@@ -747,24 +747,41 @@ const concepts = [
   {id:"65655a19-f226-47bd-9400-1fb27ee8fdd6", subtitle:"",                              lead:"Gilles", color:"#43A047", slide_index:18, pptx_name:"Efficiente Apotheek",   pv:"",  health_status:null, start:"", end:""}
 ];
 
-// Haal live data op voor alle concepten bij laden (naam, status, PV, datums)
+// Haal live data op voor alle concepten bij laden (naam, status, PV, datums, subcategorie, fases)
 async function loadConceptsMeta() {
   const ids = concepts.map(c => c.id).join(',');
   try {
+    const hdr = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
+
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/roadmap_items?id=in.(${ids})&select=id,title,health_status,owner,start_date,end_date`,
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      `${SUPABASE_URL}/rest/v1/roadmap_items?id=in.(${ids})&select=id,title,health_status,owner,start_date,end_date,subcategory_id,item_phases`,
+      { headers: hdr }
     );
     const rows = await res.json();
     rows.forEach(row => {
       const c = concepts.find(x => x.id === row.id);
       if (!c) return;
-      if (row.title)        c.pptx_name    = row.title;
-      if (row.health_status !== undefined) c.health_status = row.health_status;
-      if (row.owner)        c.pv           = row.owner;
-      if (row.start_date)   c.start        = row.start_date;
-      if (row.end_date)     c.end          = row.end_date;
+      if (row.title)                       c.pptx_name      = row.title;
+      if (row.health_status !== undefined) c.health_status  = row.health_status;
+      if (row.owner)                       c.pv             = row.owner;
+      if (row.start_date)                  c.start          = row.start_date;
+      if (row.end_date)                    c.end            = row.end_date;
+      if (row.subcategory_id)              c.subcategory_id = row.subcategory_id;
+      if (row.item_phases)                 c.item_phases    = row.item_phases;
     });
+
+    // Subcategorie namen ophalen
+    const subIds = [...new Set(concepts.filter(c => c.subcategory_id).map(c => c.subcategory_id))];
+    if (subIds.length) {
+      const subRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/subcategories?id=in.(${subIds.join(',')})&select=id,name`,
+        { headers: hdr }
+      );
+      const subs = await subRes.json();
+      const subMap = {};
+      subs.forEach(s => subMap[s.id] = s.name);
+      concepts.forEach(c => { c.subcategory_name = c.subcategory_id ? (subMap[c.subcategory_id] || '') : ''; });
+    }
   } catch(e) { console.warn('loadConceptsMeta failed', e); }
 }
 
@@ -934,56 +951,98 @@ function buildGantt() {
   const wrapper = document.getElementById('gantt-wrapper');
   if (!wrapper) return;
 
-  // Timeline: 2026-01 to 2028-02 = 25 months
-  const START = new Date('2026-01-01');
-  const END   = new Date('2028-03-01');
+  const START   = new Date('2026-01-01');
+  const END     = new Date('2028-03-01');
   const totalMs = END - START;
+  const today   = new Date().toISOString().slice(0,10);
 
   function pct(dateStr) {
+    if (!dateStr) return 0;
     const d = new Date(dateStr);
     return Math.max(0, Math.min(100, (d - START) / totalMs * 100));
   }
 
-  // Year/quarter headers
+  // Kwartaal-headers
   const quarters = [];
-  let d = new Date(START);
-  while (d < END) {
-    quarters.push({ label: `Q${Math.floor(d.getMonth()/3)+1} ${d.getFullYear()}`, left: pct(d.toISOString().slice(0,10)) });
-    d = new Date(d.getFullYear(), d.getMonth() + 3, 1);
+  let qd = new Date(START);
+  while (qd < END) {
+    quarters.push({ label:`Q${Math.floor(qd.getMonth()/3)+1} ${qd.getFullYear()}`, left:pct(qd.toISOString().slice(0,10)) });
+    qd = new Date(qd.getFullYear(), qd.getMonth() + 3, 1);
+  }
+  const gridLines = quarters.map(q => `<div class="gantt-grid-line" style="left:${q.left}%"></div>`).join('');
+  const todayPct  = pct(today);
+
+  // Fase-balk renderer
+  function renderPhaseBar(c) {
+    const phases = Array.isArray(c.item_phases) ? c.item_phases : [];
+    if (!phases.length || !c.start || !c.end) {
+      const h = healthInfo(c.health_status);
+      return `<div class="gantt-bar" style="left:${pct(c.start)}%;right:${100-pct(c.end)}%;background:${c.color};">
+        ${h.icon} ${fmtDate(c.start)} → ${fmtDate(c.end)}</div>`;
+    }
+    return phases.map((ph, i) => {
+      const left    = pct(ph.start_date);
+      const right   = 100 - pct(ph.end_date);
+      const isCur   = ph.start_date <= today && ph.end_date > today;
+      const isPast  = ph.end_date <= today;
+      const isFirst = i === 0;
+      const isLast  = i === phases.length - 1;
+      const bg      = isPast ? c.color + 'AA' : isCur ? c.color : c.color + 'CC';
+      const radius  = `${isFirst?'6px':'0'} ${isLast?'6px':'0'} ${isLast?'6px':'0'} ${isFirst?'6px':'0'}`;
+      const border  = !isLast ? 'border-right:2px solid rgba(255,255,255,0.45);' : '';
+      const shadow  = isCur ? `box-shadow:0 0 0 2px ${c.color},0 2px 8px rgba(0,0,0,0.2);z-index:3;` : '';
+      return `<div style="position:absolute;top:50%;transform:translateY(-50%);height:34px;
+          left:${left}%;right:${right}%;background:${bg};border-radius:${radius};
+          ${border}${shadow}display:flex;align-items:center;padding:0 6px;overflow:hidden;">
+        <span style="font-size:${isCur?'11px':'9px'};font-weight:${isCur?'700':'500'};color:#fff;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${isCur ? ph.name : ph.label}
+        </span>
+      </div>`;
+    }).join('');
   }
 
-  // Today line
-  const todayPct = pct(new Date().toISOString().slice(0,10));
+  // Groepeer per subcategorie (volgorde van eerste verschijning)
+  const groupMap = {};
+  const groupOrder = [];
+  concepts.forEach(c => {
+    const key = c.subcategory_name || '—';
+    if (!groupMap[key]) { groupMap[key] = []; groupOrder.push(key); }
+    groupMap[key].push(c);
+  });
+
+  const rowsHtml = groupOrder.map(grp => {
+    const header = `
+      <div style="display:flex;align-items:center;padding:10px 0 3px 0;">
+        <div style="width:220px;flex-shrink:0;font-size:9px;font-weight:800;text-transform:uppercase;
+            letter-spacing:0.12em;color:#5A8A70;padding-right:12px;text-align:right;">${grp}</div>
+        <div style="flex:1;height:1px;background:#5A8A70;opacity:0.3;"></div>
+      </div>`;
+    const rows = groupMap[grp].map(c => `
+      <div class="gantt-row" onclick="goToSlide(${c.slide_index})" title="${c.pptx_name}">
+        <div class="gantt-label">
+          <div class="gantt-label-name">${c.pptx_name}</div>
+          <div class="gantt-label-sub">${c.subtitle}</div>
+        </div>
+        <div class="gantt-track" style="position:relative;">
+          ${gridLines}
+          ${renderPhaseBar(c)}
+        </div>
+      </div>`).join('');
+    return header + rows;
+  }).join('');
 
   wrapper.innerHTML = `
-    <div style="display:flex;margin-left:220px;margin-bottom:6px;position:relative;height:20px;">
-      ${quarters.map((q,i) => `<div style="position:absolute;left:${q.left}%;font-size:10px;font-weight:700;color:#8A9E94;letter-spacing:0.05em;">${q.label}</div>`).join('')}
+    <div style="display:flex;margin-left:220px;margin-bottom:4px;position:relative;height:20px;">
+      ${quarters.map(q => `<div style="position:absolute;left:${q.left}%;font-size:10px;font-weight:700;color:#8A9E94;letter-spacing:0.05em;">${q.label}</div>`).join('')}
     </div>
-    <div style="position:relative;flex:1;">
-      ${concepts.map((c, i) => {
-        const barLeft = pct(c.start);
-        const barRight = 100 - pct(c.end);
-        const h = healthInfo(c.health_status);
-        return `
-        <div class="gantt-row" onclick="goToSlide(${c.slide_index})" title="Ga naar ${c.pptx_name}">
-          <div class="gantt-label">
-            <div class="gantt-label-name">${c.pptx_name}</div>
-            <div class="gantt-label-sub">${c.subtitle}</div>
-          </div>
-          <div class="gantt-track">
-            ${quarters.map(q => `<div class="gantt-grid-line" style="left:${q.left}%"></div>`).join('')}
-            <div class="gantt-bar" style="left:${barLeft}%;right:${barRight}%;background:${c.color};">
-              ${h.icon} ${fmtDate(c.start)} → ${fmtDate(c.end)}
-            </div>
-          </div>
-        </div>`;
-      }).join('')}
-      <!-- Today line -->
-      <div style="position:absolute;top:0;bottom:0;left:calc(220px + ${todayPct}% * (100% - 220px) / 100);width:2px;background:#E53935;z-index:10;pointer-events:none;">
+    <div style="position:relative;">
+      ${rowsHtml}
+      <!-- Today line — correct CSS calc -->
+      <div style="position:absolute;top:0;bottom:0;left:calc(220px + (100% - 220px) * ${todayPct/100});width:2px;background:#E53935;z-index:10;pointer-events:none;">
         <div style="position:absolute;top:0;left:4px;background:#E53935;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;">Vandaag</div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ---- NAVIGATION ----
