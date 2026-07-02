@@ -6112,7 +6112,7 @@ function renderGovernance() {
           <div style="margin-top:3px;">${agendaChips || '<span style="font-size:10px;color:var(--gy400);">Geen agenda</span>'}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
-          <button class="btn btn-sm" style="background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;padding:3px 10px;font-weight:600;" onclick="openMeetingPopup('${d.id}')">▶ Run</button>
+          ${m.id === '631b6480-95df-44d4-b7ca-b0d1c02e1a3d' ? `<button class="btn btn-sm" style="background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;padding:3px 10px;font-weight:600;" onclick="openMeetingPopup('${d.id}')">▶ Run</button>` : ''}
         </div>
       </div>`;
     }).join('') : `<div style="font-size:12px;color:var(--gy400);padding:8px 0;">Nog geen datums gepland.</div>`;
