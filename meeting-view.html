@@ -626,7 +626,7 @@
     <div class="cover-pretitle">Gating Meeting</div>
     <div class="cover-title">Concepten<br><span>Status Update</span></div>
     <div class="cover-subtitle">Juli 2026</div>
-    <div class="cover-date-badge">03 Juli 2026 · Lisa &amp; Stefan &amp; Gilles · Stuurgroep</div>
+    <div class="cover-date-badge">03 Juli 2026 · Stuurgroep</div>
   </div>
 
   <!-- 1: AGENDA -->
@@ -736,7 +736,37 @@
 const SUPABASE_URL = 'https://uvodxrrxsxnjlinqrjlw.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2b2R4cnJ4c3huamxpbnFyamx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjg4MzYsImV4cCI6MjA5NTEwNDgzNn0.1lX4o9zuV0VZJG7S53rdqfbRuic6YnT7g-YPnePavnI';
 
-const concepts = [{"id": "fb8bddf0-e3ef-407f-89f6-3dddf5bec7eb", "pptx_name": "Lifestyle Coaching", "subtitle": "integratie Yoboo / Newpharma", "pv": "Joris PV", "lead": "Gilles", "health_status": "sunny", "start": "2026-03-21", "end": "2027-07-29", "color": "#00897B", "slide_index": 9}, {"id": "06aa04ac-e866-45b5-a40f-7f5b762c6f2a", "pptx_name": "Leefstijlapotheek", "subtitle": "Noorderlaan", "pv": "Joris PV", "lead": "Gilles", "health_status": "stormy", "start": "2026-01-01", "end": "2028-02-07", "color": "#E53935", "slide_index": 10}, {"id": "ade1e89d-3415-4771-82b6-cd4f0e6bcd62", "pptx_name": "eRX Wilgenveld", "subtitle": "& Acacia / Beaujean", "pv": "Karlien Bisson PV", "lead": "Gilles", "health_status": "cloudy", "start": "2027-01-01", "end": "2027-12-27", "color": "#5C6BC0", "slide_index": 11}, {"id": "ee4d7465-9cc3-4992-8e6f-279dfa9094f1", "pptx_name": "Health Retail Concept", "subtitle": "St Gilles", "pv": "Joris PV", "lead": "Gilles", "health_status": "partly_cloudy", "start": "2026-01-01", "end": "2027-12-31", "color": "#FB8C00", "slide_index": 12}, {"id": "920d3e7e-3bea-4b92-987e-f0005df7a4ce", "pptx_name": "Health Box", "subtitle": "Cross Format Integratie", "pv": "Caroline PV", "lead": "Lisa", "health_status": "partly_cloudy", "start": "2026-01-04", "end": "2027-12-25", "color": "#8E24AA", "slide_index": 16}, {"id": "274a9739-e451-4237-8a3e-c445b13e5af9", "pptx_name": "Bioplanet / Yoboo", "subtitle": "met advies", "pv": "Emilie PV", "lead": "Jan", "health_status": null, "start": "2027-01-01", "end": "2027-09-09", "color": "#00ACC1", "slide_index": 17}, {"id": "65655a19-f226-47bd-9400-1fb27ee8fdd6", "pptx_name": "Efficiente Apotheek", "subtitle": "", "pv": "Karlien Bisson PV", "lead": "Gilles", "health_status": null, "start": "2026-04-28", "end": "2026-12-29", "color": "#43A047", "slide_index": 18}];
+// Presentatie-specifieke velden (kleur, slide positie, subtitle, lead) — rest komt live uit Supabase
+const concepts = [
+  {id:"fb8bddf0-e3ef-407f-89f6-3dddf5bec7eb", subtitle:"integratie Yoboo / Newpharma", lead:"Gilles", color:"#00897B", slide_index:9,  pptx_name:"Lifestyle Coaching",     pv:"",  health_status:null, start:"", end:""},
+  {id:"06aa04ac-e866-45b5-a40f-7f5b762c6f2a", subtitle:"Noorderlaan",                   lead:"Gilles", color:"#E53935", slide_index:10, pptx_name:"Leefstijlapotheek",     pv:"",  health_status:null, start:"", end:""},
+  {id:"ade1e89d-3415-4771-82b6-cd4f0e6bcd62", subtitle:"& Acacia / Beaujean",           lead:"Gilles", color:"#5C6BC0", slide_index:11, pptx_name:"eRX Wilgenveld",        pv:"",  health_status:null, start:"", end:""},
+  {id:"ee4d7465-9cc3-4992-8e6f-279dfa9094f1", subtitle:"St Gilles",                     lead:"Gilles", color:"#FB8C00", slide_index:12, pptx_name:"Health Retail Concept", pv:"",  health_status:null, start:"", end:""},
+  {id:"920d3e7e-3bea-4b92-987e-f0005df7a4ce", subtitle:"Cross Format Integratie",       lead:"Lisa",   color:"#8E24AA", slide_index:16, pptx_name:"Health Box",            pv:"",  health_status:null, start:"", end:""},
+  {id:"274a9739-e451-4237-8a3e-c445b13e5af9", subtitle:"met advies",                    lead:"Jan",    color:"#00ACC1", slide_index:17, pptx_name:"Bioplanet / Yoboo",     pv:"",  health_status:null, start:"", end:""},
+  {id:"65655a19-f226-47bd-9400-1fb27ee8fdd6", subtitle:"",                              lead:"Gilles", color:"#43A047", slide_index:18, pptx_name:"Efficiente Apotheek",   pv:"",  health_status:null, start:"", end:""}
+];
+
+// Haal live data op voor alle concepten bij laden (naam, status, PV, datums)
+async function loadConceptsMeta() {
+  const ids = concepts.map(c => c.id).join(',');
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/roadmap_items?id=in.(${ids})&select=id,title,health_status,owner,start_date,end_date`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    const rows = await res.json();
+    rows.forEach(row => {
+      const c = concepts.find(x => x.id === row.id);
+      if (!c) return;
+      if (row.title)        c.pptx_name    = row.title;
+      if (row.health_status !== undefined) c.health_status = row.health_status;
+      if (row.owner)        c.pv           = row.owner;
+      if (row.start_date)   c.start        = row.start_date;
+      if (row.end_date)     c.end          = row.end_date;
+    });
+  } catch(e) { console.warn('loadConceptsMeta failed', e); }
+}
 
 const HEALTH = {
   sunny:         { icon: '☀️',  label: 'On Track',       cls: 'health-sunny' },
@@ -760,7 +790,7 @@ function buildConceptSlides() {
     div.innerHTML = `
       <div class="concept-sidebar">
         <div class="concept-color-bar" style="background:${c.color}"></div>
-        <div class="concept-num">Concept ${i+1} van 5</div>
+        <div class="concept-num">Concept ${i+1} van ${concepts.length}</div>
         <div class="concept-status-big" id="health-icon-${c.id}">${h.icon}</div>
         <div class="concept-health-label" id="health-label-${c.id}">${h.label}</div>
         <div class="concept-name">${c.pptx_name}</div>
@@ -1009,9 +1039,12 @@ document.getElementById('deck').addEventListener('click', e => {
 });
 
 // ---- INIT ----
-buildConceptSlides();
-buildGantt();
-goToSlide(0);
+(async () => {
+  await loadConceptsMeta(); // live data uit Supabase voor alle concepten
+  buildConceptSlides();
+  buildGantt();
+  goToSlide(0);
+})();
 </script>
 </body>
 </html>
