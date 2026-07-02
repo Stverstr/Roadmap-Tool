@@ -696,16 +696,19 @@
   
   <!-- 13: Health Retail Concept -->
   <div class="slide image-slide" id="slide-13">
+    <button onclick="goToSlide(7)" style="position:absolute;top:16px;left:16px;z-index:10;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">← Roadmap</button>
     <img src="https://stverstr.github.io/Roadmap-Tool/assets/hr-concept.png" alt="Health Retail Concept — synthèse catégories produits">
   </div>
 
   <!-- 14: Health Retail Business Plan Y0-Y1 -->
   <div class="slide image-slide" id="slide-14">
+    <button onclick="goToSlide(7)" style="position:absolute;top:16px;left:16px;z-index:10;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">← Roadmap</button>
     <img src="https://stverstr.github.io/Roadmap-Tool/assets/hr-bp-y01.png" alt="Health Retail Business Plan — Year 0 & Year 1">
   </div>
 
   <!-- 15: Health Retail Business Plan Y2-Y3 -->
   <div class="slide image-slide" id="slide-15">
+    <button onclick="goToSlide(7)" style="position:absolute;top:16px;left:16px;z-index:10;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">← Roadmap</button>
     <img src="https://stverstr.github.io/Roadmap-Tool/assets/hr-bp-y23.png" alt="Health Retail Business Plan — Year 2 & Year 3">
   </div>
 
@@ -757,6 +760,7 @@ function buildConceptSlides() {
     div.innerHTML = `
       <div class="concept-sidebar">
         <div class="concept-color-bar" style="background:${c.color}"></div>
+        <button onclick="goToSlide(7)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;margin-bottom:8px;align-self:flex-start;">← Roadmap</button>
         <div class="concept-num">Concept ${i+1} van 5</div>
         <div class="concept-status-big">${h.icon}</div>
         <div class="concept-health-label">${h.label}</div>

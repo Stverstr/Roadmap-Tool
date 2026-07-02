@@ -407,10 +407,8 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div class="auth-sub">Plan. Visualiseer. Communiceer.</div>
     <div class="auth-err" id="auth-err"></div>
     <div id="auth-login-form">
-      <label class="auth-label">E-mailadres</label>
-      <input class="auth-input" id="auth-email" type="email" placeholder="jou@bedrijf.be" autocomplete="email">
       <label class="auth-label">Wachtwoord</label>
-      <input class="auth-input" id="auth-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      <input class="auth-input" id="auth-pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
       <button class="auth-btn" onclick="doLogin()">Aanmelden</button>
     </div>
   </div>
@@ -1091,16 +1089,20 @@ let saveTimer = null;
 // ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
+// Fixed user — auth via master password hash (geen Supabase auth)
+const FIXED_USER = { id: '4bdbe724-042a-46bb-8a78-b1f8ffc82caf', email: 'stijn@stoover.be' };
+const MASTER_HASH = '750db0f147fb55c6755f5b3bb2606a35623b43d03c80056c48587dfa2df45c04';
+
+async function sha256(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
+}
+
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    currentUser = session.user;
+  if (sessionStorage.getItem('rs_auth') === '1') {
+    currentUser = FIXED_USER;
     showApp();
   }
-  sb.auth.onAuthStateChange((_e, session) => {
-    if (session && !currentUser) { currentUser = session.user; showApp(); }
-    else if (!session) { currentUser = null; showAuth(); }
-  });
 })();
 
 function showApp() {
@@ -1118,12 +1120,25 @@ function showAuth() {
 //  AUTH
 // ═══════════════════════════════════════════
 async function doLogin() {
-  const email = document.getElementById('auth-email').value.trim();
   const pass = document.getElementById('auth-pass').value;
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) showAuthErr(error.message);
+  const h = await sha256(pass);
+  if (h === MASTER_HASH) {
+    sessionStorage.setItem('rs_auth', '1');
+    currentUser = FIXED_USER;
+    showApp();
+  } else {
+    const i = document.getElementById('auth-pass');
+    i.style.borderColor = '#ef4444';
+    i.value = '';
+    setTimeout(() => i.style.borderColor = '', 600);
+    showAuthErr('Ongeldig wachtwoord');
+  }
 }
-async function doLogout() { await sb.auth.signOut(); }
+function doLogout() {
+  sessionStorage.removeItem('rs_auth');
+  currentUser = null;
+  showAuth();
+}
 function showAuthErr(msg, c='#991B1B', bg='#FEE2E2') {
   const el = document.getElementById('auth-err');
   el.textContent = msg; el.style.display = 'block';
