@@ -2741,13 +2741,16 @@ function renderStoryboard() {
   if (!rowPhases.length) rowPhases = [null];
 
   const labelW = 140;
-  const MIN_COL_W = 140;
+  // Kolombreedte dynamisch: minstens 7 kolommen op het scherm (ondergrens 100px)
+  const wrapEl = el.closest('.sb-wrap');
+  const wrapW = (wrapEl && wrapEl.clientWidth) ? wrapEl.clientWidth : 1140;
+  const MIN_COL_W = Math.max(100, Math.floor((wrapW - labelW - 2) / 7));
   const minGridW = labelW + colDefs.length * MIN_COL_W;
   const gridCols = `${labelW}px ${colDefs.map(() => `minmax(${MIN_COL_W}px, 1fr)`).join(' ')}`;
-  let html = `<div class="sb-inner-grid" style="display:grid;grid-template-columns:${gridCols};width:100%;min-width:${minGridW}px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
+  let html = `<div class="sb-inner-grid" style="display:grid;grid-template-columns:${gridCols};width:100%;min-width:${minGridW}px;border:1px solid var(--gy300);border-radius:10px;">`;
 
   // Header row 1: corner + track headers (spanning visible subcols)
-  html += `<div style="grid-column:1;grid-row:1/span 2;background:var(--gy900);border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);"></div>`;
+  html += `<div style="grid-column:1;grid-row:1/span 2;position:sticky;left:0;z-index:4;background:var(--gy900);border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);"></div>`;
   let colIdx = 2;
   tracks.forEach(tr => {
     const trCols = colDefs.filter(c => c.track.id === tr.id);
@@ -2774,7 +2777,7 @@ function renderStoryboard() {
     const phLabel = ph
       ? `<div style="font-size:13px;font-weight:700;">${renderIcon(ph.icon, phBg)}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
       : `<div style="font-size:13px;font-weight:700;">Alle items</div>`;
-    html += `<div style="grid-column:1;grid-row:${rowNum};background:${phBg};color:${textColor(phBg)};padding:10px 12px;border-right:1px solid rgba(0,0,0,.1);border-top:1px solid rgba(0,0,0,.08);">${phLabel}</div>`;
+    html += `<div style="grid-column:1;grid-row:${rowNum};position:sticky;left:0;z-index:3;background:${phBg};color:${textColor(phBg)};padding:10px 12px;border-right:1px solid rgba(0,0,0,.1);border-top:1px solid rgba(0,0,0,.08);">${phLabel}</div>`;
     colIdx = 2;
     colDefs.forEach(c => {
       const cellItems = items.filter(i =>
@@ -2813,7 +2816,7 @@ function renderStoryboard() {
       done:    '<span style="font-size:11px;color:#14532D;font-weight:700;line-height:1;">✓</span>'
     };
 
-    html += `<div style="grid-column:1;grid-row:${rowNum};background:#F8FAFC;color:var(--gy600,#6B7280);padding:10px 12px;border-right:1px solid var(--gy300);border-top:2px dashed var(--gy300);display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
+    html += `<div style="grid-column:1;grid-row:${rowNum};position:sticky;left:0;z-index:3;background:#F8FAFC;color:var(--gy600,#6B7280);padding:10px 12px;border-right:1px solid var(--gy300);border-top:2px dashed var(--gy300);display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
       <div style="font-size:12px;font-weight:700;color:var(--gy500);">📥 Backlog</div>
       <div style="font-size:10px;opacity:.7;">Niet (volledig) toegewezen</div>
     </div>`;
@@ -2855,6 +2858,16 @@ function renderStoryboard() {
   html += '</div>';
   el.innerHTML = html;
 }
+
+// Herbereken kolombreedtes bij venster-resize
+let sbResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(sbResizeTimer);
+  sbResizeTimer = setTimeout(() => {
+    const sc = document.getElementById('storyboard-content');
+    if (sc && sc.style.display !== 'none' && (tracks.length || phases.length)) renderStoryboard();
+  }, 200);
+});
 
 function renderSbCell(cellItems, trackId, subcatId, phaseId, color) {
   const statusIcon = {
