@@ -229,7 +229,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* ── STORYBOARD ── */
 .sb-wrap{overflow-x:auto;width:100%;}
-#sb-grid{width:100%;}
+#sb-grid{width:max-content;min-width:100%;}
 .sb-inner-grid>*{min-width:0;overflow:hidden;}
 .sb-grid{display:grid;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;}
 .sb-header{display:contents;}
@@ -2744,7 +2744,7 @@ function renderStoryboard() {
   const MIN_COL_W = 140;
   const minGridW = labelW + colDefs.length * MIN_COL_W;
   const gridCols = `${labelW}px ${colDefs.map(() => `minmax(${MIN_COL_W}px, 1fr)`).join(' ')}`;
-  let html = `<div class="sb-inner-grid" style="display:grid;grid-template-columns:${gridCols};width:100%;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
+  let html = `<div class="sb-inner-grid" style="display:grid;grid-template-columns:${gridCols};width:100%;min-width:${minGridW}px;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
 
   // Header row 1: corner + track headers (spanning visible subcols)
   html += `<div style="grid-column:1;grid-row:1/span 2;background:var(--gy900);border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);"></div>`;
@@ -2792,8 +2792,20 @@ function renderStoryboard() {
   // Backlog row — fully unassigned items (no track, no phase). Spans all columns as one zone.
   const showingRealPhaseRows = rowPhases.some(ph => ph !== null);
   if (phases.length && showingRealPhaseRows) {
-    const backlogItems = items.filter(i => !i.track_id && !i.phase_id)
-      .sort((a,b) => (a.position||0) - (b.position||0));
+    // Backlog = elk item dat in geen enkele cel van het grid past:
+    // geen (geldige) fase, geen (geldige) stream, of stream heeft subcategorieën maar item heeft er geen (geldige).
+    const backlogItems = items.filter(i => {
+      const validPhase = i.phase_id && phases.some(p => p.id === i.phase_id);
+      const validTrack = i.track_id && tracks.some(t => t.id === i.track_id);
+      let validSub = false;
+      if (validTrack) {
+        const trackSubs = subcategories.filter(s => s.track_id === i.track_id);
+        validSub = trackSubs.length
+          ? trackSubs.some(s => s.id === i.subcategory_id)
+          : !i.subcategory_id;
+      }
+      return !(validPhase && validTrack && validSub);
+    }).sort((a,b) => (a.position||0) - (b.position||0));
     const totalTrackCols = colDefs.length;
     const blStatusIcon = {
       pending: '<span style="font-size:11px;color:var(--gy500);font-weight:700;line-height:1;">○</span>',
@@ -2803,7 +2815,7 @@ function renderStoryboard() {
 
     html += `<div style="grid-column:1;grid-row:${rowNum};background:#F8FAFC;color:var(--gy600,#6B7280);padding:10px 12px;border-right:1px solid var(--gy300);border-top:2px dashed var(--gy300);display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
       <div style="font-size:12px;font-weight:700;color:var(--gy500);">📥 Backlog</div>
-      <div style="font-size:10px;opacity:.7;">Niet toegewezen</div>
+      <div style="font-size:10px;opacity:.7;">Niet (volledig) toegewezen</div>
     </div>`;
 
     let blHtml = `<div style="grid-column:2/span ${totalTrackCols};grid-row:${rowNum};background:#F8FAFC;border-top:2px dashed var(--gy300);padding:8px;min-height:80px;"
