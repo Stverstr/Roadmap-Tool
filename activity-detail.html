@@ -544,11 +544,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 </select>
               </div>
             </div>
-            <div class="field"><label class="label">URL</label><input class="input" id="df-url" type="url" placeholder="https://…"></div>
+            <div class="field"><label class="label">Bron</label>
+              <div style="display:flex;gap:16px;align-items:center;font-size:13px;flex-wrap:wrap;">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="df-source" value="url" checked onchange="toggleDocSource()"> 🔗 Link naar bestaand document</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="df-source" value="file" onchange="toggleDocSource()"> 📤 Bestand opladen</label>
+              </div>
+            </div>
+            <div class="field" id="df-url-field"><label class="label">URL</label><input class="input" id="df-url" type="url" placeholder="https://…"></div>
+            <div class="field" id="df-file-field" style="display:none;"><label class="label">Bestand</label>
+              <input class="input" id="df-file" type="file" style="padding:8px;">
+              <div id="df-file-current" style="font-size:12px;color:var(--gy500);margin-top:4px;"></div>
+            </div>
             <div class="field"><label class="label">Beschrijving (optioneel)</label><input class="input" id="df-desc" placeholder="Wat staat er in dit document?"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;">
               <button class="btn btn-s btn-sm" onclick="hideDocForm()">Annuleer</button>
-              <button class="btn btn-p btn-sm" onclick="saveDoc()">Opslaan</button>
+              <button class="btn btn-p btn-sm" id="df-save-btn" onclick="saveDoc()">Opslaan</button>
             </div>
           </div>
         </div>
@@ -965,28 +975,46 @@ async function deleteSh(id) {
 }
 
 // ── DOCUMENTS ─────────────────────────────────────
+const DOC_BUCKET = 'activity-docs';
+const DOC_STORAGE_PREFIX = `${SUPA_URL}/storage/v1/object/public/${DOC_BUCKET}/`;
+
 async function loadDocuments() {
-  const { data, error } = await sb.from('activity_documents').select('*').eq('item_id', itemId).order('position').order('created_at');
+  const { data, error } = await sb.from('activity_documents').select('*').eq('item_id', itemId).order('created_at', { ascending: false });
   document.getElementById('cnt-docs').textContent = data ? data.length : 0;
   if (error) { document.getElementById('doc-list').innerHTML = '<div class="empty">Fout bij laden.</div>'; return; }
   renderDocuments(data || []);
 }
 
+function fmtDocDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 function renderDocuments(list) {
   const el = document.getElementById('doc-list');
   if (list.length === 0) { el.innerHTML = '<div class="empty">Nog geen documenten of links toegevoegd.</div>'; return; }
-  el.innerHTML = list.map(d => `<div class="doc-item">
+  el.innerHTML = list.map(d => {
+    const isUpload = d.url && d.url.startsWith(DOC_STORAGE_PREFIX);
+    return `<div class="doc-item">
     <div class="doc-icon">${DOC_ICONS[d.doc_type] || '📎'}</div>
     <div class="doc-body">
-      <div class="doc-title">${esc(d.title)}</div>
-      ${d.url ? `<div class="doc-url" onclick="window.open('${esc(d.url)}','_blank')">${esc(d.url)}</div>` : ''}
+      <div class="doc-title">${esc(d.title)}${isUpload ? ' <span style="font-size:10px;font-weight:600;color:#1E40AF;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;padding:1px 6px;vertical-align:middle;">geüpload</span>' : ''}</div>
+      ${d.url ? `<div class="doc-url" onclick="window.open('${esc(d.url)}','_blank')">${isUpload ? esc(decodeURIComponent(d.url.split('/').pop())) : esc(d.url)}</div>` : ''}
       ${d.description ? `<div class="doc-desc">${esc(d.description)}</div>` : ''}
+      <div class="doc-desc" style="margin-top:3px;">📅 ${fmtDocDate(d.created_at)}</div>
     </div>
     <div style="display:flex;gap:2px;">
       <button class="btn-icon" onclick="editDoc('${d.id}')" title="Bewerken">✏️</button>
       <button class="btn-icon" onclick="deleteDoc('${d.id}')" title="Verwijderen">🗑</button>
     </div>
-  </div>`).join('');
+  </div>`; }).join('');
+}
+
+function toggleDocSource() {
+  const src = document.querySelector('input[name="df-source"]:checked').value;
+  document.getElementById('df-url-field').style.display = src === 'url' ? 'block' : 'none';
+  document.getElementById('df-file-field').style.display = src === 'file' ? 'block' : 'none';
 }
 
 function showDocForm(doc) {
@@ -995,10 +1023,34 @@ function showDocForm(doc) {
   document.getElementById('df-type').value = doc ? (doc.doc_type||'link') : 'link';
   document.getElementById('df-url').value = doc ? (doc.url||'') : '';
   document.getElementById('df-desc').value = doc ? (doc.description||'') : '';
+  document.getElementById('df-file').value = '';
+  const isUpload = doc && doc.url && doc.url.startsWith(DOC_STORAGE_PREFIX);
+  document.querySelector(`input[name="df-source"][value="${isUpload ? 'file' : 'url'}"]`).checked = true;
+  document.getElementById('df-file-current').textContent = isUpload
+    ? `Huidig bestand: ${decodeURIComponent(doc.url.split('/').pop())} — kies enkel een nieuw bestand als je het wil vervangen.`
+    : '';
+  toggleDocSource();
   document.getElementById('doc-form').style.display = 'block';
   document.getElementById('df-title').focus();
 }
 function hideDocForm() { editingDocId = null; document.getElementById('doc-form').style.display = 'none'; }
+
+async function uploadDocFile(file) {
+  const safeName = file.name.replace(/[^\w.\-() ]+/g, '_');
+  const path = `${itemId}/${Date.now()}_${safeName}`;
+  const { error } = await sb.storage.from(DOC_BUCKET).upload(path, file, { upsert: false });
+  if (error) {
+    if (/bucket/i.test(error.message)) throw new Error(`Storage-bucket "${DOC_BUCKET}" bestaat nog niet in Supabase.`);
+    throw new Error(error.message);
+  }
+  return sb.storage.from(DOC_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+async function removeDocFileIfUploaded(url) {
+  if (!url || !url.startsWith(DOC_STORAGE_PREFIX)) return;
+  const path = decodeURIComponent(url.slice(DOC_STORAGE_PREFIX.length));
+  await sb.storage.from(DOC_BUCKET).remove([path]);
+}
 
 async function editDoc(id) {
   const { data } = await sb.from('activity_documents').select('*').eq('id', id).single();
@@ -1008,6 +1060,10 @@ async function editDoc(id) {
 async function saveDoc() {
   const title = document.getElementById('df-title').value.trim();
   if (!title) { toast('❌ Titel is verplicht'); return; }
+  const source = document.querySelector('input[name="df-source"]:checked').value;
+  const fileInput = document.getElementById('df-file');
+  const btn = document.getElementById('df-save-btn');
+
   const payload = {
     item_id: itemId, user_id: userId,
     title,
@@ -1015,6 +1071,31 @@ async function saveDoc() {
     url: document.getElementById('df-url').value,
     description: document.getElementById('df-desc').value
   };
+
+  let oldUrl = null;
+  if (source === 'file') {
+    const file = fileInput.files[0];
+    if (!file && !editingDocId) { toast('❌ Kies een bestand om op te laden'); return; }
+    if (file) {
+      btn.disabled = true; btn.textContent = '⏳ Opladen…';
+      try {
+        if (editingDocId) {
+          const { data: cur } = await sb.from('activity_documents').select('url').eq('id', editingDocId).single();
+          oldUrl = cur ? cur.url : null;
+        }
+        payload.url = await uploadDocFile(file);
+        if (payload.doc_type === 'link') payload.doc_type = 'file';
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Opslaan';
+        toast('❌ Opladen mislukt: ' + e.message);
+        return;
+      }
+      btn.disabled = false; btn.textContent = 'Opslaan';
+    } else {
+      delete payload.url; // bestaand geüpload bestand behouden
+    }
+  }
+
   let error;
   if (editingDocId) {
     ({ error } = await sb.from('activity_documents').update(payload).eq('id', editingDocId));
@@ -1022,6 +1103,7 @@ async function saveDoc() {
     ({ error } = await sb.from('activity_documents').insert(payload));
   }
   if (error) { toast('❌ ' + error.message); return; }
+  if (oldUrl && oldUrl !== payload.url) await removeDocFileIfUploaded(oldUrl);
   hideDocForm();
   await loadDocuments();
   toast('✅ Document opgeslagen');
@@ -1029,7 +1111,9 @@ async function saveDoc() {
 
 async function deleteDoc(id) {
   if (!confirm('Document verwijderen?')) return;
+  const { data: doc } = await sb.from('activity_documents').select('url').eq('id', id).single();
   await sb.from('activity_documents').delete().eq('id', id);
+  if (doc) await removeDocFileIfUploaded(doc.url);
   await loadDocuments();
   toast('🗑 Document verwijderd');
 }
