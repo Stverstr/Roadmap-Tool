@@ -228,7 +228,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .modal-foot{padding:12px 22px;border-top:1px solid var(--gy200);display:flex;justify-content:flex-end;gap:10px;background:white;border-radius:0 0 12px 12px;}
 
 /* ── STORYBOARD ── */
-.sb-wrap{overflow-x:auto;width:100%;}
+.sb-wrap{overflow-x:auto;width:100%;container-type:inline-size;}
 #sb-grid{width:100%;}
 .sb-inner-grid>*{min-width:0;overflow:hidden;}
 .sb-grid{display:grid;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;}
@@ -407,10 +407,8 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
     <div class="auth-sub">Plan. Visualiseer. Communiceer.</div>
     <div class="auth-err" id="auth-err"></div>
     <div id="auth-login-form">
-      <label class="auth-label">E-mailadres</label>
-      <input class="auth-input" id="auth-email" type="email" placeholder="jou@bedrijf.be" autocomplete="email">
       <label class="auth-label">Wachtwoord</label>
-      <input class="auth-input" id="auth-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      <input class="auth-input" id="auth-pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
       <button class="auth-btn" onclick="doLogin()">Aanmelden</button>
     </div>
   </div>
@@ -987,11 +985,10 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
       <div id="mgd-dates-list"></div>
       <!-- Selected date agenda -->
       <div id="mgd-agenda-section" style="display:none;margin-top:18px;border-top:2px solid var(--gy200);padding-top:14px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
           <span style="font-size:13px;font-weight:700;color:var(--gy900);" id="mgd-agenda-date-label">📋 Agenda</span>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-sm btn-s" onclick="addGovAgendaTopic()">＋ Topic</button>
-            <button class="btn btn-sm" style="background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;" onclick="openGovActivityPicker()">＋ Activiteit</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-sm" style="background:#F3F4F6;color:#374151;border:1px solid #D1D5DB;" onclick="openGovActivityPicker()">＋ Activiteit</button>
           </div>
         </div>
         <div style="margin-bottom:10px;">
@@ -1092,16 +1089,20 @@ let saveTimer = null;
 // ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
+// Fixed user — auth via master password hash (geen Supabase auth)
+const FIXED_USER = { id: '4bdbe724-042a-46bb-8a78-b1f8ffc82caf', email: 'stijn@stoover.be' };
+const MASTER_HASH = '750db0f147fb55c6755f5b3bb2606a35623b43d03c80056c48587dfa2df45c04';
+
+async function sha256(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
+}
+
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    currentUser = session.user;
+  if (sessionStorage.getItem('rs_auth') === '1') {
+    currentUser = FIXED_USER;
     showApp();
   }
-  sb.auth.onAuthStateChange((_e, session) => {
-    if (session && !currentUser) { currentUser = session.user; showApp(); }
-    else if (!session) { currentUser = null; showAuth(); }
-  });
 })();
 
 function showApp() {
@@ -1119,12 +1120,25 @@ function showAuth() {
 //  AUTH
 // ═══════════════════════════════════════════
 async function doLogin() {
-  const email = document.getElementById('auth-email').value.trim();
   const pass = document.getElementById('auth-pass').value;
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) showAuthErr(error.message);
+  const h = await sha256(pass);
+  if (h === MASTER_HASH) {
+    sessionStorage.setItem('rs_auth', '1');
+    currentUser = FIXED_USER;
+    showApp();
+  } else {
+    const i = document.getElementById('auth-pass');
+    i.style.borderColor = '#ef4444';
+    i.value = '';
+    setTimeout(() => i.style.borderColor = '', 600);
+    showAuthErr('Ongeldig wachtwoord');
+  }
 }
-async function doLogout() { await sb.auth.signOut(); }
+function doLogout() {
+  sessionStorage.removeItem('rs_auth');
+  currentUser = null;
+  showAuth();
+}
 function showAuthErr(msg, c='#991B1B', bg='#FEE2E2') {
   const el = document.getElementById('auth-err');
   el.textContent = msg; el.style.display = 'block';
@@ -1249,6 +1263,17 @@ async function loadProjectData() {
     strategicChanges = []; hefbomenData = []; ltDoelstellingen = []; ktTargets = []; inspanningsverbintenissen = [];
   }
 }
+
+// ── Auto-refresh wanneer activity-detail.html iets opslaat ─────────────
+(function() {
+  const bc = new BroadcastChannel('roadmap_refresh');
+  bc.onmessage = async (event) => {
+    if (event.data?.type === 'item_updated' && currentProjectId) {
+      const { data } = await sb.from('roadmap_items').select('*').eq('project_id', currentProjectId).order('position');
+      if (data) { items = data; renderStoryboard(); renderTimeline(); }
+    }
+  };
+})();
 
 async function loadStrategicData(pid) {
   const sc = await sb.from('strategic_changes').select('*').eq('project_id', pid).order('position');
@@ -1971,9 +1996,12 @@ function openItemModal(id, mode, extra, prefillTrackId, prefillSubcatId, prefill
     psel.value = prefillPhaseId || '';
     fillTrackSubDropdown(prefillTrackId, prefillSubcatId);
 
-    document.getElementById('mi-other-roadmap').checked = false;
-    document.getElementById('mi-other-roadmap-name').value = '';
-    document.getElementById('mi-other-roadmap-wrap').style.display = 'none';
+    const _orEl = document.getElementById('mi-other-roadmap');
+    const _orNameEl = document.getElementById('mi-other-roadmap-name');
+    const _orWrapEl = document.getElementById('mi-other-roadmap-wrap');
+    if (_orEl) _orEl.checked = false;
+    if (_orNameEl) _orNameEl.value = '';
+    if (_orWrapEl) _orWrapEl.style.display = 'none';
     itemStatusHistory = [];
   }
   // Fill gov meeting selects
@@ -2162,8 +2190,9 @@ function switchItemTab(tab) {
   });
 }
 function toggleOtherRoadmap() {
-  document.getElementById('mi-other-roadmap-wrap').style.display =
-    document.getElementById('mi-other-roadmap').checked ? 'block' : 'none';
+  const _orWrap = document.getElementById('mi-other-roadmap-wrap');
+  const _orChk = document.getElementById('mi-other-roadmap');
+  if (_orWrap && _orChk) _orWrap.style.display = _orChk.checked ? 'block' : 'none';
 }
 async function loadStatusHistory(itemId) {
   const { data } = await sb.from('item_status_history')
@@ -2524,8 +2553,42 @@ let tlDragItemId = null;
 let tlFilterSubcats = new Set();
 let tlFilterMilestoneTypes = new Set();
 let tlFilterGovMeetings = new Set(); // which gov meeting series to show on timeline
+let tlShowPhases = true; // toon/verberg fase-strips in tijdslijn
 let tlBarDrag = null;
 let tlBarDragged = false;
+let tlPhaseSplitDrag = null; // voor slepen van fase-splitsing
+
+function tlPhaseSplitMouseDown(e, itemId, splitIdx) {
+  e.stopPropagation();
+  e.preventDefault();
+  const it = items.find(i => i.id === itemId);
+  if (!it || !it.item_phases?.length) return;
+  const barEl = document.querySelector(`[data-tl-bar="${itemId}"]`);
+  if (!barEl) return;
+  const rect = barEl.getBoundingClientRect();
+  tlPhaseSplitDrag = { itemId, splitIdx, it, barLeft: rect.left, barWidth: rect.width };
+}
+
+document.addEventListener('mousemove', function(e) {
+  if (!tlPhaseSplitDrag) return;
+  const { it, splitIdx, barLeft, barWidth } = tlPhaseSplitDrag;
+  const phases = phaseWithPct(it.item_phases, it.start_date, it.end_date);
+  const relPct = Math.max(0, Math.min(100, (e.clientX - barLeft) / Math.max(1, barWidth) * 100));
+  const minPct = (splitIdx === 0 ? 0 : phases[splitIdx-1].end_pct) + 3;
+  const maxPct = (splitIdx >= phases.length - 2 ? 100 : phases[splitIdx+1].end_pct) - 3;
+  phases[splitIdx].end_pct = Math.min(maxPct, Math.max(minPct, relPct));
+  it.item_phases = phases;
+  renderTimeline();
+});
+
+document.addEventListener('mouseup', async function(e) {
+  if (!tlPhaseSplitDrag) return;
+  const { it } = tlPhaseSplitDrag;
+  tlPhaseSplitDrag = null;
+  recalcPhaseDates(it);
+  await sb.from('roadmap_items').update({ item_phases: it.item_phases }).eq('id', it.id);
+  renderTimeline();
+});
 
 // ── Strategisch Tijdslijn state ───────────────────────────────────────────
 // tlZoom / tlYearMode / tlFilterYears / tlFromDate / tlToDate are shared with activiteiten TL
@@ -2678,13 +2741,15 @@ function renderStoryboard() {
   if (!rowPhases.length) rowPhases = [null];
 
   const labelW = 140;
-  const MIN_COL_W = 140;
-  const minGridW = labelW + colDefs.length * MIN_COL_W;
-  const gridCols = `${labelW}px ${colDefs.map(() => `minmax(${MIN_COL_W}px, 1fr)`).join(' ')}`;
-  let html = `<div class="sb-inner-grid" style="display:grid;grid-template-columns:${gridCols};width:100%;border:1px solid var(--gy300);border-radius:10px;overflow:hidden;">`;
+  // Kolombreedte via container-query-eenheden (100cqw = breedte .sb-wrap):
+  // elke kolom max 1/7 van de zichtbare breedte, zodat er altijd minstens
+  // 7 kolommen naast de labelkolom passen. Schaalt live mee bij resize.
+  const colMin = `max(90px, (100cqw - ${labelW + 2}px) / 7)`;
+  const gridCols = `${labelW}px repeat(${colDefs.length}, minmax(${colMin}, 1fr))`;
+  let html = `<div class="sb-inner-grid" style="display:grid;grid-template-columns:${gridCols};width:100%;min-width:calc(${labelW + 2}px + ${colDefs.length} * ${colMin});border:1px solid var(--gy300);border-radius:10px;">`;
 
   // Header row 1: corner + track headers (spanning visible subcols)
-  html += `<div style="grid-column:1;grid-row:1/span 2;background:var(--gy900);border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);"></div>`;
+  html += `<div style="grid-column:1;grid-row:1/span 2;position:sticky;left:0;z-index:4;background:var(--gy900);border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);"></div>`;
   let colIdx = 2;
   tracks.forEach(tr => {
     const trCols = colDefs.filter(c => c.track.id === tr.id);
@@ -2711,7 +2776,7 @@ function renderStoryboard() {
     const phLabel = ph
       ? `<div style="font-size:13px;font-weight:700;">${renderIcon(ph.icon, phBg)}${ph.name}</div><div style="font-size:10px;opacity:.75;margin-top:3px;">${ph.start_date||''}${ph.start_date&&ph.end_date?' – ':''}${ph.end_date||''}</div>`
       : `<div style="font-size:13px;font-weight:700;">Alle items</div>`;
-    html += `<div style="grid-column:1;grid-row:${rowNum};background:${phBg};color:${textColor(phBg)};padding:10px 12px;border-right:1px solid rgba(0,0,0,.1);border-top:1px solid rgba(0,0,0,.08);">${phLabel}</div>`;
+    html += `<div style="grid-column:1;grid-row:${rowNum};position:sticky;left:0;z-index:3;background:${phBg};color:${textColor(phBg)};padding:10px 12px;border-right:1px solid rgba(0,0,0,.1);border-top:1px solid rgba(0,0,0,.08);">${phLabel}</div>`;
     colIdx = 2;
     colDefs.forEach(c => {
       const cellItems = items.filter(i =>
@@ -2729,8 +2794,20 @@ function renderStoryboard() {
   // Backlog row — fully unassigned items (no track, no phase). Spans all columns as one zone.
   const showingRealPhaseRows = rowPhases.some(ph => ph !== null);
   if (phases.length && showingRealPhaseRows) {
-    const backlogItems = items.filter(i => !i.track_id && !i.phase_id)
-      .sort((a,b) => (a.position||0) - (b.position||0));
+    // Backlog = elk item dat in geen enkele cel van het grid past:
+    // geen (geldige) fase, geen (geldige) stream, of stream heeft subcategorieën maar item heeft er geen (geldige).
+    const backlogItems = items.filter(i => {
+      const validPhase = i.phase_id && phases.some(p => p.id === i.phase_id);
+      const validTrack = i.track_id && tracks.some(t => t.id === i.track_id);
+      let validSub = false;
+      if (validTrack) {
+        const trackSubs = subcategories.filter(s => s.track_id === i.track_id);
+        validSub = trackSubs.length
+          ? trackSubs.some(s => s.id === i.subcategory_id)
+          : !i.subcategory_id;
+      }
+      return !(validPhase && validTrack && validSub);
+    }).sort((a,b) => (a.position||0) - (b.position||0));
     const totalTrackCols = colDefs.length;
     const blStatusIcon = {
       pending: '<span style="font-size:11px;color:var(--gy500);font-weight:700;line-height:1;">○</span>',
@@ -2738,9 +2815,9 @@ function renderStoryboard() {
       done:    '<span style="font-size:11px;color:#14532D;font-weight:700;line-height:1;">✓</span>'
     };
 
-    html += `<div style="grid-column:1;grid-row:${rowNum};background:#F8FAFC;color:var(--gy600,#6B7280);padding:10px 12px;border-right:1px solid var(--gy300);border-top:2px dashed var(--gy300);display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
+    html += `<div style="grid-column:1;grid-row:${rowNum};position:sticky;left:0;z-index:3;background:#F8FAFC;color:var(--gy600,#6B7280);padding:10px 12px;border-right:1px solid var(--gy300);border-top:2px dashed var(--gy300);display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
       <div style="font-size:12px;font-weight:700;color:var(--gy500);">📥 Backlog</div>
-      <div style="font-size:10px;opacity:.7;">Niet toegewezen</div>
+      <div style="font-size:10px;opacity:.7;">Niet (volledig) toegewezen</div>
     </div>`;
 
     let blHtml = `<div style="grid-column:2/span ${totalTrackCols};grid-row:${rowNum};background:#F8FAFC;border-top:2px dashed var(--gy300);padding:8px;min-height:80px;"
@@ -2780,6 +2857,16 @@ function renderStoryboard() {
   html += '</div>';
   el.innerHTML = html;
 }
+
+// Herbereken kolombreedtes bij venster-resize
+let sbResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(sbResizeTimer);
+  sbResizeTimer = setTimeout(() => {
+    const sc = document.getElementById('storyboard-content');
+    if (sc && sc.style.display !== 'none' && (tracks.length || phases.length)) renderStoryboard();
+  }, 200);
+});
 
 function renderSbCell(cellItems, trackId, subcatId, phaseId, color) {
   const statusIcon = {
@@ -3016,6 +3103,12 @@ async function tlBarMouseUp(e) {
       updates.end_date = projectedEnd;
     }
     if (Object.keys(updates).length) {
+      // Herbereken fase-datums op basis van opgeslagen end_pct
+      const itCopy = Object.assign({}, it, updates);
+      if (itCopy.item_phases?.length) {
+        recalcPhaseDates(itCopy);
+        updates.item_phases = itCopy.item_phases;
+      }
       await sb.from('roadmap_items').update(updates).eq('id', id);
       Object.assign(it, updates);
       renderTimeline();
@@ -3098,6 +3191,42 @@ async function tlLaneDrop(e) {
 }
 
 // ═══════════════════════════════════════════
+//  FASE HELPERS (globaal — ook gebruikt door drag handlers)
+// ═══════════════════════════════════════════
+function phaseWithPct(phases, actStart, actEnd) {
+  if (!phases?.length) return [];
+  let startMs = 0, totalMs = 1;
+  if (actStart && actEnd) {
+    const [sy,sm,sd] = actStart.split('-').map(Number);
+    const [ey,em,ed] = actEnd.split('-').map(Number);
+    startMs = Date.UTC(sy, sm-1, sd);
+    totalMs = Math.max(1, Date.UTC(ey, em-1, ed) - startMs);
+  }
+  return phases.map((ph, i) => {
+    if (ph.end_pct != null) return ph;
+    if (ph.end_date && actStart) {
+      const [py,pm,pd] = ph.end_date.split('-').map(Number);
+      return { ...ph, end_pct: Math.min(100, Math.max(0, (Date.UTC(py,pm-1,pd) - startMs) / totalMs * 100)) };
+    }
+    return { ...ph, end_pct: (i+1) / phases.length * 100 };
+  });
+}
+
+function recalcPhaseDates(it) {
+  if (!it.start_date || !it.end_date || !it.item_phases?.length) return;
+  const [sy,sm,sd] = it.start_date.split('-').map(Number);
+  const [ey,em,ed] = it.end_date.split('-').map(Number);
+  const startMs = Date.UTC(sy, sm-1, sd);
+  const totalMs = Math.max(1, Date.UTC(ey, em-1, ed) - startMs);
+  const phases = phaseWithPct(it.item_phases, it.start_date, it.end_date);
+  phases.forEach((ph, i) => {
+    const prevPct = i === 0 ? 0 : phases[i-1].end_pct;
+    ph.start_date = i === 0 ? it.start_date : new Date(startMs + totalMs * prevPct / 100).toISOString().split('T')[0];
+    ph.end_date = i === phases.length-1 ? it.end_date : new Date(startMs + totalMs * ph.end_pct / 100).toISOString().split('T')[0];
+  });
+  it.item_phases = phases;
+}
+
 //  TIMELINE RENDER
 // ═══════════════════════════════════════════
 function renderTimeline() {
@@ -3259,6 +3388,7 @@ function renderTimeline() {
   }).join('');
 
   const keyChip = `<button onclick="setTlFilterKeyOnly(${!tlFilterKeyOnly})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterKeyOnly?'#D97706':'var(--gy300)'};background:${tlFilterKeyOnly?'#FFFBEB':'white'};color:${tlFilterKeyOnly?'#D97706':'var(--gy700)'};cursor:pointer;white-space:nowrap;">⭐ Key only</button>`;
+  const showPhasesChip = `<button onclick="tlShowPhases=!tlShowPhases;renderTimeline()" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlShowPhases?'#1D4ED8':'var(--gy300)'};background:${tlShowPhases?'#EFF6FF':'white'};color:${tlShowPhases?'#1D4ED8':'var(--gy700)'};cursor:pointer;white-space:nowrap;">▦ Fasen</button>`;
   const otherRoadmapChip = `<button onclick="setTlFilterOtherRoadmap(${!tlFilterOtherRoadmap})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterOtherRoadmap?'#6B7280':'var(--gy300)'};background:${tlFilterOtherRoadmap?'#F3F4F6':'white'};color:${tlFilterOtherRoadmap?'#374151':'var(--gy700)'};cursor:pointer;white-space:nowrap;">🔗 Andere roadmap</button>`;
   const noBacklogChip = `<button onclick="setTlFilterNoBacklog(${!tlFilterNoBacklog})" style="padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;border:1.5px solid ${tlFilterNoBacklog?'#14532D':'var(--gy300)'};background:${tlFilterNoBacklog?'#F0FDF4':'white'};color:${tlFilterNoBacklog?'#14532D':'var(--gy700)'};cursor:pointer;white-space:nowrap;">📥 Geen backlog</button>`;
 
@@ -3324,7 +3454,7 @@ function renderTimeline() {
     if (tracks.length) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Streams')}${streamChips}</div>`);
     if (subcatChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Subcategorieën')}${subcatChips}</div>`);
     if (phaseChips) tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Fasen')}${phaseChips}</div>`);
-    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}${otherRoadmapChip}${noBacklogChip}</div>`);
+    tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Status')}${statusChips}${keyChip}${otherRoadmapChip}${noBacklogChip}${showPhasesChip}</div>`);
     const healthDefs = [['sunny','☀️','#92400E','#FEF3C7'],['partly_cloudy','⛅','#1E40AF','#DBEAFE'],['cloudy','☁️','#374151','#F3F4F6'],['stormy','⛈️','#991B1B','#FEE2E2']];
     const healthChips = healthDefs.map(([v,l,color,bg]) => { const act = tlFilterHealthStatuses.has(v); return `<button onclick="toggleTlFilterHealth('${v}')" style="padding:3px 9px;font-size:13px;font-weight:600;border-radius:12px;border:1.5px solid ${act?color:'var(--gy300)'};background:${act?bg:'white'};color:${act?color:'var(--gy700)'};cursor:pointer;white-space:nowrap;">${l}</button>`; }).join('');
     tlRow2Groups.push(`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${tlLbl('Gezondheid')}${healthChips}</div>`);
@@ -3412,6 +3542,11 @@ function renderTimeline() {
   }
 
   // ── 10. renderLane helper ─────────────────────────────────────────────────
+  function lightenHex(hex, factor) {
+    if (!hex || hex.length < 7 || hex[0] !== '#') return hex || '#888';
+    const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+    return `rgb(${Math.round(r+(255-r)*factor)},${Math.round(g+(255-g)*factor)},${Math.round(b+(255-b)*factor)})`;
+  }
   function renderLane(label, laneItems, bgColor, labelStyle, barColor, clickFn, contentFn, droppable, sidebarItems, laneTrackId, laneSubcatId, laneMilestones) {
     const visItems = laneItems.filter(it => {
       if (tlFilterPhases.size && !tlFilterPhases.has(it.phase_id)) return false;
@@ -3451,7 +3586,11 @@ function renderTimeline() {
       barRows.set(_id, { startPct, endPct, w, rowIdx, _type });
     });
     const numRows = Math.max(1, rowEnds.length);
-    const laneH = TOP_PAD + numRows * (BAR_H + BAR_GAP) + TOP_PAD;
+    // ── fase-aware bar heights ─────────────────────────────────────────────
+    const PHASE_STRIP_H = 14;
+    const hasPhaseItems = scheduled.some(it => (it.item_phases || []).length > 0);
+    const EFFECTIVE_BAR_H = hasPhaseItems ? BAR_H + PHASE_STRIP_H : BAR_H;
+    const laneH = TOP_PAD + numRows * (EFFECTIVE_BAR_H + BAR_GAP) + TOP_PAD;
     // ───────────────────────────────────────────────────────────────────────
     const trkAttr = laneTrackId ? ` data-track-id="${laneTrackId}" data-subcat-id="${laneSubcatId||''}"` : '';
     let cells = `<div data-tl-grid="1"${trkAttr} style="flex:1;position:relative;min-height:${laneH}px;"
@@ -3463,7 +3602,7 @@ function renderTimeline() {
       const bm = barRows.get(it.id);
       if (!bm) return;
       const { startPct, w, rowIdx } = bm;
-      const top = TOP_PAD + rowIdx * (BAR_H + BAR_GAP);
+      const top = TOP_PAD + rowIdx * (EFFECTIVE_BAR_H + BAR_GAP);
       const content = contentFn ? contentFn(it) : (it.title || it.name);
       const isDone = it.status === 'done';
       const isActive = it.status === 'active';
@@ -3475,19 +3614,45 @@ function renderTimeline() {
       const fw = isActive ? 'font-weight:800;' : 'font-weight:600;';
       const onclickStr = clickFn(it);
       const safeTitle = (it.title||it.name||'').replace(/"/g,'&quot;');
-      cells += `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:${BAR_H}px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:${effectiveTextColor};background:${effectiveBarColor};z-index:2;transition:filter .15s;opacity:${opacity};${textDeco}${fw}cursor:grab;user-select:none;overflow:hidden;white-space:nowrap;"
+      // ── fase strip embedded in bar (positie via end_pct) ─────────────────
+      const rawPhases = it.item_phases || [];
+      const phasesWithPct = tlShowPhases ? phaseWithPct(rawPhases, it.start_date, it.end_date) : [];
+      let phaseStripHtml = '';
+      if (phasesWithPct.length > 0) {
+        phaseStripHtml = `<div style="position:absolute;left:0;right:0;bottom:0;height:${PHASE_STRIP_H}px;overflow:hidden;border-radius:0 0 5px 5px;">`;
+        phasesWithPct.forEach((ph, phIdx) => {
+          const phStart = phIdx === 0 ? 0 : phasesWithPct[phIdx-1].end_pct;
+          const phEnd = Math.min(100, ph.end_pct);
+          const phW = phEnd - phStart;
+          if (phW <= 0) return;
+          const phColor = lightenHex(effectiveBarColor, 0.22 + phIdx * 0.12);
+          const phLabel = phW >= 8 && ph.label ? ph.label : '';
+          const phName = (ph.name || ph.label || '').replace(/"/g, '&quot;');
+          phaseStripHtml += `<div style="position:absolute;left:${phStart}%;width:${phW}%;height:100%;background:${phColor};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:rgba(0,0,0,.75);overflow:hidden;" title="${phName}">${phLabel}</div>`;
+          // Drag handle tussen fasen (niet na de laatste)
+          if (phIdx < phasesWithPct.length - 1) {
+            phaseStripHtml += `<div onmousedown="tlPhaseSplitMouseDown(event,'${it.id}',${phIdx})" style="position:absolute;left:calc(${phEnd}% - 4px);top:0;bottom:0;width:8px;cursor:col-resize;z-index:10;background:rgba(255,255,255,.35);border-left:1px solid rgba(255,255,255,.5);border-right:1px solid rgba(255,255,255,.5);" title="Sleep om fase te vergroten/verkleinen"></div>`;
+          }
+        });
+        phaseStripHtml += `</div>`;
+      }
+      const barDisplayH = EFFECTIVE_BAR_H;
+      cells += `<div data-tl-bar="${it.id}" style="position:absolute;left:${startPct}%;width:${Math.max(w,2)}%;height:${barDisplayH}px;top:${top}px;border-radius:5px;font-size:11px;color:${effectiveTextColor};background:${effectiveBarColor};z-index:2;transition:filter .15s;opacity:${opacity};${textDeco}${fw}cursor:grab;user-select:none;overflow:hidden;"
         onmousedown="tlBarMouseDown(event,'${it.id}','move')"
         onclick="if(!tlBarDragged){${onclickStr}}else{tlBarDragged=false;}"
         title="${safeTitle}"
         onmouseover="this.style.filter='brightness(1.1)'"
         onmouseout="this.style.filter=''">
-        <div onmousedown="tlBarMouseDown(event,'${it.id}','left');event.stopPropagation();" style="position:absolute;left:0;top:0;bottom:0;width:8px;cursor:w-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:5px 0 0 5px;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
-        ${isActive ? `<span style="flex-shrink:0;margin-right:4px;font-size:9px;opacity:.9;">▶</span>` : ''}
-        ${isOtherRoadmap ? `<span style="flex-shrink:0;margin-right:4px;font-size:11px;opacity:.7;" title="${it.other_roadmap_name||'Andere roadmap'}">🔗</span>` : ''}
-        ${it.health_status ? `<span style="flex-shrink:0;margin-right:5px;font-size:13px;line-height:1;">${HEALTH_ICON[it.health_status]||''}</span>` : ''}
-        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${content}</span>
-        ${it.key_activity && !tlFilterKeyOnly ? `<span style="flex-shrink:0;margin-left:4px;font-size:11px;opacity:.85;">⭐</span>` : ''}
-        <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
+        <div style="height:${BAR_H}px;display:flex;align-items:center;padding:0 12px;white-space:nowrap;">
+          <div onmousedown="tlBarMouseDown(event,'${it.id}','left');event.stopPropagation();" style="position:absolute;left:0;top:0;bottom:0;width:8px;cursor:w-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:5px 0 0 5px;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
+          ${isActive ? `<span style="flex-shrink:0;margin-right:4px;font-size:9px;opacity:.9;">▶</span>` : ''}
+          ${isOtherRoadmap ? `<span style="flex-shrink:0;margin-right:4px;font-size:11px;opacity:.7;" title="${it.other_roadmap_name||'Andere roadmap'}">🔗</span>` : ''}
+          ${it.health_status ? `<span style="flex-shrink:0;margin-right:5px;font-size:13px;line-height:1;">${HEALTH_ICON[it.health_status]||''}</span>` : ''}
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${content}</span>
+          ${it.key_activity && !tlFilterKeyOnly ? `<span style="flex-shrink:0;margin-left:4px;font-size:11px;opacity:.85;">⭐</span>` : ''}
+          <div onmousedown="tlBarMouseDown(event,'${it.id}','right');event.stopPropagation();" style="position:absolute;right:0;top:0;bottom:0;width:8px;cursor:e-resize;z-index:3;background:rgba(0,0,0,.2);border-radius:0 5px 5px 0;opacity:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'"></div>
+        </div>
+        ${phaseStripHtml}
       </div>`;
     });
     // milestones
@@ -3495,7 +3660,7 @@ function renderTimeline() {
       const bm = barRows.get(ms.id);
       if (!bm) return;
       const { startPct, rowIdx } = bm;
-      const top = TOP_PAD + rowIdx * (BAR_H + BAR_GAP);
+      const top = TOP_PAD + rowIdx * (EFFECTIVE_BAR_H + BAR_GAP);
       const mtype = milestoneTypes.find(t => t.id === ms.type_id);
       const msColor = mtype ? mtype.color : '#7C3AED';
       const msIcon = mtype ? (mtype.icon || '◆') : '◆';
@@ -3522,17 +3687,20 @@ function renderTimeline() {
 
   // ── 13. Track lanes ────────────────────────────────────────────────────────
   const keyContentFn = (it) => it.title;
-  tracks.forEach(tr => {
-    if (tlFilterStreams.size && !tlFilterStreams.has(tr.id)) return;
-    const subs = subcategories.filter(s => s.track_id === tr.id);
-    html += `<div style="display:flex;border-bottom:1px solid var(--gy300);min-height:36px;background:var(--gy100);align-items:center;">
+  const trackHeader = (tr) => `<div style="display:flex;border-bottom:1px solid var(--gy300);min-height:36px;background:var(--gy100);align-items:center;">
       <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;font-weight:700;color:var(--gy900);border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;background:var(--gy100);">
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${tr.color};flex-shrink:0;"></span>${renderIcon(tr.icon)}${tr.name}
       </div>
       <div style="flex:1;background:var(--gy100);"></div>
       ${hasSidebar ? `<div style="width:${SIDEBAR_W}px;flex-shrink:0;border-left:2px solid #FDE68A;background:#FEF3C7;padding:4px 6px;display:flex;align-items:center;"><span style="font-size:9px;color:#B45309;font-style:italic;opacity:.7;">← sleep</span></div>` : ''}
     </div>`;
+  tracks.forEach(tr => {
+    if (tlFilterStreams.size && !tlFilterStreams.has(tr.id)) return;
+    const subs = subcategories.filter(s => s.track_id === tr.id);
     if (subs.length === 0) {
+      // Track zonder subcats: verberg alleen als subcat-filter actief is
+      if (tlFilterSubcats.size) return;
+      html += trackHeader(tr);
       const laneUnsched = unscheduled.filter(i => i.track_id === tr.id && !i.subcategory_id);
       const laneMs = p.enable_milestones !== false ? milestones.filter(ms => ms.track_id === tr.id && !ms.subcategory_id && (!tlFilterMilestoneTypes.size || tlFilterMilestoneTypes.has(ms.type_id))) : [];
       html += renderLane(
@@ -3543,7 +3711,11 @@ function renderTimeline() {
         keyContentFn, true, laneUnsched, tr.id, null, laneMs
       );
     } else {
-      subs.forEach(sub => {
+      // Alleen subcats tonen die door de filter komen
+      const visibleSubs = subs.filter(sub => !tlFilterSubcats.size || tlFilterSubcats.has(sub.id));
+      if (!visibleSubs.length) return; // geen zichtbare subcats → ook geen track-header
+      html += trackHeader(tr);
+      visibleSubs.forEach(sub => {
         const laneUnsched = unscheduled.filter(i => i.track_id === tr.id && i.subcategory_id === sub.id);
         const laneMs = p.enable_milestones !== false ? milestones.filter(ms => ms.track_id === tr.id && ms.subcategory_id === sub.id && (!tlFilterMilestoneTypes.size || tlFilterMilestoneTypes.has(ms.type_id))) : [];
         html += renderLane(
@@ -5978,7 +6150,9 @@ function renderGovernance() {
           ${d.adhoc_participants ? `<div class="gov-date-adhoc">＋ ${d.adhoc_participants}</div>` : ''}
           <div style="margin-top:3px;">${agendaChips || '<span style="font-size:10px;color:var(--gy400);">Geen agenda</span>'}</div>
         </div>
-        <button class="btn btn-sm" style="background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE;flex-shrink:0;padding:3px 7px;" onclick="applyGovFilter('${m.id}','${d.id}')" title="Filter Storyboard &amp; Tijdslijn op deze datum">🔍</button>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          ${m.id === '631b6480-95df-44d4-b7ca-b0d1c02e1a3d' ? `<button class="btn btn-sm" style="background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;padding:3px 10px;font-weight:600;" onclick="openMeetingPopup('${d.id}')">▶ Run</button>` : ''}
+        </div>
       </div>`;
     }).join('') : `<div style="font-size:12px;color:var(--gy400);padding:8px 0;">Nog geen datums gepland.</div>`;
 
@@ -6475,6 +6649,51 @@ function renderGovMeetingFilterBadge(containerId, filterRef, onClear) {
     <button onclick="${onClear}" style="background:none;border:none;color:#1E40AF;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;">✕</button>
   </span>`;
 }
+
+
+
+// ---- MEETING POPUP ----
+function openMeetingPopup(dateId) {
+  const url = `meeting-view.html?date_id=${dateId}&v=${Date.now()}`;
+  let overlay = document.getElementById('meeting-popup-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'meeting-popup-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;
+      display:flex;align-items:center;justify-content:center;
+    `;
+    overlay.innerHTML = `
+      <div style="position:relative;width:96vw;height:94vh;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6);">
+        <button onclick="closeMeetingPopup()" style="
+          position:absolute;top:12px;right:16px;z-index:10;
+          background:rgba(0,0,0,0.5);color:#fff;border:1px solid rgba(255,255,255,0.3);
+          border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;
+          backdrop-filter:blur(4px);
+        ">✕ Sluiten</button>
+        <iframe id="meeting-popup-frame" src="" style="width:100%;height:100%;border:none;border-radius:12px;"></iframe>
+      </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeMeetingPopup(); });
+    document.body.appendChild(overlay);
+  }
+  document.getElementById('meeting-popup-frame').src = url;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMeetingPopup() {
+  const overlay = document.getElementById('meeting-popup-overlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+    document.getElementById('meeting-popup-frame').src = '';
+  }
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeMeetingPopup();
+});
 
 </script>
 </body>

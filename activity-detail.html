@@ -308,6 +308,61 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="btn btn-p" onclick="saveStatusOpmerking()">💾 Opmerking opslaan</button>
         </div>
       </div>
+      <!-- Inzichten -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">💡 Inzichten vandaag</div>
+          <button class="btn btn-p btn-sm" onclick="showInzichtForm()">＋ Inzicht</button>
+        </div>
+        <div id="inzicht-form" style="display:none;">
+          <div class="inline-form">
+            <div class="field"><label class="label">Inzicht / observatie</label><textarea class="textarea" id="inzicht-text" placeholder="Beschrijf het inzicht of de observatie…" style="min-height:65px;"></textarea></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="btn btn-s btn-sm" onclick="hideInzichtForm()">Annuleer</button>
+              <button class="btn btn-p btn-sm" onclick="saveInzicht()">Opslaan</button>
+            </div>
+          </div>
+        </div>
+        <div id="inzicht-list"><div class="empty">Nog geen inzichten toegevoegd.</div></div>
+      </div>
+
+      <!-- Planning verwachtingen -->
+      <div class="card">
+        <div class="card-title">📅 Algemene verwachtingen van de planning</div>
+        <div class="field">
+          <textarea class="textarea" id="st-planning" placeholder="Hoe evolueert de planning t.o.v. de verwachting? Zijn er risico's of verschuivingen voorzien?" style="min-height:100px;"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-p btn-sm" onclick="savePlanning()">💾 Opslaan</button>
+        </div>
+      </div>
+
+      <!-- Beslissingen / acties -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">⚡ Beslissingen & bijsturingen vereist</div>
+          <button class="btn btn-p btn-sm" onclick="showActieForm()">＋ Toevoegen</button>
+        </div>
+        <div id="actie-form" style="display:none;">
+          <div class="inline-form">
+            <div class="field"><label class="label">Beslissing / actie / bijsturing</label><textarea class="textarea" id="actie-text" placeholder="Omschrijf de vereiste beslissing of bijsturing…" style="min-height:65px;"></textarea></div>
+            <div class="field"><label class="label">Status</label>
+              <select class="select" id="actie-status">
+                <option value="open">🔴 Open</option>
+                <option value="in_progress">🟡 In behandeling</option>
+                <option value="done">🟢 Afgerond</option>
+                <option value="uitgesteld">⏸ Uitgesteld</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="btn btn-s btn-sm" onclick="hideActieForm()">Annuleer</button>
+              <button class="btn btn-p btn-sm" onclick="saveActie()">Opslaan</button>
+            </div>
+          </div>
+        </div>
+        <div id="actie-list"><div class="empty">Nog geen beslissingen of bijsturingen geregistreerd.</div></div>
+      </div>
+
       <div class="card" id="st-history-card" style="display:none;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
           <div class="card-title" style="margin:0;">📜 Historiek</div>
@@ -319,6 +374,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <!-- ══ TAB: AANPAK ══ -->
     <div class="panel" id="panel-aanpak">
+      <div class="card">
+        <div class="card-title">🎯 Verwachtingen</div>
+        <div class="field">
+          <label class="label">Doel</label>
+          <textarea class="textarea" id="aanpak-doel" placeholder="Wat is het doel van deze activiteit? Omschrijf uitgebreid de beoogde uitkomst en strategische relevantie…" style="min-height:110px;"></textarea>
+        </div>
+        <div class="field">
+          <label class="label">Wat willen we testen / leren?</label>
+          <textarea class="textarea" id="aanpak-leren" placeholder="Welke hypothesen willen we valideren? Wat moeten we bijleren als resultaat van deze activiteit?" style="min-height:90px;"></textarea>
+        </div>
+        <div class="field">
+          <label class="label">KPI verwachtingen</label>
+          <textarea class="textarea" id="aanpak-kpi" placeholder="Welke meetbare indicatoren definiëren succes? (bijv. conversie ≥ 5%, NPS +10, kostenbesparing X…)" style="min-height:80px;"></textarea>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-title">📦 Verwachte deliverables</div>
         <div class="field">
@@ -345,7 +416,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div class="card-title" style="margin:0;">📋 Fasen van deze activiteit</div>
-          <button class="btn btn-p btn-sm" onclick="addAanpakPhase()">＋ Fase</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <div style="position:relative;">
+              <button class="btn btn-s btn-sm" onclick="toggleAanpakTplMenu(event)">📋 Template ▾</button>
+              <div id="aanpak-tpl-menu" style="display:none;position:fixed;background:white;border:1px solid var(--gy300);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.15);z-index:2000;min-width:200px;overflow:hidden;">
+                <div style="padding:8px 14px 4px;font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.06em;">Standaard templates</div>
+                <button onclick="loadAanpakTemplate('Innovaties')" style="width:100%;text-align:left;padding:9px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--gy900);" onmouseover="this.style.background='var(--gy100)'" onmouseout="this.style.background='none'">🔬 Innovaties</button>
+              </div>
+            </div>
+            <button class="btn btn-p btn-sm" onclick="addAanpakPhase()">＋ Fase</button>
+          </div>
         </div>
         <div id="aanpak-phases-container">
           <div class="empty">Nog geen fasen. Voeg er een toe.</div>
@@ -707,6 +787,7 @@ async function saveBasis() {
   const { error } = await sb.update(updates).from('roadmap_items').eq('id', itemId);
   if (error) { toast('❌ Fout bij opslaan: ' + error.message); return; }
 
+  new BroadcastChannel('roadmap_refresh').postMessage({ type: 'item_updated', itemId });
   // status opmerking beheerd in Status tab
   toast('✅ Basis-info opgeslagen');
   await loadItem();
@@ -960,6 +1041,158 @@ async function loadStatus() {
   const { data: hist } = await sb.from('item_status_history')
     .select('*').eq('item_id', itemId).order('created_at', {ascending: false}).limit(30);
   renderStatusHistory(hist || []);
+  // Reload currentItem to get latest jsonb fields
+  const { data: fresh } = await sb.from('roadmap_items').select('status_inzichten,status_planning,status_acties').eq('id', itemId).single();
+  if (fresh) {
+    currentItem.status_inzichten = fresh.status_inzichten || [];
+    currentItem.status_planning  = fresh.status_planning  || '';
+    currentItem.status_acties    = fresh.status_acties    || [];
+  }
+  renderInzichten(currentItem.status_inzichten || []);
+  document.getElementById('st-planning').value = currentItem.status_planning || '';
+  renderActies(currentItem.status_acties || []);
+}
+
+// ── INZICHTEN ─────────────────────────────────────
+let editingInzichtId = null;
+
+function showInzichtForm(inzicht) {
+  editingInzichtId = inzicht ? inzicht.id : null;
+  document.getElementById('inzicht-text').value = inzicht ? inzicht.text : '';
+  document.getElementById('inzicht-form').style.display = 'block';
+  document.getElementById('inzicht-text').focus();
+}
+function hideInzichtForm() {
+  editingInzichtId = null;
+  document.getElementById('inzicht-form').style.display = 'none';
+}
+
+function renderInzichten(list) {
+  const el = document.getElementById('inzicht-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">Nog geen inzichten toegevoegd.</div>'; return; }
+  el.innerHTML = list.map((iz, i) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--gy200);border-radius:9px;margin-bottom:8px;background:white;">
+      <span style="font-size:16px;flex-shrink:0;margin-top:1px;">💡</span>
+      <div style="flex:1;font-size:14px;color:var(--gy900);line-height:1.5;white-space:pre-wrap;">${esc(iz.text)}</div>
+      <div style="display:flex;gap:2px;flex-shrink:0;">
+        <button class="btn-icon" onclick="editInzicht(${i})" title="Bewerken">✏️</button>
+        <button class="btn-icon" onclick="deleteInzicht(${i})" title="Verwijderen">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+async function saveInzicht() {
+  const text = document.getElementById('inzicht-text').value.trim();
+  if (!text) { toast('❌ Tekst is verplicht'); return; }
+  const list = [...(currentItem.status_inzichten || [])];
+  if (editingInzichtId !== null) {
+    list[editingInzichtId] = { ...list[editingInzichtId], text };
+  } else {
+    list.push({ id: Date.now(), text });
+  }
+  const { error } = await sb.from('roadmap_items').update({ status_inzichten: list, updated_at: new Date().toISOString() }).eq('id', itemId);
+  if (error) { toast('❌ ' + error.message); return; }
+  currentItem.status_inzichten = list;
+  renderInzichten(list);
+  hideInzichtForm();
+  toast('✅ Inzicht opgeslagen');
+}
+
+function editInzicht(idx) {
+  showInzichtForm({ id: idx, text: currentItem.status_inzichten[idx].text });
+}
+
+async function deleteInzicht(idx) {
+  if (!confirm('Inzicht verwijderen?')) return;
+  const list = currentItem.status_inzichten.filter((_, i) => i !== idx);
+  await sb.from('roadmap_items').update({ status_inzichten: list, updated_at: new Date().toISOString() }).eq('id', itemId);
+  currentItem.status_inzichten = list;
+  renderInzichten(list);
+  toast('🗑 Inzicht verwijderd');
+}
+
+// ── PLANNING VERWACHTINGEN ────────────────────────
+async function savePlanning() {
+  const val = document.getElementById('st-planning').value;
+  const { error } = await sb.from('roadmap_items').update({ status_planning: val, updated_at: new Date().toISOString() }).eq('id', itemId);
+  if (error) { toast('❌ ' + error.message); return; }
+  currentItem.status_planning = val;
+  toast('✅ Planning opgeslagen');
+}
+
+// ── BESLISSINGEN / ACTIES ─────────────────────────
+let editingActieId = null;
+const ACTIE_STATUS_LABELS = { open:'🔴 Open', in_progress:'🟡 In behandeling', done:'🟢 Afgerond', uitgesteld:'⏸ Uitgesteld' };
+
+function showActieForm(actie) {
+  editingActieId = actie ? actie._idx : null;
+  document.getElementById('actie-text').value = actie ? actie.text : '';
+  document.getElementById('actie-status').value = actie ? (actie.status || 'open') : 'open';
+  document.getElementById('actie-form').style.display = 'block';
+  document.getElementById('actie-text').focus();
+}
+function hideActieForm() {
+  editingActieId = null;
+  document.getElementById('actie-form').style.display = 'none';
+}
+
+function renderActies(list) {
+  const el = document.getElementById('actie-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">Nog geen beslissingen of bijsturingen geregistreerd.</div>'; return; }
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--gy200);">
+          <th style="text-align:left;padding:6px 8px;color:var(--gy500);font-weight:600;width:60%;">Beslissing / actie</th>
+          <th style="text-align:left;padding:6px 8px;color:var(--gy500);font-weight:600;width:25%;">Status</th>
+          <th style="width:15%;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.map((a, i) => `
+          <tr style="border-bottom:1px solid var(--gy200);">
+            <td style="padding:9px 8px;vertical-align:top;line-height:1.45;">${esc(a.text)}</td>
+            <td style="padding:9px 8px;vertical-align:top;">
+              <span style="font-size:12px;font-weight:600;">${ACTIE_STATUS_LABELS[a.status] || a.status}</span>
+            </td>
+            <td style="padding:6px 4px;vertical-align:top;text-align:right;white-space:nowrap;">
+              <button class="btn-icon" onclick="editActie(${i})" title="Bewerken">✏️</button>
+              <button class="btn-icon" onclick="deleteActie(${i})" title="Verwijderen">🗑</button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function saveActie() {
+  const text = document.getElementById('actie-text').value.trim();
+  if (!text) { toast('❌ Beschrijving is verplicht'); return; }
+  const status = document.getElementById('actie-status').value;
+  const list = [...(currentItem.status_acties || [])];
+  if (editingActieId !== null) {
+    list[editingActieId] = { ...list[editingActieId], text, status };
+  } else {
+    list.push({ id: Date.now(), text, status });
+  }
+  const { error } = await sb.from('roadmap_items').update({ status_acties: list, updated_at: new Date().toISOString() }).eq('id', itemId);
+  if (error) { toast('❌ ' + error.message); return; }
+  currentItem.status_acties = list;
+  renderActies(list);
+  hideActieForm();
+  toast('✅ Beslissing opgeslagen');
+}
+
+function editActie(idx) {
+  showActieForm({ ...currentItem.status_acties[idx], _idx: idx });
+}
+
+async function deleteActie(idx) {
+  if (!confirm('Verwijderen?')) return;
+  const list = currentItem.status_acties.filter((_, i) => i !== idx);
+  await sb.from('roadmap_items').update({ status_acties: list, updated_at: new Date().toISOString() }).eq('id', itemId);
+  currentItem.status_acties = list;
+  renderActies(list);
+  toast('🗑 Verwijderd');
 }
 
 function renderStatusHistory(hist) {
@@ -1087,6 +1320,10 @@ let hefbomenLinks = []; // [{id, roadmap_item_id, hefboom_id}]
 
 async function loadAanpak() {
   if (!currentItem) return;
+  // Verwachtingen
+  document.getElementById('aanpak-doel').value = currentItem.verwachtingen_doel || '';
+  document.getElementById('aanpak-leren').value = currentItem.verwachtingen_leren || '';
+  document.getElementById('aanpak-kpi').value = currentItem.verwachtingen_kpi || '';
   // Deliverables
   document.getElementById('aanpak-deliverables').value = currentItem.deliverables || '';
   // Owner
@@ -1107,29 +1344,114 @@ async function loadAanpak() {
   renderDeps(projItems || [], tracks || [], subcats || [], currentItem.dependencies || []);
 }
 
+function computePhaseDatesForDisplay(phases) {
+  // Bereken datums uit end_pct + activity begin/eind voor weergave
+  const actStart = currentItem?.start_date;
+  const actEnd = currentItem?.end_date;
+  if (!actStart || !actEnd || !phases.length) return phases;
+  const [sy,sm,sd] = actStart.split('-').map(Number);
+  const [ey,em,ed] = actEnd.split('-').map(Number);
+  const startMs = Date.UTC(sy, sm-1, sd);
+  const totalMs = Math.max(1, Date.UTC(ey, em-1, ed) - startMs);
+  // Ensure end_pct
+  const phs = phases.map((ph, i) => {
+    if (ph.end_pct != null) return ph;
+    if (ph.end_date) {
+      const [py,pm,pd] = ph.end_date.split('-').map(Number);
+      return { ...ph, end_pct: Math.min(100, Math.max(0, (Date.UTC(py,pm-1,pd) - startMs) / totalMs * 100)) };
+    }
+    return { ...ph, end_pct: (i+1) / phases.length * 100 };
+  });
+  return phs.map((ph, i) => {
+    const prevPct = i === 0 ? 0 : phs[i-1].end_pct;
+    const startD = i === 0 ? actStart : new Date(startMs + totalMs * prevPct / 100).toISOString().split('T')[0];
+    const endD = i === phs.length-1 ? actEnd : new Date(startMs + totalMs * ph.end_pct / 100).toISOString().split('T')[0];
+    return { ...ph, start_date: startD, end_date: endD };
+  });
+}
+
 function renderAanpakPhases() {
   const c = document.getElementById('aanpak-phases-container');
   if (!aanpakPhasesTemp.length) {
     c.innerHTML = '<div class="empty">Nog geen fasen. Klik ＋ Fase.</div>';
     return;
   }
-  c.innerHTML = aanpakPhasesTemp.map((ph, i) => `
+  const displayed = computePhaseDatesForDisplay(aanpakPhasesTemp);
+  c.innerHTML = displayed.map((ph, i) => `
     <div class="iph-row">
       <input type="checkbox" style="width:16px;height:16px;accent-color:var(--g700);flex-shrink:0;" ${ph.completed?'checked':''}
         onchange="aanpakPhasesTemp[${i}].completed=this.checked" title="Afgerond">
       <input class="iph-name" value="${(ph.name||'').replace(/"/g,'&quot;')}" placeholder="Naam fase…"
         oninput="aanpakPhasesTemp[${i}].name=this.value">
-      <input class="iph-date" type="date" value="${ph.start_date||''}" title="Start"
-        onchange="aanpakPhasesTemp[${i}].start_date=this.value">
-      <input class="iph-date" type="date" value="${ph.end_date||''}" title="Eind"
-        onchange="aanpakPhasesTemp[${i}].end_date=this.value">
-      <button class="btn btn-danger btn-sm" onclick="aanpakPhasesTemp.splice(${i},1);renderAanpakPhases()" title="Verwijder">✕</button>
+      <input style="width:46px;border:1px solid var(--gy300);border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;color:var(--gy700);text-align:center;flex-shrink:0;" maxlength="3" value="${(ph.label||'').replace(/"/g,'&quot;')}" placeholder="Lbl" title="Kort label voor tijdslijn (max 3 tekens)"
+        oninput="aanpakPhasesTemp[${i}].label=this.value.slice(0,3)">
+      <span style="font-size:11px;color:var(--gy500);flex-shrink:0;white-space:nowrap;" title="Automatisch berekend uit activiteitsdatums">${ph.start_date||'—'} → ${ph.end_date||'—'}</span>
+      <button class="btn btn-danger btn-sm" onclick="aanpakPhasesTemp.splice(${i},1);redistributePhasesPct();saveAanpak()" title="Verwijder">✕</button>
     </div>`).join('');
 }
 
-function addAanpakPhase() {
-  aanpakPhasesTemp.push({ id: Date.now().toString(), name: '', start_date: '', end_date: '', completed: false });
+// ── DATUM HELPERS ─────────────────────────────────
+// Gebruik Date.UTC om timezone-bugs te vermijden (België = UTC+2)
+function dateAddDays(dateStr, days) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days));
+  return dt.toISOString().split('T')[0];
+}
+function dateAddMonths(dateStr, months) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1 + months, d));
+  return dt.toISOString().split('T')[0];
+}
+
+// Herverdeelt end_pct gelijkmatig over alle fasen
+function redistributePhasesPct() {
+  const n = aanpakPhasesTemp.length;
+  aanpakPhasesTemp.forEach((ph, i) => { ph.end_pct = (i+1) / n * 100; });
   renderAanpakPhases();
+}
+
+const PHASE_TEMPLATES = {
+  'Innovaties': [
+    { name: 'Explore',               label: 'Exp' },
+    { name: 'Define Concept',        label: 'Con' },
+    { name: 'Proof of Concept',      label: 'Poc' },
+    { name: 'Pilot',                 label: 'Pil' },
+    { name: 'Pre-industrialisatie',  label: 'Pre' },
+    { name: 'Industrialisatie',      label: 'Ind' },
+  ]
+};
+
+function toggleAanpakTplMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('aanpak-tpl-menu');
+  const rect = e.currentTarget.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = rect.left + 'px';
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', () => {
+  const m = document.getElementById('aanpak-tpl-menu');
+  if (m) m.style.display = 'none';
+});
+
+function loadAanpakTemplate(name) {
+  document.getElementById('aanpak-tpl-menu').style.display = 'none';
+  const tpl = PHASE_TEMPLATES[name];
+  if (!tpl) return;
+  if (aanpakPhasesTemp.length > 0 && !confirm(`Huidige fasen vervangen door template "${name}"?`)) return;
+  const n = tpl.length;
+  aanpakPhasesTemp = tpl.map((ph, i) => ({
+    id: (Date.now() + i).toString(), name: ph.name, label: ph.label,
+    end_pct: (i+1) / n * 100, start_date: '', end_date: '', completed: false
+  }));
+  renderAanpakPhases();
+  toast(`📋 Template "${name}" geladen`);
+}
+
+function addAanpakPhase() {
+  aanpakPhasesTemp.push({ id: Date.now().toString(), name: '', label: '', end_pct: 100, start_date: '', end_date: '', completed: false });
+  redistributePhasesPct();
+  saveAanpak();
 }
 
 function renderDeps(items, tracks, subcats, selectedIds) {
@@ -1176,6 +1498,9 @@ function renderDeps(items, tracks, subcats, selectedIds) {
 async function saveAanpak() {
   const deps = Array.from(document.querySelectorAll('#aanpak-deps-container input[type=checkbox]:checked')).map(c => c.value);
   const updates = {
+    verwachtingen_doel:  document.getElementById('aanpak-doel').value,
+    verwachtingen_leren: document.getElementById('aanpak-leren').value,
+    verwachtingen_kpi:   document.getElementById('aanpak-kpi').value,
     deliverables: document.getElementById('aanpak-deliverables').value,
     owner: document.getElementById('aanpak-owner').value.trim() || null,
     managed_in_other_roadmap: document.getElementById('aanpak-other-roadmap').checked,
@@ -1188,6 +1513,7 @@ async function saveAanpak() {
   if (error) { toast('❌ ' + error.message); return; }
   // Update cached currentItem
   Object.assign(currentItem, updates);
+  new BroadcastChannel('roadmap_refresh').postMessage({ type: 'item_updated', itemId });
   // Update header owner if shown
   toast('✅ Aanpak opgeslagen');
 }

@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CG Health — Concepten Gating Meeting — 03 Juli 2026</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --green-dark: #1B5E37;
+    --green-mid: #2E7D52;
+    --green-light: #4CAF7A;
+    --teal: #00897B;
+    --white: #FFFFFF;
+    --gray-light: #F4F7F5;
+    --gray: #E0E8E3;
+    --text-dark: #1A2E24;
+    --text-muted: #5C7A6A;
+  }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #000;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* ---- DECK ---- */
+  #deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.prev {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ---- NAV ---- */
+  #nav {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 999;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(8px);
+    border-radius: 40px;
+    padding: 10px 24px;
+  }
+  #nav button {
+    background: none;
+    border: 2px solid rgba(255,255,255,0.6);
+    color: #fff;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  #nav button:hover { background: rgba(255,255,255,0.2); border-color: #fff; }
+  #slide-counter {
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    min-width: 70px;
+    text-align: center;
+  }
+  #progress {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--green-light);
+    transition: width 0.5s ease;
+    z-index: 1000;
+  }
+
+  /* ---- COVER ---- */
+  .cover {
+    background: var(--green-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+  }
+  .cover-logo {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 48px;
+  }
+  .cover-pretitle {
+    font-size: 15px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 20px;
+  }
+  .cover-title {
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+    max-width: 900px;
+    margin-bottom: 24px;
+  }
+  .cover-title span { color: var(--green-light); }
+  .cover-subtitle {
+    font-size: 22px;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 60px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 48px;
+    margin-top: 16px;
+  }
+  .cover-meta-item {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+  }
+  .cover-meta-item strong {
+    display: block;
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .cover-date-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 30px;
+    padding: 10px 28px;
+    color: rgba(255,255,255,0.85);
+    font-size: 15px;
+    letter-spacing: 0.08em;
+  }
+  .cover-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    pointer-events: none;
+  }
+
+  /* ---- AGENDA ---- */
+  .agenda-slide {
+    background: var(--gray-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+  }
+  .slide-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--green-mid);
+    margin-bottom: 16px;
+  }
+  .agenda-title {
+    font-size: 44px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 56px;
+    text-align: center;
+  }
+  .agenda-items {
+    display: flex;
+    gap: 32px;
+    max-width: 1100px;
+    width: 100%;
+  }
+  .agenda-item {
+    flex: 1;
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px 36px;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.08);
+    border-top: 5px solid var(--green-dark);
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 0.6s forwards;
+  }
+  .agenda-item:nth-child(2) { animation-delay: 0.15s; border-top-color: var(--teal); }
+  .agenda-item:nth-child(3) { animation-delay: 0.3s; border-top-color: var(--green-light); }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .agenda-num {
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--gray);
+    margin-bottom: 20px;
+    line-height: 1;
+  }
+  .agenda-item-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .agenda-item-desc {
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* ---- SECTION BREAK ---- */
+  .section-break {
+    background: var(--green-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-align: center;
+  }
+  .section-num {
+    font-size: 120px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.08);
+    line-height: 1;
+    position: absolute;
+  }
+  .section-label {
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--green-light);
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .section-title {
+    font-size: 56px;
+    font-weight: 800;
+    color: #fff;
+    max-width: 800px;
+    line-height: 1.2;
+    position: relative;
+  }
+
+  /* ---- IMAGE SLIDE ---- */
+  .image-slide {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .image-slide img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  }
+
+  /* ---- ROADMAP SLIDE ---- */
+  .roadmap-slide {
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 48px 64px 80px;
+  }
+  .roadmap-header {
+    margin-bottom: 40px;
+  }
+  .roadmap-header h2 {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--text-dark);
+  }
+  .roadmap-header p {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin-top: 6px;
+  }
+  .gantt-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .gantt-timeline-header {
+    display: flex;
+    margin-left: 220px;
+    margin-bottom: 12px;
+  }
+  .gantt-quarter {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-left: 1px solid var(--gray);
+    padding-left: 6px;
+  }
+  .gantt-year-row {
+    display: flex;
+    margin-left: 220px;
+    margin-bottom: 4px;
+  }
+  .gantt-year {
+    flex: 4;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+    border-left: 1px solid #ccc;
+    padding-left: 6px;
+  }
+  .gantt-row {
+    display: flex;
+    align-items: center;
+    height: 68px;
+    border-bottom: 1px solid var(--gray);
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 4px;
+  }
+  .gantt-row:hover { background: var(--gray-light); }
+  .gantt-label {
+    width: 220px;
+    flex-shrink: 0;
+    padding-right: 20px;
+  }
+  .gantt-label-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+  .gantt-label-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .gantt-track {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+  .gantt-bar {
+    position: absolute;
+    height: 36px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    gap: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    transition: all 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .gantt-bar:hover { height: 42px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .health-icon {
+    font-size: 20px;
+  }
+  .health-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+  .health-sunny { background: #FFF8E1; color: #F57F17; }
+  .health-partly_cloudy { background: #FFF3E0; color: #E65100; }
+  .health-cloudy { background: #ECEFF1; color: #455A64; }
+  .health-stormy { background: #FFEBEE; color: #C62828; }
+  
+  /* Grid lines on gantt */
+  .gantt-grid-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--gray);
+    pointer-events: none;
+  }
+
+  /* ---- CONCEPT SLIDE ---- */
+  .concept-slide {
+    background: #fff;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: 100%;
+  }
+  .concept-sidebar {
+    background: var(--green-dark);
+    color: #fff;
+    padding: 52px 40px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .concept-sidebar::before {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    right: -60px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+  .concept-sidebar::after {
+    content: '';
+    position: absolute;
+    top: -40px;
+    left: -80px;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+  }
+  .concept-num {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 32px;
+  }
+  .concept-status-big {
+    font-size: 64px;
+    margin-bottom: 12px;
+  }
+  .concept-health-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 40px;
+  }
+  .concept-name {
+    font-size: 30px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .concept-name-sub {
+    font-size: 15px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 40px;
+  }
+  .concept-meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: auto;
+  }
+  .concept-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .concept-meta-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+  }
+  .concept-meta-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .concept-color-bar {
+    height: 5px;
+    border-radius: 3px;
+    margin-bottom: 28px;
+    opacity: 0.7;
+  }
+  .concept-content {
+    padding: 48px 52px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 28px;
+  }
+  .concept-top-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .concept-bottom-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .field-block {
+    background: var(--gray-light);
+    border-radius: 12px;
+    padding: 20px 22px;
+    border-left: 4px solid var(--green-light);
+  }
+  .field-block.doel { border-left-color: var(--green-dark); grid-column: 1 / -1; }
+  .field-block.inzichten { border-left-color: var(--teal); }
+  .field-block.beslissingen { border-left-color: #E53935; }
+  .field-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .field-value {
+    font-size: 14px;
+    color: var(--text-dark);
+    line-height: 1.6;
+  }
+  .field-value.empty { color: var(--text-muted); font-style: italic; }
+  .loading-text { color: var(--text-muted); font-size: 13px; }
+  ul.inzichten-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  ul.inzichten-list li::before {
+    content: '→';
+    color: var(--teal);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+  ul.inzichten-list li {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-dark);
+  }
+  .actie-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--gray);
+    font-size: 13px;
+  }
+  .actie-row:last-child { border: none; }
+  .actie-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .dot-open { background: #E53935; }
+  .dot-in_progress { background: #FB8C00; }
+  .dot-done { background: #4CAF50; }
+  .dot-uitgesteld { background: #78909C; }
+  .actie-text { flex: 1; color: var(--text-dark); }
+  .actie-status-label { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+
+  /* Loader spinner */
+  .spin {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--gray);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- 0: COVER -->
+  <div class="slide cover active" id="slide-0">
+    <div class="cover-circle" style="width:600px;height:600px;top:-200px;right:-200px;"></div>
+    <div class="cover-circle" style="width:400px;height:400px;bottom:-150px;left:-100px;"></div>
+    <div class="cover-logo">Colruyt Group Health</div>
+    <div class="cover-pretitle">Gating Meeting</div>
+    <div class="cover-title">Concepten<br><span>Status Update</span></div>
+    <div class="cover-subtitle">Juli 2026</div>
+    <div class="cover-date-badge">03 Juli 2026 · Stuurgroep</div>
+  </div>
+
+  <!-- 1: AGENDA -->
+  <div class="slide agenda-slide" id="slide-1">
+    <div class="slide-label">Agenda</div>
+    <div class="agenda-title">Vandaag bespreken we</div>
+    <div class="agenda-items">
+      <div class="agenda-item">
+        <div class="agenda-num">01</div>
+        <div class="agenda-item-title">Concepten in nieuw jasje</div>
+        <div class="agenda-item-desc">Overzicht van de health concepten, strategische context en de huidige As-Is status update.</div>
+      </div>
+      <div class="agenda-item">
+        <div class="agenda-num">02</div>
+        <div class="agenda-item-title">Roadmap Concepten</div>
+        <div class="agenda-item-desc">Visueel overzicht van de planningsroad&shy;map voor alle key activities van CG Health.</div>
+      </div>
+      <div class="agenda-item">
+        <div class="agenda-num">03</div>
+        <div class="agenda-item-title">Eén voor één de concepten</div>
+        <div class="agenda-item-desc">Diepgaande bespreking per concept: doel, inzichten en te nemen beslissingen.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2: SECTION 1 -->
+  <div class="slide section-break" id="slide-2">
+    <div class="section-num">01</div>
+    <div class="section-label">Agenda punt 1</div>
+    <div class="section-title">Concepten in<br>nieuw jasje</div>
+  </div>
+
+  <!-- 3: PPTX SLIDE 3 -->
+  <div class="slide image-slide" id="slide-3">
+    <img src="https://stverstr.github.io/Roadmap-Tool/assets/slide3.png" alt="Health Concepten As IS Status April 2026">
+  </div>
+
+  <!-- 4: PPTX SLIDE 4 -->
+  <div class="slide image-slide" id="slide-4">
+    <img src="https://stverstr.github.io/Roadmap-Tool/assets/slide4.png" alt="CG Health Strategische Veranderingen & Initiatieven">
+  </div>
+
+  <!-- 5: PPTX SLIDE 5 -->
+  <div class="slide image-slide" id="slide-5">
+    <img src="https://stverstr.github.io/Roadmap-Tool/assets/slide5.png" alt="CG Health Strategische Veranderingen & Initiatieven — met concepten">
+  </div>
+
+  <!-- 6: SECTION 2 -->
+  <div class="slide section-break" id="slide-6">
+    <div class="section-num">02</div>
+    <div class="section-label">Agenda punt 2</div>
+    <div class="section-title">Roadmap<br>Concepten</div>
+  </div>
+
+  <!-- 7: ROADMAP / TIMELINE -->
+  <div class="slide roadmap-slide" id="slide-7">
+    <div class="roadmap-header">
+      <div class="slide-label">CG Health · Key Activities</div>
+      <h2>Roadmap overzicht 2026 – 2028</h2>
+      <p>Klik op een concept om de detailfiche te bekijken</p>
+    </div>
+    <div class="gantt-wrapper" id="gantt-wrapper">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+
+  
+  <!-- 13: Health Retail Concept -->
+  <div class="slide image-slide" id="slide-13">
+    <img src="https://stverstr.github.io/Roadmap-Tool/assets/hr-concept.png" alt="Health Retail Concept — synthèse catégories produits">
+  </div>
+
+  <!-- 14: Health Retail Business Plan Y0-Y1 -->
+  <div class="slide image-slide" id="slide-14">
+    <img src="https://stverstr.github.io/Roadmap-Tool/assets/hr-bp-y01.png" alt="Health Retail Business Plan — Year 0 & Year 1">
+  </div>
+
+  <!-- 15: Health Retail Business Plan Y2-Y3 -->
+  <div class="slide image-slide" id="slide-15">
+    <img src="https://stverstr.github.io/Roadmap-Tool/assets/hr-bp-y23.png" alt="Health Retail Business Plan — Year 2 & Year 3">
+  </div>
+
+  <!-- 8: SECTION 3 -->
+  <div class="slide section-break" id="slide-8">
+    <div class="section-num">03</div>
+    <div class="section-label">Agenda punt 3</div>
+    <div class="section-title">Eén voor één<br>de concepten</div>
+  </div>
+
+  <!-- 9-13: CONCEPT SLIDES -->
+  <!-- Rendered by JS -->
+
+</div><!-- #deck -->
+
+<!-- Vaste ← Roadmap knop (toont enkel op detail slides 9-18) -->
+<button id="btn-roadmap" onclick="goToSlide(7)" style="display:none;position:fixed;top:18px;left:18px;z-index:9000;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px);">← Roadmap</button>
+
+<!-- Navigation -->
+<div id="nav">
+  <button id="btn-prev" onclick="navigate(-1)">&#8592;</button>
+  <span id="slide-counter">1 / 14</span>
+  <button id="btn-next" onclick="navigate(1)">&#8594;</button>
+</div>
+<div id="progress"></div>
+
+<script>
+const SUPABASE_URL = 'https://uvodxrrxsxnjlinqrjlw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2b2R4cnJ4c3huamxpbnFyamx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjg4MzYsImV4cCI6MjA5NTEwNDgzNn0.1lX4o9zuV0VZJG7S53rdqfbRuic6YnT7g-YPnePavnI';
+
+// Presentatie-specifieke velden (kleur, slide positie, subtitle, lead) — rest komt live uit Supabase
+const concepts = [
+  {id:"fb8bddf0-e3ef-407f-89f6-3dddf5bec7eb", subtitle:"integratie Yoboo / Newpharma", lead:"Gilles", color:"#00897B", slide_index:9,  pptx_name:"Lifestyle Coaching",     pv:"",  health_status:null, start:"", end:""},
+  {id:"06aa04ac-e866-45b5-a40f-7f5b762c6f2a", subtitle:"Noorderlaan",                   lead:"Gilles", color:"#E53935", slide_index:10, pptx_name:"Leefstijlapotheek",     pv:"",  health_status:null, start:"", end:""},
+  {id:"ade1e89d-3415-4771-82b6-cd4f0e6cdc62", subtitle:"& Acacia / Beaujean",           lead:"Gilles", color:"#5C6BC0", slide_index:11, pptx_name:"eRX Wilgenveld",        pv:"",  health_status:null, start:"", end:""},
+  {id:"ee4d7465-9cc3-4992-8e6f-279dfa9094f1", subtitle:"St Gilles",                     lead:"Gilles", color:"#FB8C00", slide_index:12, pptx_name:"Health Retail Concept", pv:"",  health_status:null, start:"", end:""},
+  {id:"920d3e7e-3bea-4b92-987e-f0005df7a4ce", subtitle:"Cross Format Integratie",       lead:"Lisa",   color:"#8E24AA", slide_index:16, pptx_name:"Health Box",            pv:"",  health_status:null, start:"", end:""},
+  {id:"274a9739-e451-4237-8a3e-c445b13e5af9", subtitle:"met advies",                    lead:"Jan",    color:"#00ACC1", slide_index:17, pptx_name:"Bioplanet / Yoboo",     pv:"",  health_status:null, start:"", end:""},
+  {id:"65655a19-f226-47bd-9400-1fb27ee8fdd6", subtitle:"",                              lead:"Gilles", color:"#43A047", slide_index:18, pptx_name:"Efficiente Apotheek",   pv:"",  health_status:null, start:"", end:""}
+];
+
+// Haal live data op voor alle concepten bij laden (naam, status, PV, datums, subcategorie, fases)
+async function loadConceptsMeta() {
+  const ids = concepts.map(c => c.id).join(',');
+  try {
+    const hdr = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/roadmap_items?id=in.(${ids})&select=id,title,health_status,owner,start_date,end_date,subcategory_id,item_phases`,
+      { headers: hdr }
+    );
+    const rows = await res.json();
+    rows.forEach(row => {
+      const c = concepts.find(x => x.id === row.id);
+      if (!c) return;
+      if (row.title)                       c.pptx_name      = row.title;
+      if (row.health_status !== undefined) c.health_status  = row.health_status;
+      if (row.owner)                       c.pv             = row.owner;
+      if (row.start_date)                  c.start          = row.start_date;
+      if (row.end_date)                    c.end            = row.end_date;
+      if (row.subcategory_id)              c.subcategory_id = row.subcategory_id;
+      if (row.item_phases)                 c.item_phases    = row.item_phases;
+    });
+
+    // Subcategorie namen ophalen
+    const subIds = [...new Set(concepts.filter(c => c.subcategory_id).map(c => c.subcategory_id))];
+    if (subIds.length) {
+      const subRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/subcategories?id=in.(${subIds.join(',')})&select=id,name`,
+        { headers: hdr }
+      );
+      const subs = await subRes.json();
+      const subMap = {};
+      subs.forEach(s => subMap[s.id] = s.name);
+      concepts.forEach(c => { c.subcategory_name = c.subcategory_id ? (subMap[c.subcategory_id] || '') : ''; });
+    }
+  } catch(e) { console.warn('loadConceptsMeta failed', e); }
+}
+
+const HEALTH = {
+  sunny:         { icon: '☀️',  label: 'On Track',       cls: 'health-sunny' },
+  partly_cloudy: { icon: '⛅',  label: 'Aandacht nodig',  cls: 'health-partly_cloudy' },
+  cloudy:        { icon: '☁️',  label: 'Risico',          cls: 'health-cloudy' },
+  stormy:        { icon: '⛈️', label: 'Kritiek',          cls: 'health-stormy' }
+};
+
+function healthInfo(s) {
+  return HEALTH[s] || { icon: '', label: '', cls: '' };
+}
+
+// ---- BUILD CONCEPT SLIDES ----
+function buildConceptSlides() {
+  const deck = document.getElementById('deck');
+  concepts.forEach((c, i) => {
+    const h = healthInfo(c.health_status);
+    const div = document.createElement('div');
+    div.className = 'slide concept-slide';
+    div.id = `slide-${c.slide_index}`;
+    div.innerHTML = `
+      <div class="concept-sidebar">
+        <div class="concept-color-bar" style="background:${c.color}"></div>
+        <div class="concept-num">Concept ${i+1} van ${concepts.length}</div>
+        <div class="concept-status-big" id="health-icon-${c.id}">${h.icon}</div>
+        <div class="concept-health-label" id="health-label-${c.id}">${h.label}</div>
+        <div class="concept-name">${c.pptx_name}</div>
+        <div class="concept-name-sub">${c.subtitle}</div>
+        <div class="concept-meta-row">
+          <div class="concept-meta-item">
+            <span class="concept-meta-label">Product Verantwoordelijke</span>
+            <span class="concept-meta-value" id="pv-${c.id}">${c.pv}</span>
+          </div>
+          <div class="concept-meta-item">
+            <span class="concept-meta-label">Lead</span>
+            <span class="concept-meta-value">${c.lead}</span>
+          </div>
+          <div class="concept-meta-item">
+            <span class="concept-meta-label">Timing</span>
+            <span class="concept-meta-value">${fmtDate(c.start)} → ${fmtDate(c.end)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="concept-content" id="content-${c.id}">
+        <div class="field-block doel">
+          <div class="field-label">🎯 Doel concept</div>
+          <div class="field-value loading-text" id="doel-${c.id}"><span class="spin"></span> Laden...</div>
+        </div>
+        <div class="concept-top-fields">
+          <div class="field-block">
+            <div class="field-label">🔬 Wat willen we testen / leren</div>
+            <div class="field-value loading-text" id="leren-${c.id}"><span class="spin"></span> Laden...</div>
+          </div>
+          <div class="field-block inzichten">
+            <div class="field-label">💡 Inzichten tot nu toe</div>
+            <div class="field-value loading-text" id="inzichten-${c.id}"><span class="spin"></span> Laden...</div>
+          </div>
+        </div>
+        <div class="concept-bottom-fields">
+          <div class="field-block beslissingen" style="grid-column:1/-1">
+            <div class="field-label">⚡ Beslissingen / acties vereist</div>
+            <div class="field-value loading-text" id="acties-${c.id}"><span class="spin"></span> Laden...</div>
+          </div>
+        </div>
+      </div>
+    `;
+    deck.appendChild(div);
+  });
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  return d.toLocaleDateString('nl-BE', {month: 'short', year: 'numeric'});
+}
+
+// ---- FETCH CONCEPT DATA ----
+const fetched = {};
+async function fetchConcept(conceptId) {
+  if (fetched[conceptId]) return;
+  fetched[conceptId] = true;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/roadmap_items?id=eq.${conceptId}&select=owner,health_status,verwachtingen_doel,verwachtingen_leren,status_inzichten,status_acties`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    const data = await res.json();
+    if (!data || !data[0]) throw new Error('No data');
+    const d = data[0];
+
+    // Doel
+    const doelEl = document.getElementById('doel-' + conceptId);
+    if (doelEl) doelEl.innerHTML = d.verwachtingen_doel
+      ? `<span style="font-size:14px">${escHtml(d.verwachtingen_doel)}</span>`
+      : '<span class="empty">Nog niet ingevuld</span>';
+
+    // Leren
+    const lerenEl = document.getElementById('leren-' + conceptId);
+    if (lerenEl) lerenEl.innerHTML = d.verwachtingen_leren
+      ? escHtml(d.verwachtingen_leren)
+      : '<span class="empty">Nog niet ingevuld</span>';
+
+    // PV from owner
+    const pvEl = document.getElementById('pv-' + conceptId);
+    if (pvEl && d.owner) pvEl.textContent = d.owner;
+
+    // Live health_status — update sidebar icon + label
+    if (d.health_status !== undefined) {
+      const h = healthInfo(d.health_status);
+      const iconEl = document.getElementById('health-icon-' + conceptId);
+      const labelEl = document.getElementById('health-label-' + conceptId);
+      if (iconEl) iconEl.textContent = h.icon;
+      if (labelEl) labelEl.textContent = h.label;
+      // Also update Gantt row icon
+      const ganttIconEl = document.getElementById('gantt-health-' + conceptId);
+      if (ganttIconEl) ganttIconEl.textContent = h.icon;
+    }
+
+    // Inzichten
+    const inzEl = document.getElementById('inzichten-' + conceptId);
+    if (inzEl) {
+      const inz = d.status_inzichten || [];
+      if (inz.length === 0) {
+        inzEl.innerHTML = '<span class="empty">Nog geen inzichten geregistreerd</span>';
+      } else {
+        inzEl.innerHTML = '<ul class="inzichten-list">' + inz.map(i =>
+          `<li>${escHtml(i.tekst || i.text || JSON.stringify(i))}</li>`
+        ).join('') + '</ul>';
+      }
+    }
+
+    // Acties/Beslissingen
+    const actEl = document.getElementById('acties-' + conceptId);
+    if (actEl) {
+      const acties = d.status_acties || [];
+      if (acties.length === 0) {
+        actEl.innerHTML = '<span class="empty">Geen openstaande acties</span>';
+      } else {
+        const STATUS_LABELS = {open:'Open', in_progress:'In behandeling', done:'Afgerond', uitgesteld:'Uitgesteld'};
+        actEl.innerHTML = acties.map(a => {
+          const st = a.status || 'open';
+          return `<div class="actie-row">
+            <div class="actie-status-dot dot-${st}"></div>
+            <span class="actie-text">${escHtml(a.tekst || a.text || '')}</span>
+            <span class="actie-status-label">${STATUS_LABELS[st] || st}</span>
+          </div>`;
+        }).join('');
+      }
+    }
+  } catch(e) {
+    ['doel','leren','inzichten','acties'].forEach(f => {
+      const el = document.getElementById(f + '-' + conceptId);
+      if (el) el.innerHTML = '<span class="empty">Fout bij laden</span>';
+    });
+  }
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ---- BUILD GANTT ----
+function buildGantt() {
+  const wrapper = document.getElementById('gantt-wrapper');
+  if (!wrapper) return;
+
+  const START   = new Date('2026-01-01');
+  const END     = new Date('2028-03-01');
+  const totalMs = END - START;
+  const today   = new Date().toISOString().slice(0,10);
+
+  function pct(dateStr) {
+    if (!dateStr) return 0;
+    const d = new Date(dateStr);
+    return Math.max(0, Math.min(100, (d - START) / totalMs * 100));
+  }
+
+  // Kwartaal-headers
+  const quarters = [];
+  let qd = new Date(START);
+  while (qd < END) {
+    quarters.push({ label:`Q${Math.floor(qd.getMonth()/3)+1} ${qd.getFullYear()}`, left:pct(qd.toISOString().slice(0,10)) });
+    qd = new Date(qd.getFullYear(), qd.getMonth() + 3, 1);
+  }
+  const gridLines = quarters.map(q => `<div class="gantt-grid-line" style="left:${q.left}%"></div>`).join('');
+  const todayPct  = pct(today);
+
+  // Fase-balk renderer
+  function renderPhaseBar(c) {
+    const phases = Array.isArray(c.item_phases) ? c.item_phases : [];
+    if (!phases.length || !c.start || !c.end) {
+      const h = healthInfo(c.health_status);
+      return `<div class="gantt-bar" style="left:${pct(c.start)}%;right:${100-pct(c.end)}%;background:${c.color};">
+        ${h.icon} ${fmtDate(c.start)} → ${fmtDate(c.end)}</div>`;
+    }
+    return phases.map((ph, i) => {
+      const left    = pct(ph.start_date);
+      const right   = 100 - pct(ph.end_date);
+      const isCur   = ph.start_date <= today && ph.end_date > today;
+      const isPast  = ph.end_date <= today;
+      const isFirst = i === 0;
+      const isLast  = i === phases.length - 1;
+      const bg      = isPast ? c.color + 'AA' : isCur ? c.color : c.color + 'CC';
+      const radius  = `${isFirst?'6px':'0'} ${isLast?'6px':'0'} ${isLast?'6px':'0'} ${isFirst?'6px':'0'}`;
+      const border  = !isLast ? 'border-right:2px solid rgba(255,255,255,0.45);' : '';
+      const shadow  = isCur ? `box-shadow:0 0 0 2px ${c.color},0 2px 8px rgba(0,0,0,0.2);z-index:3;` : '';
+      return `<div style="position:absolute;top:50%;transform:translateY(-50%);height:34px;
+          left:${left}%;right:${right}%;background:${bg};border-radius:${radius};
+          ${border}${shadow}display:flex;align-items:center;padding:0 6px;overflow:hidden;">
+        <span style="font-size:${isCur?'11px':'9px'};font-weight:${isCur?'700':'500'};color:#fff;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${isCur ? ph.name : ph.label}
+        </span>
+      </div>`;
+    }).join('');
+  }
+
+  // Groepeer per subcategorie (volgorde van eerste verschijning)
+  const groupMap = {};
+  const groupOrder = [];
+  concepts.forEach(c => {
+    const key = c.subcategory_name || '—';
+    if (!groupMap[key]) { groupMap[key] = []; groupOrder.push(key); }
+    groupMap[key].push(c);
+  });
+
+  const rowsHtml = groupOrder.map(grp => {
+    const header = `
+      <div style="display:flex;align-items:center;padding:10px 0 3px 0;">
+        <div style="width:220px;flex-shrink:0;font-size:9px;font-weight:800;text-transform:uppercase;
+            letter-spacing:0.12em;color:#5A8A70;padding-right:12px;text-align:right;">${grp}</div>
+        <div style="flex:1;height:1px;background:#5A8A70;opacity:0.3;"></div>
+      </div>`;
+    const rows = groupMap[grp].map(c => `
+      <div class="gantt-row" onclick="goToSlide(${c.slide_index})" title="${c.pptx_name}">
+        <div class="gantt-label">
+          <div class="gantt-label-name">${c.pptx_name}</div>
+          <div class="gantt-label-sub">${c.subtitle}</div>
+        </div>
+        <div class="gantt-track" style="position:relative;">
+          ${gridLines}
+          ${renderPhaseBar(c)}
+        </div>
+      </div>`).join('');
+    return header + rows;
+  }).join('');
+
+  wrapper.innerHTML = `
+    <div style="display:flex;margin-left:220px;margin-bottom:4px;position:relative;height:20px;">
+      ${quarters.map(q => `<div style="position:absolute;left:${q.left}%;font-size:10px;font-weight:700;color:#8A9E94;letter-spacing:0.05em;">${q.label}</div>`).join('')}
+    </div>
+    <div style="position:relative;">
+      ${rowsHtml}
+      <!-- Today line — correct CSS calc -->
+      <div style="position:absolute;top:0;bottom:0;left:calc(220px + (100% - 220px) * ${todayPct/100});width:2px;background:#E53935;z-index:10;pointer-events:none;">
+        <div style="position:absolute;top:0;left:4px;background:#E53935;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;">Vandaag</div>
+      </div>
+    </div>`;
+}
+
+// ---- NAVIGATION ----
+let current = 0;
+const TOTAL = 19; // 0..18
+
+function goToSlide(n) {
+  if (n < 0 || n >= TOTAL) return;
+  const slides = document.querySelectorAll('.slide');
+  slides.forEach(s => { s.classList.remove('active','prev'); });
+  
+  const prev = document.getElementById('slide-' + current);
+  if (prev) prev.classList.add('prev');
+  
+  current = n;
+  const next = document.getElementById('slide-' + current);
+  if (next) {
+    next.classList.remove('prev');
+    next.classList.add('active');
+  }
+
+  // Update counter
+  document.getElementById('slide-counter').textContent = `${current+1} / ${TOTAL}`;
+  document.getElementById('progress').style.width = `${(current/(TOTAL-1))*100}%`;
+
+  // Toon/verberg vaste roadmap-knop op detail slides (9–18)
+  const roadmapBtn = document.getElementById('btn-roadmap');
+  if (roadmapBtn) roadmapBtn.style.display = (current >= 9) ? 'block' : 'none';
+
+  // Lazy-load concept data
+  const concept = concepts.find(c => c.slide_index === current);
+  if (concept) fetchConcept(concept.id);
+
+  // Rebuild gantt if on slide 7
+  if (current === 7) buildGantt();
+}
+
+function navigate(dir) {
+  goToSlide(current + dir);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') navigate(1);
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navigate(-1);
+});
+
+// Also click on slide to advance (except on concept slides with scroll)
+document.getElementById('deck').addEventListener('click', e => {
+  // Don't advance if clicking on a gantt row (handled separately)
+  if (e.target.closest('.gantt-row')) return;
+  if (e.target.closest('.concept-content')) return; // allow scroll
+  navigate(1);
+});
+
+// ---- INIT ----
+(async () => {
+  await loadConceptsMeta(); // live data uit Supabase voor alle concepten
+  buildConceptSlides();
+  buildGantt();
+  goToSlide(0);
+})();
+</script>
+</body>
+</html>

@@ -519,7 +519,16 @@ input[type=color]{width:36px;height:28px;border:1px solid var(--gy300);border-ra
         <div class="field">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
             <label class="label" style="margin:0;">📋 Fasen van dit item</label>
-            <button class="btn btn-sm btn-p" onclick="addItemPhase()">＋ Fase</button>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <div style="position:relative;">
+                <button class="btn btn-sm btn-s" onclick="toggleItemTplMenu(event)">📋 Template ▾</button>
+                <div id="item-tpl-menu" style="display:none;position:fixed;background:white;border:1px solid var(--gy300);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.15);z-index:3000;min-width:200px;overflow:hidden;">
+                  <div style="padding:8px 14px 4px;font-size:10px;font-weight:700;color:var(--gy500);text-transform:uppercase;letter-spacing:.06em;">Standaard templates</div>
+                  <button onclick="loadItemTemplate('Innovaties')" style="width:100%;text-align:left;padding:9px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--gy900);" onmouseover="this.style.background='var(--gy100)'" onmouseout="this.style.background='none'">🔬 Innovaties</button>
+                </div>
+              </div>
+              <button class="btn btn-sm btn-p" onclick="addItemPhase()">＋ Fase</button>
+            </div>
           </div>
           <div id="mi-phases-container"></div>
         </div>
@@ -1572,8 +1581,80 @@ function renderDepsMultiselect() {
   container.innerHTML = html || '<div style="color:var(--gy400);font-size:12px;font-style:italic;padding:6px 0;">Geen andere items.</div>';
 }
 
+// ── DATUM HELPERS ─────────────────────────────────
+function dateAddDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+function dateAddMonths(dateStr, months) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+
+function cascadeItemDates(fromIndex) {
+  for (let i = fromIndex; i < itemPhasesTemp.length; i++) {
+    if (i > 0 && itemPhasesTemp[i-1].end_date) {
+      itemPhasesTemp[i].start_date = dateAddDays(itemPhasesTemp[i-1].end_date, 1);
+    }
+    if (itemPhasesTemp[i].start_date) {
+      itemPhasesTemp[i].end_date = dateAddMonths(itemPhasesTemp[i].start_date, 1);
+    }
+  }
+  renderItemPhasesBuilder();
+}
+
+function onItemStartChange(i) {
+  if (itemPhasesTemp[i].start_date) {
+    itemPhasesTemp[i].end_date = dateAddMonths(itemPhasesTemp[i].start_date, 1);
+  }
+  cascadeItemDates(i + 1);
+}
+
+function onItemEndChange(i) {
+  cascadeItemDates(i + 1);
+}
+
+const PHASE_TEMPLATES = {
+  'Innovaties': [
+    { name: 'Explore',               label: 'Exp' },
+    { name: 'Define Concept',        label: 'Con' },
+    { name: 'Proof of Concept',      label: 'Poc' },
+    { name: 'Pilot',                 label: 'Pil' },
+    { name: 'Pre-industrialisatie',  label: 'Pre' },
+    { name: 'Industrialisatie',      label: 'Ind' },
+  ]
+};
+
+function toggleItemTplMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('item-tpl-menu');
+  const rect = e.currentTarget.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = rect.left + 'px';
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', () => {
+  const m = document.getElementById('item-tpl-menu');
+  if (m) m.style.display = 'none';
+});
+
+function loadItemTemplate(name) {
+  document.getElementById('item-tpl-menu').style.display = 'none';
+  const tpl = PHASE_TEMPLATES[name];
+  if (!tpl) return;
+  if (itemPhasesTemp.length > 0 && !confirm(`Huidige fasen vervangen door template "${name}"?`)) return;
+  itemPhasesTemp = tpl.map((ph, i) => ({
+    id: (Date.now() + i).toString(), name: ph.name, label: ph.label,
+    start_date: '', end_date: '', completed: false
+  }));
+  renderItemPhasesBuilder();
+  toast(`📋 Template "${name}" geladen ✓`);
+}
+
 function addItemPhase() {
-  itemPhasesTemp.push({ id: Date.now().toString(), name: '', start_date: '', end_date: '', completed: false });
+  itemPhasesTemp.push({ id: Date.now().toString(), name: '', label: '', start_date: '', end_date: '', completed: false });
   renderItemPhasesBuilder();
 }
 
@@ -1589,10 +1670,12 @@ function renderItemPhasesBuilder() {
         onchange="itemPhasesTemp[${i}].completed=this.checked">
       <input class="iph-name" value="${(ph.name||'').replace(/"/g,'&quot;')}" placeholder="Naam fase…"
         oninput="itemPhasesTemp[${i}].name=this.value">
+      <input style="width:46px;border:1px solid var(--gy300);border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;color:var(--gy700);text-align:center;" maxlength="3" value="${(ph.label||'').replace(/"/g,'&quot;')}" placeholder="Lbl" title="Kort label voor tijdslijn (max 3 tekens)"
+        oninput="itemPhasesTemp[${i}].label=this.value.slice(0,3)">
       <input class="iph-date" type="date" value="${ph.start_date||''}" title="Start"
-        onchange="itemPhasesTemp[${i}].start_date=this.value">
+        onchange="itemPhasesTemp[${i}].start_date=this.value;onItemStartChange(${i})">
       <input class="iph-date" type="date" value="${ph.end_date||''}" title="Eind"
-        onchange="itemPhasesTemp[${i}].end_date=this.value">
+        onchange="itemPhasesTemp[${i}].end_date=this.value;onItemEndChange(${i})">
       <button class="btn btn-danger btn-sm" title="Verwijder"
         onclick="itemPhasesTemp.splice(${i},1);renderItemPhasesBuilder()">✕</button>
     </div>`).join('');
@@ -1854,21 +1937,81 @@ function renderTimeline() {
     return `<div style="position:absolute;left:${left}%;width:${width}%;top:0;bottom:0;background:${ph.color||'#2D6A4F'};opacity:.06;pointer-events:none;"></div>`;
   }).join('');
 
+  function lightenHex(hex, factor) {
+    if (!hex || hex.length < 7 || hex[0] !== '#') return hex || '#888';
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return `rgb(${Math.round(r+(255-r)*factor)},${Math.round(g+(255-g)*factor)},${Math.round(b+(255-b)*factor)})`;
+  }
+
   function renderLane(label, laneItems, bgColor, labelStyle, barColor, clickFn) {
-    let cells = `<div style="flex:1;position:relative;min-height:48px;">
-      ${phaseBandsHtml}
-      ${months.map((_,i) => `<div style="position:absolute;top:0;bottom:0;left:${(i/months.length)*100}%;width:${(1/months.length)*100}%;border-right:1px solid var(--gy200);"></div>`).join('')}`;
-    laneItems.forEach((it, idx) => {
-      const startPct = dateToPercent(it.start_date || it.date);
-      const endPct = dateToPercent(it.end_date || it.start_date || it.date);
-      if (startPct === null) return;
-      const w = Math.max(1, (endPct || startPct) - startPct);
-      const top = 10 + (idx % 2) * 34;
-      const itHealth = it.health_status ? HEALTH_ICON[it.health_status] : '';
-      cells += `<div style="position:absolute;left:${startPct}%;width:${Math.max(w, 3)}%;height:28px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 8px;gap:4px;font-size:11px;font-weight:600;color:white;background:${barColor};cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:2;transition:filter .15s;" onclick="${clickFn(it)}" title="${it.title||it.name}" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">${itHealth ? `<span style="font-size:13px;flex-shrink:0;">${itHealth}</span>` : ''}${it.title||it.name}</div>`;
-    });
-    cells += `</div>`;
-    return `<div style="display:flex;border-bottom:1px solid var(--gy200);min-height:48px;background:${bgColor||'white'};align-items:stretch;">
+    const MAIN_H = 28, PHASE_H = 14, PHASE_GAP = 2;
+    const ITEM_PAD_TOP = 10, ITEM_PAD_BOTTOM = 6, ITEM_GAP = 4;
+
+    const hasAnyPhases = laneItems.some(it =>
+      (it.item_phases || []).some(ph => ph.start_date && ph.end_date));
+
+    let cells, laneMinH;
+    const gridLines = months.map((_,i) =>
+      `<div style="position:absolute;top:0;bottom:0;left:${(i/months.length)*100}%;width:${(1/months.length)*100}%;border-right:1px solid var(--gy200);"></div>`).join('');
+
+    if (!hasAnyPhases) {
+      // Original staggered rendering
+      laneMinH = 48;
+      cells = `<div style="flex:1;position:relative;min-height:48px;">${phaseBandsHtml}${gridLines}`;
+      laneItems.forEach((it, idx) => {
+        const startPct = dateToPercent(it.start_date || it.date);
+        const endPct = dateToPercent(it.end_date || it.start_date || it.date);
+        if (startPct === null) return;
+        const w = Math.max(1, (endPct || startPct) - startPct);
+        const top = 10 + (idx % 2) * 34;
+        const itHealth = it.health_status ? HEALTH_ICON[it.health_status] : '';
+        cells += `<div style="position:absolute;left:${startPct}%;width:${Math.max(w, 3)}%;height:28px;top:${top}px;border-radius:5px;display:flex;align-items:center;padding:0 8px;gap:4px;font-size:11px;font-weight:600;color:white;background:${barColor};cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:2;transition:filter .15s;" onclick="${clickFn(it)}" title="${it.title||it.name}" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">${itHealth ? `<span style="font-size:13px;flex-shrink:0;">${itHealth}</span>` : ''}${it.title||it.name}</div>`;
+      });
+      cells += `</div>`;
+    } else {
+      // Phase-aware: each item gets its own vertical slot
+      let topCursor = 0;
+      const slots = laneItems.map((it, idx) => {
+        const validPhases = (it.item_phases || []).filter(ph => ph.start_date && ph.end_date);
+        const phaseBlockH = validPhases.length > 0 ? 4 + validPhases.length * (PHASE_H + PHASE_GAP) : 0;
+        const mainBarTop = topCursor + ITEM_PAD_TOP;
+        const slotH = ITEM_PAD_TOP + MAIN_H + phaseBlockH + ITEM_PAD_BOTTOM;
+        topCursor += slotH + (idx < laneItems.length - 1 ? ITEM_GAP : 0);
+        return { it, validPhases, mainBarTop };
+      });
+      laneMinH = Math.max(48, topCursor);
+
+      cells = `<div style="flex:1;position:relative;min-height:${laneMinH}px;">${phaseBandsHtml}${gridLines}`;
+      slots.forEach(({ it, validPhases, mainBarTop }) => {
+        const startPct = dateToPercent(it.start_date || it.date);
+        const endPct = dateToPercent(it.end_date || it.start_date || it.date);
+        if (startPct === null) return;
+        const w = Math.max(1, (endPct || startPct) - startPct);
+        const itHealth = it.health_status ? HEALTH_ICON[it.health_status] : '';
+
+        // Main activity bar
+        cells += `<div style="position:absolute;left:${startPct}%;width:${Math.max(w, 3)}%;height:${MAIN_H}px;top:${mainBarTop}px;border-radius:5px;display:flex;align-items:center;padding:0 8px;gap:4px;font-size:11px;font-weight:600;color:white;background:${barColor};cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:2;transition:filter .15s;" onclick="${clickFn(it)}" title="${it.title||it.name}" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">${itHealth ? `<span style="font-size:13px;flex-shrink:0;">${itHealth}</span>` : ''}${it.title||it.name}</div>`;
+
+        // Phase sub-bars
+        validPhases.forEach((ph, phIdx) => {
+          const phStart = dateToPercent(ph.start_date);
+          const phEnd = dateToPercent(ph.end_date);
+          if (phStart === null) return;
+          const phW = Math.max(0.5, (phEnd || phStart) - phStart);
+          const phBarTop = mainBarTop + MAIN_H + 4 + phIdx * (PHASE_H + PHASE_GAP);
+          const phColor = lightenHex(barColor, 0.28 + phIdx * 0.14);
+          const phLabel = ph.label || '';
+          // Only show label if bar is wide enough (>2% ≈ ~20px on most screens)
+          const showLabel = phW >= 2 && phLabel;
+          cells += `<div style="position:absolute;left:${phStart}%;width:${Math.max(phW, 1)}%;height:${PHASE_H}px;top:${phBarTop}px;border-radius:3px;display:flex;align-items:center;padding:0 4px;font-size:10px;font-weight:700;color:white;background:${phColor};overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:2;box-shadow:inset 0 1px 0 rgba(255,255,255,.25);" title="${ph.name||phLabel}">${showLabel ? phLabel : ''}</div>`;
+        });
+      });
+      cells += `</div>`;
+    }
+
+    return `<div style="display:flex;border-bottom:1px solid var(--gy200);min-height:${laneMinH}px;background:${bgColor||'white'};align-items:stretch;">
       <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:12px;border-right:1px solid var(--gy300);display:flex;align-items:center;gap:6px;${labelStyle||''}">${label}</div>
       ${cells}
     </div>`;
